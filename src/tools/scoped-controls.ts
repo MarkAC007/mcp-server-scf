@@ -17,24 +17,26 @@ const ImplementationStatus = z.enum([
 export function registerScopedControlTools(server: McpServer) {
   server.tool(
     "list_scoped_controls",
-    "List controls scoped to your organization with their implementation status. Supports filtering by status, framework, and search. Returns implementation progress across the 8-state workflow.",
+    "List controls scoped to your organization with their implementation status. Supports filtering by status, domain, framework, and search. Returns paginated implementation progress across the 8-state workflow. Pagination uses limit/offset.",
     {
-      org_id: z.string().describe("Organization ID"),
-      status: ImplementationStatus.optional().describe("Filter by implementation status"),
+      org_id: z.string().describe("Organization ID (UUID)"),
+      scope_status: ImplementationStatus.optional().describe("Filter by implementation status (e.g., 'not_started', 'in_progress', 'implemented')"),
+      domain: z.string().optional().describe("Filter by SCF domain (e.g., 'GOV', 'AST', 'IAC')"),
       framework: z.string().optional().describe("Filter by framework"),
-      search: z.string().optional().describe("Search term"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
+      search: z.string().optional().describe("Search term to filter by control ID or title"),
+      limit: z.number().min(1).max(100).default(25).describe("Number of results to return (max 100)"),
+      offset: z.number().min(0).default(0).describe("Number of results to skip for pagination"),
     },
-    async ({ org_id, status, framework, search, page, per_page }) => {
+    async ({ org_id, scope_status, domain, framework, search, limit, offset }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/scoped-controls`, {
-          status,
+        const data = await client.get(`/organizations/${org_id}/scoped-controls-paginated`, {
+          scope_status,
+          domain,
           framework,
           search,
-          page,
-          per_page,
+          limit,
+          offset,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
@@ -47,7 +49,7 @@ export function registerScopedControlTools(server: McpServer) {
     "get_scoped_control",
     "Get detailed implementation status of a specific scoped control, including owner, notes, evidence links, and audit history. Use the scf_id (e.g., 'AST-01') as the identifier.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
     },
     async ({ org_id, scf_id }) => {
@@ -65,7 +67,7 @@ export function registerScopedControlTools(server: McpServer) {
     "update_scoped_control",
     "Update a scoped control's implementation tracking fields. Use the scf_id (e.g., 'AST-01', 'GOV-02') as the identifier — NOT the UUID. Status values are lowercase (e.g., 'not_started', 'in_progress'). All fields are optional — only provided fields are updated.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
       implementation_status: ImplementationStatus.optional().describe("New implementation status (lowercase: not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred)"),
       priority: z.string().optional().describe("Implementation priority (e.g., 'high', 'medium', 'low')"),
@@ -92,7 +94,7 @@ export function registerScopedControlTools(server: McpServer) {
     "get_scoping_stats",
     "Get implementation statistics for an organization — counts by status, completion percentage, framework coverage breakdown.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -109,13 +111,13 @@ export function registerScopedControlTools(server: McpServer) {
     "scope_framework",
     "Bulk-scope all controls from a framework to your organization. This creates scoped control entries for every control in the selected framework.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       framework_id: z.string().describe("Framework ID to scope (e.g., 'nist-800-53-r5')"),
     },
     async ({ org_id, framework_id }) => {
       try {
         const client = getClient();
-        const data = await client.post(`/organizations/${org_id}/scoped-controls/scope-framework`, {
+        const data = await client.post(`/organizations/${org_id}/scoped-controls/bulk-scope-framework`, {
           framework_id,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -129,7 +131,7 @@ export function registerScopedControlTools(server: McpServer) {
     "batch_update_controls",
     "Batch update multiple scoped controls in a single transaction. Maximum 500 operations per request. Use scf_id (e.g., 'AST-01') to identify controls. Status values must be lowercase.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       operations: z
         .array(
           z.object({
