@@ -1,0 +1,91 @@
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      changelog:
+        description: 'Changelog entry (what changed)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: version
+        run: |
+          OLD_VERSION=$(node -p "require('./package.json').version")
+          npm version ${{ inputs.bump }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "old=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumped $OLD_VERSION → $NEW_VERSION"
+
+      - name: Update CHANGELOG
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          VERSION="${{ steps.version.outputs.new }}"
+          ENTRY="${{ inputs.changelog }}"
+
+          # Insert new version entry after the header lines
+          sed -i "/^## \[/i\\
+          ## [$VERSION] - $DATE\\
+          \\
+          ### Changed\\
+          - $ENTRY\\
+          " CHANGELOG.md
+
+      - name: Commit, tag, and push
+        run: |
+          VERSION="${{ steps.version.outputs.new }}"
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore: bump version to $VERSION"
+          git tag "v$VERSION"
+          git push origin main --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.new }}
+          name: v${{ steps.version.outputs.new }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Version Bump Complete" >> "$GITHUB_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "- **Old:** ${{ steps.version.outputs.old }}" >> "$GITHUB_SUMMARY"
+          echo "- **New:** ${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo "- **Tag:** v${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "To publish to npm, run the **Publish to npm** workflow with tag \`v${{ steps.version.outputs.new }}\`." >> "$GITHUB_SUMMARY"
