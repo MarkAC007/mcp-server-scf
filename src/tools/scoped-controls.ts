@@ -63,14 +63,19 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "update_scoped_control",
-    "Update a scoped control's implementation status, owner, notes, or other fields. Status transitions are validated (e.g., NOT_STARTED -> IN_PROGRESS -> IMPLEMENTED).",
+    "Update a scoped control's implementation tracking fields. Status transitions are validated (e.g., NOT_STARTED -> IN_PROGRESS -> IMPLEMENTED). All fields are optional — only provided fields are updated.",
     {
       org_id: z.string().describe("Organization ID"),
       scoped_control_id: z.string().describe("Scoped control ID"),
-      status: ImplementationStatus.optional().describe("New implementation status"),
-      owner: z.string().optional().describe("Assigned owner"),
-      notes: z.string().optional().describe("Implementation notes"),
-      justification: z.string().optional().describe("Justification for status (required for NOT_APPLICABLE, DEFERRED)"),
+      implementation_status: ImplementationStatus.optional().describe("New implementation status"),
+      priority: z.string().optional().describe("Implementation priority (e.g., 'high', 'medium', 'low')"),
+      maturity_level: z.string().optional().describe("Control maturity level"),
+      owner: z.string().optional().describe("Control owner (person accountable)"),
+      assigned_to: z.string().optional().describe("Assignee (person responsible for implementation)"),
+      implementation_notes: z.string().optional().describe("Implementation notes and context"),
+      target_date: z.string().optional().describe("Target completion date (YYYY-MM-DD)"),
+      completion_date: z.string().optional().describe("Actual completion date (YYYY-MM-DD)"),
+      selection_reason: z.string().optional().describe("Justification for scoping selection or status (required for NOT_APPLICABLE, DEFERRED)"),
     },
     async ({ org_id, scoped_control_id, ...fields }) => {
       try {
