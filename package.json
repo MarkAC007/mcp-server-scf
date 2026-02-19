@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-scf",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for the SCF Controls Platform — security compliance controls, frameworks, evidence, and risk management for AI agents",
   "type": "module",
   "bin": {
