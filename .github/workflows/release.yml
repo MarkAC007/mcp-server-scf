@@ -44,7 +44,9 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure npm for OIDC publishing
+        run: npm config set registry https://registry.npmjs.org/
 
       - name: Install dependencies
         run: npm ci
@@ -60,8 +62,6 @@ jobs:
 
       - name: Publish to npm with provenance
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ''  # Clear setup-node's default token so npm uses OIDC
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
