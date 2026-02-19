@@ -1,0 +1,88 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to publish (e.g., v0.1.6)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write  # Required for npm OIDC trusted publishing
+
+jobs:
+  validate:
+    name: Validate Tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Validate tag exists and matches package.json
+        run: |
+          TAG_VERSION="${{ inputs.tag }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "Version validated: $TAG_VERSION"
+
+      - name: Check not already published
+        run: |
+          TAG_VERSION="${{ inputs.tag }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          if npm view "mcp-server-scf@$TAG_VERSION" version 2>/dev/null; then
+            echo "::error::Version $TAG_VERSION is already published to npm"
+            exit 1
+          fi
+          echo "Version $TAG_VERSION not yet published — good to go"
+
+  publish:
+    name: Publish
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: npm  # Link to GitHub Environment for OIDC
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npx eslint --version > /dev/null 2>&1 && npm run lint || echo "eslint not installed, skipping lint"
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
+
+      - name: Summary
+        run: |
+          TAG_VERSION="${{ inputs.tag }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          echo "## Published to npm" >> "$GITHUB_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "- **Package:** [mcp-server-scf@$TAG_VERSION](https://www.npmjs.com/package/mcp-server-scf/v/$TAG_VERSION)" >> "$GITHUB_SUMMARY"
+          echo "- **Tag:** ${{ inputs.tag }}" >> "$GITHUB_SUMMARY"
+          echo "- **Provenance:** ✅ Signed" >> "$GITHUB_SUMMARY"

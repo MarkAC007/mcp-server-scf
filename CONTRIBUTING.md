@@ -35,27 +35,45 @@ Thank you for your interest in contributing! Here's how to get started.
 
 ## Release Process
 
-Releases are automated via GitHub Actions with npm trusted publishing (OIDC — no static tokens).
+Releases use two separate GitHub Actions workflows — version bumping and npm publishing are decoupled so you control when each happens.
 
-### How to release
+### Step 1: Version Bump
 
-1. Update `version` in `package.json`
-2. Update `CHANGELOG.md` with the new version and changes
-3. Commit: `git commit -am "chore: bump version to X.Y.Z"`
-4. Tag: `git tag vX.Y.Z`
-5. Push: `git push origin main --tags`
+Go to **Actions → Version Bump → Run workflow** and select:
+- **Bump type:** patch, minor, or major
+- **Changelog entry:** what changed
 
-The release workflow will:
-- Validate the tag matches `package.json` version
-- Build and type-check
-- Publish to npm with [provenance attestation](https://docs.npmjs.com/generating-provenance-statements)
+This will:
+- Bump `package.json` version
+- Update `CHANGELOG.md`
+- Commit, tag (`vX.Y.Z`), and push to main
 - Create a GitHub Release with auto-generated notes
+
+### Step 2: Publish to npm
+
+Go to **Actions → Publish to npm → Run workflow** and enter:
+- **Tag:** the git tag from Step 1 (e.g., `v0.2.0`)
+
+This will:
+- Check out the tagged commit
+- Validate the tag matches `package.json`
+- Verify the version isn't already published
+- Build, lint, type-check
+- Publish to npm with [provenance attestation](https://docs.npmjs.com/generating-provenance-statements)
+
+### Why two steps?
+
+The version bump creates a tag and GitHub Release immediately. Publishing to npm is a separate, manual decision. This lets you:
+- Review the release notes before publishing
+- Hold a version if issues are found after tagging
+- Re-run the publish if it fails without re-tagging
 
 ### Security
 
 - **No static npm tokens** — uses GitHub Actions OIDC for authentication
 - **Provenance** — every published package is cryptographically linked to its source commit
-- **Version lockstep** — the workflow fails if the git tag doesn't match `package.json`
+- **Version lockstep** — publish fails if the tag doesn't match `package.json`
+- **Duplicate protection** — publish fails if the version already exists on npm
 
 ## Reporting Issues
 
