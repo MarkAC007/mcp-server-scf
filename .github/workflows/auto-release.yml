@@ -89,7 +89,7 @@ jobs:
           esac
 
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "New version: v$NEW_VERSION"
+          echo "Calculated version: v$NEW_VERSION"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -98,9 +98,29 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Reconcile version with package.json
+        id: final_version
+        run: |
+          CALC_VERSION="${{ steps.new_version.outputs.version }}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+
+          # Use whichever is higher — package.json may have been bumped manually
+          HIGHER=$(npx --yes semver "$CALC_VERSION" "$PKG_VERSION" | tail -1)
+
+          if [ "$HIGHER" = "$PKG_VERSION" ] && [ "$PKG_VERSION" != "$CALC_VERSION" ]; then
+            FINAL_VERSION="$PKG_VERSION"
+            echo "Using package.json version ($PKG_VERSION > $CALC_VERSION)"
+          else
+            FINAL_VERSION="$CALC_VERSION"
+            echo "Using calculated version ($CALC_VERSION >= $PKG_VERSION)"
+          fi
+
+          echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "Final version: v$FINAL_VERSION"
+
       - name: Update package.json version
         run: |
-          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          NEW_VERSION="${{ steps.final_version.outputs.version }}"
           npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
 
           if git diff --quiet package.json package-lock.json; then
@@ -117,9 +137,13 @@ jobs:
 
       - name: Create and push tag
         run: |
-          NEW_VERSION="${{ steps.new_version.outputs.version }}"
-          git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
-          git push origin "v${NEW_VERSION}"
+          NEW_VERSION="${{ steps.final_version.outputs.version }}"
+          if git rev-parse "v${NEW_VERSION}" >/dev/null 2>&1; then
+            echo "::warning::Tag v${NEW_VERSION} already exists, skipping tag creation"
+          else
+            git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+            git push origin "v${NEW_VERSION}"
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -139,7 +163,7 @@ jobs:
       - name: Generate release notes
         id: release_notes
         run: |
-          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          NEW_VERSION="${{ steps.final_version.outputs.version }}"
           PREVIOUS_TAG="${{ steps.latest_tag.outputs.tag }}"
           PR_NUMBER="${{ github.event.pull_request.number }}"
           PR_AUTHOR="${{ github.event.pull_request.user.login }}"
@@ -212,8 +236,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.new_version.outputs.version }}
-          name: v${{ steps.new_version.outputs.version }}
+          tag_name: v${{ steps.final_version.outputs.version }}
+          name: v${{ steps.final_version.outputs.version }}
           body_path: release_notes.md
           draft: false
           prerelease: false
@@ -227,8 +251,8 @@ jobs:
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Previous Version | ${{ steps.latest_tag.outputs.tag }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| New Version | v${{ steps.new_version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| New Version | v${{ steps.final_version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Bump Type | ${{ steps.bump_type.outputs.bump }} |" >> $GITHUB_STEP_SUMMARY
           echo "| PR | #${{ github.event.pull_request.number }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| npm | [mcp-server-scf@${{ steps.new_version.outputs.version }}](https://www.npmjs.com/package/mcp-server-scf/v/${{ steps.new_version.outputs.version }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| npm | [mcp-server-scf@${{ steps.final_version.outputs.version }}](https://www.npmjs.com/package/mcp-server-scf/v/${{ steps.final_version.outputs.version }}) |" >> $GITHUB_STEP_SUMMARY
           echo "| Provenance | Signed |" >> $GITHUB_STEP_SUMMARY
