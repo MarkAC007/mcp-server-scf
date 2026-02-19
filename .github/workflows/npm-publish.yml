@@ -102,8 +102,8 @@ jobs:
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "## Published to npm" >> "$GITHUB_SUMMARY"
-          echo "" >> "$GITHUB_SUMMARY"
-          echo "- **Package:** [mcp-server-scf@$VERSION](https://www.npmjs.com/package/mcp-server-scf/v/$VERSION)" >> "$GITHUB_SUMMARY"
-          echo "- **Tag:** v$VERSION" >> "$GITHUB_SUMMARY"
-          echo "- **Provenance:** ✅ Signed" >> "$GITHUB_SUMMARY"
+          echo "## Published to npm" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Package:** [mcp-server-scf@$VERSION](https://www.npmjs.com/package/mcp-server-scf/v/$VERSION)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Tag:** v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Provenance:** ✅ Signed" >> "$GITHUB_STEP_SUMMARY"
