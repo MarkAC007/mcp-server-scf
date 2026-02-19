@@ -33,6 +33,30 @@ Thank you for your interest in contributing! Here's how to get started.
 - Include a clear description of what changed and why
 - Ensure `npm run build` passes with no errors
 
+## Release Process
+
+Releases are automated via GitHub Actions with npm trusted publishing (OIDC — no static tokens).
+
+### How to release
+
+1. Update `version` in `package.json`
+2. Update `CHANGELOG.md` with the new version and changes
+3. Commit: `git commit -am "chore: bump version to X.Y.Z"`
+4. Tag: `git tag vX.Y.Z`
+5. Push: `git push origin main --tags`
+
+The release workflow will:
+- Validate the tag matches `package.json` version
+- Build and type-check
+- Publish to npm with [provenance attestation](https://docs.npmjs.com/generating-provenance-statements)
+- Create a GitHub Release with auto-generated notes
+
+### Security
+
+- **No static npm tokens** — uses GitHub Actions OIDC for authentication
+- **Provenance** — every published package is cryptographically linked to its source commit
+- **Version lockstep** — the workflow fails if the git tag doesn't match `package.json`
+
 ## Reporting Issues
 
 Open an issue on GitHub with:
