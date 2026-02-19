@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   bump:
@@ -27,7 +28,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -63,29 +63,40 @@ jobs:
           - $ENTRY\\
           " CHANGELOG.md
 
-      - name: Commit, tag, and push
+      - name: Create release branch and PR
+        id: pr
         run: |
           VERSION="${{ steps.version.outputs.new }}"
+          BRANCH="release/v$VERSION"
+          git checkout -b "$BRANCH"
           git add package.json package-lock.json CHANGELOG.md
-          git commit -m "chore: bump version to $VERSION"
-          git tag "v$VERSION"
-          git push origin main --tags
+          git commit -m "chore: release v$VERSION"
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create \
+            --title "chore: release v$VERSION" \
+            --body "Automated version bump: ${{ steps.version.outputs.old }} → $VERSION
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.new }}
-          name: v${{ steps.version.outputs.new }}
-          generate_release_notes: true
+          **Changelog:** ${{ inputs.changelog }}
+
+          Once merged, run **Publish to npm** with tag \`v$VERSION\` to publish." \
+            --head "$BRANCH" \
+            --base main)
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "Created PR: $PR_URL"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         run: |
-          echo "## Version Bump Complete" >> "$GITHUB_SUMMARY"
+          echo "## Version Bump PR Created" >> "$GITHUB_SUMMARY"
           echo "" >> "$GITHUB_SUMMARY"
+          echo "- **Bump:** ${{ inputs.bump }}" >> "$GITHUB_SUMMARY"
           echo "- **Old:** ${{ steps.version.outputs.old }}" >> "$GITHUB_SUMMARY"
           echo "- **New:** ${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
-          echo "- **Tag:** v${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo "- **PR:** ${{ steps.pr.outputs.url }}" >> "$GITHUB_SUMMARY"
           echo "" >> "$GITHUB_SUMMARY"
-          echo "To publish to npm, run the **Publish to npm** workflow with tag \`v${{ steps.version.outputs.new }}\`." >> "$GITHUB_SUMMARY"
+          echo "Merge the PR, then tag and publish:" >> "$GITHUB_SUMMARY"
+          echo '```bash' >> "$GITHUB_SUMMARY"
+          echo "git tag v${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo "git push origin v${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo '```' >> "$GITHUB_SUMMARY"
