@@ -5,10 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.6] - 2026-02-19
 
@@ -18,10 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `batch_update_controls` schema expanded from 4 fields to 11 fields, matching the platform's updated `BatchScopedControlOperation` schema
 - Tool descriptions updated to clarify `scf_id` usage and lowercase status values
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.5] - 2026-02-19
 
@@ -29,40 +49,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed npm trusted publisher case-sensitivity (owner must match GitHub exactly)
 - Restored registry-url in setup-node for proper OIDC .npmrc generation
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.4] - 2026-02-19
 
 ### Fixed
 - Removed registry-url from setup-node to allow npm native OIDC exchange
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.3] - 2026-02-19
 
 ### Fixed
 - Fixed OIDC token conflict with setup-node's default NODE_AUTH_TOKEN
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.2] - 2026-02-19
 
 ### Fixed
 - Release workflow now uses Node 24 (required for npm OIDC trusted publishing)
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.1] - 2026-02-19
 
@@ -76,10 +136,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependabot: Weekly dependency and GitHub Actions updates
 - Branch protection with required status checks
 
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
+
 ## [0.1.7] - 2026-02-19
 
 ### Changed
 - Version-bump workflow now creates PR instead of direct push; npm-publish auto-detects version and creates GitHub Releases
+
+## [0.2.0] - 2026-02-19
+
+### Changed
+- ..
 
 ## [0.1.0] - 2026-02-19
 
