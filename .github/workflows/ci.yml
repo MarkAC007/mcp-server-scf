@@ -33,7 +33,7 @@ jobs:
         run: npm run build
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint --if-present
 
       - name: Check for type errors
         run: npx tsc --noEmit
