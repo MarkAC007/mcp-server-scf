@@ -1,0 +1,23 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      SCF_API_KEY:
+        type: string
+        description: "Your SCF platform API key (scf_ prefix). Generate at Settings > API Keys."
+      SCF_API_URL:
+        type: string
+        default: "https://eu.scfcontrolsplatform.app"
+        description: "SCF Controls Platform API URL"
+    required:
+      - SCF_API_KEY
+  commandFunction: |-
+    (config) => ({
+      command: "node",
+      args: ["build/index.js"],
+      env: {
+        SCF_API_KEY: config.SCF_API_KEY,
+        SCF_API_URL: config.SCF_API_URL || "https://eu.scfcontrolsplatform.app"
+      }
+    })

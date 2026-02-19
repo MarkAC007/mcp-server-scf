@@ -61,6 +61,22 @@ Add to your MCP config (`.cursor/mcp.json` or equivalent):
 }
 ```
 
+### Docker
+
+```json
+{
+  "mcpServers": {
+    "scf": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "SCF_API_KEY", "markac007/mcp-server-scf"],
+      "env": {
+        "SCF_API_KEY": "scf_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
 ## Getting an API Key
 
 1. Sign up at [scfcontrolsplatform.app](https://eu.scfcontrolsplatform.app)
