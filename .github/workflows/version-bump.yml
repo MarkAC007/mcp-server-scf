@@ -1,0 +1,141 @@
+name: Version Bump
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      override:
+        description: 'Override auto-detected bump (leave empty to auto-detect)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    # Skip if the push was from this workflow (prevents infinite loop)
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Detect semver bump from commits
+        id: detect
+        run: |
+          OVERRIDE="${{ inputs.override }}"
+          if [ -n "$OVERRIDE" ]; then
+            echo "bump=$OVERRIDE" >> "$GITHUB_OUTPUT"
+            echo "Using override: $OVERRIDE"
+            exit 0
+          fi
+
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --oneline)
+          else
+            COMMITS=$(git log "$LAST_TAG"..HEAD --oneline)
+          fi
+
+          echo "Commits since $LAST_TAG:"
+          echo "$COMMITS"
+
+          # Check for breaking changes (major)
+          if echo "$COMMITS" | grep -qiE "BREAKING CHANGE|^[a-f0-9]+ [a-z]+(\(.+\))?!:"; then
+            echo "bump=major" >> "$GITHUB_OUTPUT"
+            echo "Detected: major (breaking change)"
+            exit 0
+          fi
+
+          # Check for features (minor)
+          if echo "$COMMITS" | grep -qE "^[a-f0-9]+ feat"; then
+            echo "bump=minor" >> "$GITHUB_OUTPUT"
+            echo "Detected: minor (new feature)"
+            exit 0
+          fi
+
+          # Default to patch
+          echo "bump=patch" >> "$GITHUB_OUTPUT"
+          echo "Detected: patch (fixes/chores)"
+
+      - name: Bump version
+        id: version
+        run: |
+          BUMP="${{ steps.detect.outputs.bump }}"
+          OLD_VERSION=$(node -p "require('./package.json').version")
+          npm version "$BUMP" --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "old=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+          echo "Bumped $OLD_VERSION → $NEW_VERSION ($BUMP)"
+
+      - name: Update CHANGELOG
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          VERSION="${{ steps.version.outputs.new }}"
+
+          # Get commit subjects since last tag for changelog
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            SUBJECTS=$(git log --format="- %s" | head -20)
+          else
+            SUBJECTS=$(git log "$LAST_TAG"..HEAD --format="- %s" | head -20)
+          fi
+
+          # Build changelog entry
+          ENTRY="## [$VERSION] - $DATE\n\n### Changes\n$SUBJECTS"
+
+          # Insert after the header (line 7, after semver adherence line)
+          sed -i "7a\\
+          \\
+          $ENTRY" CHANGELOG.md
+
+      - name: Commit, tag, and push
+        run: |
+          VERSION="${{ steps.version.outputs.new }}"
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore: release v$VERSION"
+          git tag "v$VERSION"
+          git push origin main --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.new }}
+          name: v${{ steps.version.outputs.new }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Version Bump Complete" >> "$GITHUB_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "- **Bump:** ${{ steps.version.outputs.bump }}" >> "$GITHUB_SUMMARY"
+          echo "- **Old:** ${{ steps.version.outputs.old }}" >> "$GITHUB_SUMMARY"
+          echo "- **New:** ${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo "- **Tag:** v${{ steps.version.outputs.new }}" >> "$GITHUB_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "To publish to npm, run the **Publish to npm** workflow with tag \`v${{ steps.version.outputs.new }}\`." >> "$GITHUB_SUMMARY"

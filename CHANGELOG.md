@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.6] - 2026-02-19
 
+### Changed
+- Split release workflow into two: Version Bump (auto-detect semver) + Publish to npm (manual)
+- Version bump auto-detects patch/minor/major from conventional commit prefixes
+
 ### Fixed
 - **Breaking fix:** `ImplementationStatus` enum values changed from UPPERCASE to lowercase to match platform API (e.g., `not_started` instead of `NOT_STARTED`)
 - **Breaking fix:** `update_scoped_control` and `get_scoped_control` now use `scf_id` (e.g., `"AST-01"`) instead of UUID — matches the platform's PATCH route
