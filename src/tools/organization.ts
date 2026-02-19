@@ -38,7 +38,7 @@ export function registerOrganizationTools(server: McpServer) {
     "get_organization",
     "Get detailed organization information including subscription tier, member count, usage limits, and settings.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -55,7 +55,7 @@ export function registerOrganizationTools(server: McpServer) {
     "list_members",
     "List members of an organization with their roles (admin, editor, viewer).",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -85,16 +85,16 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "get_audit_log",
-    "Get the audit trail for an organization. Shows field-level changes to controls, evidence, and other entities with actor, timestamp, and before/after values.",
+    "Get the audit trail for an organization. Shows field-level changes to controls, evidence, and other entities with actor, timestamp, and before/after values. Pagination uses limit/offset.",
     {
-      org_id: z.string().describe("Organization ID"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(50).describe("Results per page"),
+      org_id: z.string().describe("Organization ID (UUID)"),
+      limit: z.number().min(1).max(100).default(50).describe("Number of results to return (max 100)"),
+      offset: z.number().min(0).default(0).describe("Number of results to skip for pagination"),
     },
-    async ({ org_id, page, per_page }) => {
+    async ({ org_id, limit, offset }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/audit-logs/${org_id}`, { page, per_page });
+        const data = await client.get(`/organizations/${org_id}/audit-log`, { limit, offset });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -107,13 +107,12 @@ export function registerOrganizationTools(server: McpServer) {
     "Get notifications for the current user — new assignments, comments, status changes, and system alerts.",
     {
       unread_only: z.boolean().default(false).describe("Only return unread notifications"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
+      limit: z.number().min(1).max(100).default(25).describe("Number of notifications to return (max 100)"),
     },
-    async ({ unread_only, page, per_page }) => {
+    async ({ unread_only, limit }) => {
       try {
         const client = getClient();
-        const data = await client.get("/notifications", { unread_only, page, per_page });
+        const data = await client.get("/notifications", { unread_only, limit });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

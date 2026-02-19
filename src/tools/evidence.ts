@@ -6,22 +6,16 @@ import { errorResult } from "../lib/errors.js";
 export function registerEvidenceTools(server: McpServer) {
   server.tool(
     "list_evidence",
-    "List evidence items tracked for an organization's controls. Evidence demonstrates control implementation for audit readiness.",
+    "List evidence items tracked for an organization's controls. Evidence demonstrates control implementation for audit readiness. Returns evidence with status, maturity, and linked controls.",
     {
-      org_id: z.string().describe("Organization ID"),
-      control_id: z.string().optional().describe("Filter by scoped control ID"),
-      status: z.string().optional().describe("Filter by evidence status"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      system_id: z.string().optional().describe("Filter by system ID"),
     },
-    async ({ org_id, control_id, status, page, per_page }) => {
+    async ({ org_id, system_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/evidence`, {
-          control_id,
-          status,
-          page,
-          per_page,
+        const data = await client.get(`/organizations/${org_id}/evidence-tracking`, {
+          system_id,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
@@ -34,8 +28,8 @@ export function registerEvidenceTools(server: McpServer) {
     "create_evidence",
     "Create a new evidence item linked to a control. Evidence items track artifacts that demonstrate control implementation.",
     {
-      org_id: z.string().describe("Organization ID"),
-      control_id: z.string().describe("Scoped control ID to link evidence to"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      control_id: z.string().optional().describe("Scoped control ID to link evidence to"),
       title: z.string().describe("Evidence title"),
       description: z.string().optional().describe("Evidence description"),
       evidence_type: z.string().optional().describe("Type of evidence (e.g., 'document', 'screenshot', 'log')"),
@@ -43,7 +37,7 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
-        const data = await client.post(`/organizations/${org_id}/evidence`, body);
+        const data = await client.post(`/organizations/${org_id}/evidence-tracking`, body);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -53,14 +47,14 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "get_evidence_maturity",
-    "Get evidence maturity scores for an organization. Shows how well evidence collection is progressing across controls.",
+    "Get evidence maturity summary for an organization. Shows average maturity score, automation percentage, distribution by maturity level, and improvement opportunities.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
     },
     async ({ org_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/evidence-maturity/summary/${org_id}`);
+        const data = await client.get(`/organizations/${org_id}/evidence-maturity-summary`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -72,7 +66,7 @@ export function registerEvidenceTools(server: McpServer) {
     "list_evidence_tasks",
     "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
     {
-      org_id: z.string().optional().describe("Organization ID"),
+      org_id: z.string().optional().describe("Organization ID (UUID)"),
       assignee: z.string().optional().describe("Filter by assigned user"),
       status: z.string().optional().describe("Filter by task status"),
     },

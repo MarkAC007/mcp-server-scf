@@ -6,12 +6,14 @@ import { errorResult } from "../lib/errors.js";
 export function registerCapabilityTools(server: McpServer) {
   server.tool(
     "list_capability_themes",
-    "List the 11 KSI-aligned capability themes that group NIST 800-53 controls into security capability areas. Provides a high-level view of your security posture by capability.",
-    {},
-    async () => {
+    "List the 11 KSI-aligned capability themes for an organization. Capability themes group NIST 800-53 controls into security capability areas, providing a high-level view of security posture.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+    },
+    async ({ org_id }) => {
       try {
         const client = getClient();
-        const data = await client.get("/capability-themes");
+        const data = await client.get(`/organizations/${org_id}/capability-themes`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -23,14 +25,12 @@ export function registerCapabilityTools(server: McpServer) {
     "list_capabilities",
     "List capabilities for an organization. Capabilities map to systems and evidence, showing what security functions your infrastructure supports.",
     {
-      org_id: z.string().describe("Organization ID"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
     },
-    async ({ org_id, page, per_page }) => {
+    async ({ org_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/capabilities`, { page, per_page });
+        const data = await client.get(`/organizations/${org_id}/evidence-capabilities`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -42,7 +42,7 @@ export function registerCapabilityTools(server: McpServer) {
     "list_systems",
     "List infrastructure systems in the organization's inventory. Systems are the tools and platforms that implement security capabilities.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -59,7 +59,7 @@ export function registerCapabilityTools(server: McpServer) {
     "create_system",
     "Add a system to the organization's infrastructure inventory. Systems can be linked to capabilities and evidence.",
     {
-      org_id: z.string().describe("Organization ID"),
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       name: z.string().describe("System name"),
       description: z.string().optional().describe("System description"),
       system_type: z
