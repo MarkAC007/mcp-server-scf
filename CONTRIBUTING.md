@@ -39,34 +39,30 @@ Releases use two separate GitHub Actions workflows — version bumping and npm p
 
 ### Step 1: Version Bump
 
-Go to **Actions → Version Bump → Run workflow** and select:
+Go to **Actions → Version Bump → Run workflow** and provide:
 - **Bump type:** patch, minor, or major
 - **Changelog entry:** what changed
 
-This will:
-- Bump `package.json` version
-- Update `CHANGELOG.md`
-- Commit, tag (`vX.Y.Z`), and push to main
-- Create a GitHub Release with auto-generated notes
+This creates a PR with the bumped version and updated CHANGELOG. Merge the PR to main.
 
 ### Step 2: Publish to npm
 
-Go to **Actions → Publish to npm → Run workflow** and enter:
-- **Tag:** the git tag from Step 1 (e.g., `v0.2.0`)
+Go to **Actions → Publish to npm → Run workflow**. The version is read from `package.json` on main automatically (or you can override it).
 
 This will:
-- Check out the tagged commit
-- Validate the tag matches `package.json`
+- Validate the version matches `package.json`
 - Verify the version isn't already published
+- Create a git tag if one doesn't exist
 - Build, lint, type-check
 - Publish to npm with [provenance attestation](https://docs.npmjs.com/generating-provenance-statements)
+- Create a GitHub Release
 
 ### Why two steps?
 
-The version bump creates a tag and GitHub Release immediately. Publishing to npm is a separate, manual decision. This lets you:
-- Review the release notes before publishing
-- Hold a version if issues are found after tagging
-- Re-run the publish if it fails without re-tagging
+Version bumping goes through a PR (respects branch protection). Publishing to npm is a separate manual trigger. This lets you:
+- Batch multiple merges before bumping the version
+- Review the version PR before merging
+- Publish when ready, not on every merge
 
 ### Security
 
