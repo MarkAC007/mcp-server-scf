@@ -71,7 +71,8 @@ export function registerScopedControlTools(server: McpServer) {
       scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
       implementation_status: ImplementationStatus.optional().describe("New implementation status (lowercase: not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred)"),
       priority: z.string().optional().describe("Implementation priority (e.g., 'high', 'medium', 'low')"),
-      maturity_level: z.string().optional().describe("Control maturity level"),
+      maturity_level: z.enum(["L0", "L1", "L2", "L3", "L4", "L5"]).optional()
+        .describe("Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)"),
       owner: z.string().optional().describe("Control owner (person accountable)"),
       assigned_to: z.string().optional().describe("Assignee (person responsible for implementation)"),
       implementation_notes: z.string().optional().describe("Implementation notes and context"),
@@ -142,7 +143,8 @@ export function registerScopedControlTools(server: McpServer) {
             priority: z.string().optional().describe("Implementation priority"),
             owner: z.string().optional().describe("Control owner"),
             assigned_to: z.string().optional().describe("Assignee"),
-            maturity_level: z.string().optional().describe("Control maturity level"),
+            maturity_level: z.enum(["L0", "L1", "L2", "L3", "L4", "L5"]).optional()
+              .describe("Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)"),
             target_date: z.string().optional().describe("Target date (YYYY-MM-DD)"),
             completion_date: z.string().optional().describe("Completion date (YYYY-MM-DD)"),
             implementation_notes: z.string().optional().describe("Implementation notes"),

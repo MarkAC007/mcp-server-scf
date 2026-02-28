@@ -52,6 +52,8 @@ export function registerVendorTools(server: McpServer) {
       description: z.string().optional().describe("Vendor description"),
       category: z.string().optional().describe("Vendor category (e.g., 'SaaS', 'Infrastructure', 'Consulting')"),
       criticality: z.enum(["critical", "high", "medium", "low"]).default("medium").describe("Vendor criticality"),
+      status: z.enum(["prospect", "active", "inactive", "under_review"]).default("prospect")
+        .describe("Vendor status — defaults to 'prospect'"),
       website: z.string().optional().describe("Vendor website URL"),
       contact_email: z.string().optional().describe("Primary contact email"),
     },
@@ -59,6 +61,31 @@ export function registerVendorTools(server: McpServer) {
       try {
         const client = getClient();
         const data = await client.post(`/organizations/${org_id}/vendors`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "update_vendor",
+    "Update an existing vendor record. All fields are optional — only provided fields are updated.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      vendor_id: z.string().describe("Vendor ID — get from list_vendors"),
+      name: z.string().optional().describe("Vendor name"),
+      description: z.string().optional().describe("Vendor description"),
+      category: z.string().optional().describe("Vendor category (e.g., 'SaaS', 'Infrastructure', 'Consulting')"),
+      criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("Vendor criticality"),
+      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("Vendor status"),
+      website: z.string().optional().describe("Vendor website URL"),
+      contact_email: z.string().optional().describe("Primary contact email"),
+    },
+    async ({ org_id, vendor_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const data = await client.patch(`/organizations/${org_id}/vendors/${vendor_id}`, fields);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
