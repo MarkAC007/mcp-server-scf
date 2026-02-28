@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-28
+
+### Added
+- `update_vendor` tool — PATCH existing vendor records (name, description, category, criticality, status, website, contact_email)
+- `update_system` tool — PATCH existing system records (name, description, system_type, status, vendor, category)
+- `vendor` and `category` parameters to `create_system`
+- `status` parameter to `create_vendor` (enum: prospect/active/inactive/under_review, default: prospect)
+
+### Fixed
+- `maturity_level` in `update_scoped_control` and `batch_update_controls` now validates as enum `["L0"..."L5"]` — bare numeric strings (e.g., `"4"`) are rejected with a descriptive error at the Zod layer. Closes #28.
+
+Closes #28, #30.
+
 ## [0.2.0] - 2026-02-19
 
 ### Fixed
