@@ -3,6 +3,17 @@ import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
 
+const SystemType = z.enum([
+  "cloud_provider",
+  "identity_provider",
+  "ticketing",
+  "logging",
+  "security_tool",
+  "code_repository",
+  "document_management",
+  "custom",
+]);
+
 export function registerCapabilityTools(server: McpServer) {
   server.tool(
     "list_capability_themes",
@@ -62,18 +73,7 @@ export function registerCapabilityTools(server: McpServer) {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       name: z.string().describe("System name"),
       description: z.string().optional().describe("System description"),
-      system_type: z
-        .enum([
-          "cloud_provider",
-          "identity_provider",
-          "ticketing",
-          "logging",
-          "security_tool",
-          "code_repository",
-          "document_management",
-          "custom",
-        ])
-        .describe("System type"),
+      system_type: SystemType.describe("System type"),
       status: z.enum(["active", "inactive", "deprecated"]).default("active").describe("System status"),
       vendor: z.string().optional().describe("Vendor ID for this system — get from list_vendors"),
       category: z.string().optional().describe("System category (e.g., 'SIEM', 'Endpoint', 'Identity')"),
@@ -97,19 +97,7 @@ export function registerCapabilityTools(server: McpServer) {
       system_id: z.string().describe("System ID — get from list_systems"),
       name: z.string().optional().describe("System name"),
       description: z.string().optional().describe("System description"),
-      system_type: z
-        .enum([
-          "cloud_provider",
-          "identity_provider",
-          "ticketing",
-          "logging",
-          "security_tool",
-          "code_repository",
-          "document_management",
-          "custom",
-        ])
-        .optional()
-        .describe("System type"),
+      system_type: SystemType.optional().describe("System type"),
       status: z.enum(["active", "inactive", "deprecated"]).optional().describe("System status"),
       vendor: z.string().optional().describe("Vendor ID for this system"),
       category: z.string().optional().describe("System category"),

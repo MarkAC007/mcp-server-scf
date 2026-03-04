@@ -9,7 +9,7 @@ export function registerVendorTools(server: McpServer) {
     "List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Filter by status, criticality, or category.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      status: z.enum(["active", "inactive", "under_review"]).optional().describe("Vendor status filter"),
+      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("Vendor status filter"),
       criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("Vendor criticality filter"),
       page: z.number().min(1).default(1).describe("Page number"),
       per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
