@@ -9,6 +9,7 @@ import { registerRiskTools } from "./tools/risk.js";
 import { registerVendorTools } from "./tools/vendors.js";
 import { registerOrganizationTools } from "./tools/organization.js";
 import { registerCapabilityTools } from "./tools/capabilities.js";
+import { registerWebhookTools } from "./tools/webhooks.js";
 
 const server = new McpServer({
   name: "mcp-server-scf",
@@ -23,6 +24,7 @@ registerRiskTools(server);
 registerVendorTools(server);
 registerOrganizationTools(server);
 registerCapabilityTools(server);
+registerWebhookTools(server);
 
 // Start server
 async function main() {
