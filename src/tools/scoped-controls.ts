@@ -16,26 +16,32 @@ const ImplementationStatus = z.enum([
 
 const MaturityLevel = z.enum(["L0", "L1", "L2", "L3", "L4", "L5"]);
 
+const ScopeStatus = z.enum(["in_scope", "out_of_scope", "all"]);
+
 export function registerScopedControlTools(server: McpServer) {
   server.tool(
     "list_scoped_controls",
-    "List controls scoped to your organization with their implementation status. Supports filtering by status, domain, framework, and search. Returns paginated implementation progress across the 8-state workflow. Pagination uses limit/offset.",
+    "List controls scoped to your organization with their implementation status. Supports filtering by scope status, domain, framework, CSF function, control weighting, and search. Use scope_status='in_scope' to return only controls where selected=True. Returns paginated results. Pagination uses limit/offset.",
     {
       org_id: z.string().describe("Organization ID (UUID)"),
-      scope_status: ImplementationStatus.optional().describe("Filter by implementation status (e.g., 'not_started', 'in_progress', 'implemented')"),
+      scope_status: ScopeStatus.optional().describe("Filter by scoping status: 'in_scope' (selected=True only), 'out_of_scope' (not selected), 'all' (default — returns everything)"),
       domain: z.string().optional().describe("Filter by SCF domain (e.g., 'GOV', 'AST', 'IAC')"),
-      framework: z.string().optional().describe("Filter by framework"),
-      search: z.string().optional().describe("Search term to filter by control ID or title"),
-      limit: z.number().min(1).max(100).default(25).describe("Number of results to return (max 100)"),
+      framework: z.string().optional().describe("Filter by framework mapping"),
+      csf_function: z.string().optional().describe("Filter by NIST CSF function"),
+      control_weighting: z.number().min(0).max(10).optional().describe("Filter by control weighting (0-10)"),
+      search: z.string().optional().describe("Search term to filter by control ID, name, or description"),
+      limit: z.number().min(1).max(200).default(50).describe("Number of results to return (max 200)"),
       offset: z.number().min(0).default(0).describe("Number of results to skip for pagination"),
     },
-    async ({ org_id, scope_status, domain, framework, search, limit, offset }) => {
+    async ({ org_id, scope_status, domain, framework, csf_function, control_weighting, search, limit, offset }) => {
       try {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/scoped-controls-paginated`, {
           scope_status,
           domain,
           framework,
+          csf_function,
+          control_weighting,
           search,
           limit,
           offset,
