@@ -63,6 +63,43 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
+    "list_evidence_files",
+    "List all evidence files uploaded or ingested for a specific evidence item. Returns file metadata including filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-min expiry). Use this to see what artifacts have been collected for an evidence item.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+    },
+    async ({ org_id, evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/files`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_evidence_file",
+    "Get metadata and a pre-signed download URL for a single evidence file. The download URL expires after 15 minutes. Use this to inspect or retrieve a specific uploaded artifact.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+    },
+    async ({ org_id, evidence_id, file_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
     "list_evidence_tasks",
     "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
     {
