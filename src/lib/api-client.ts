@@ -59,7 +59,12 @@ export class ScfApiClient {
       let detail = response.statusText;
       try {
         const errorBody = (await response.json()) as Record<string, unknown>;
-        detail = (errorBody.detail as string) || (errorBody.error as string) || detail;
+        const raw = errorBody.detail ?? errorBody.error ?? errorBody.message;
+        if (typeof raw === "string") {
+          detail = raw;
+        } else if (raw !== undefined && raw !== null) {
+          detail = JSON.stringify(raw);
+        }
       } catch {
         // Use status text as fallback
       }
