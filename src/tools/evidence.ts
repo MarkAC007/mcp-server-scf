@@ -100,6 +100,64 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
+    "update_evidence",
+    "Update an evidence item's tracking fields — toggle tracking, link to a system, set collection method, owner, frequency, etc. Use the catalog evidence ID (e.g., 'E-IAM-01') as the identifier. All fields except org_id and evidence_id are optional — only provided fields are updated.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence or list_evidence_catalog"),
+      is_tracked: z.boolean().optional().describe("Whether this evidence item is actively tracked for the organization"),
+      system_id: z.string().optional().describe("System ID (UUID) to link this evidence to — get from list_systems"),
+      method_of_collection: z.string().optional().describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
+      collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
+      owner: z.string().optional().describe("Person responsible for this evidence item"),
+      frequency: z.string().optional().describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
+      comments: z.string().optional().describe("Additional notes or context about this evidence item"),
+    },
+    async ({ org_id, evidence_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const data = await client.patch(`/organizations/${org_id}/evidence-tracking/${evidence_id}`, fields);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "batch_update_evidence",
+    "Batch update multiple evidence items in a single transaction. Maximum 500 operations per request. Use catalog evidence IDs (e.g., 'E-IAM-01') to identify items. Useful for bulk-enabling tracking or linking evidence to systems.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      operations: z
+        .array(
+          z.object({
+            evidence_id: z.string().describe("Catalog evidence ID (e.g., 'E-IAM-01') — required"),
+            is_tracked: z.boolean().optional().describe("Whether this evidence item is actively tracked"),
+            system_id: z.string().optional().describe("System ID (UUID) to link to — get from list_systems"),
+            method_of_collection: z.string().optional().describe("How the evidence is collected"),
+            collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
+            owner: z.string().optional().describe("Person responsible for this evidence item"),
+            frequency: z.string().optional().describe("Collection frequency"),
+            comments: z.string().optional().describe("Additional notes"),
+          }),
+        )
+        .min(1)
+        .max(500)
+        .describe("Array of evidence update operations"),
+    },
+    async ({ org_id, operations }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/evidence-tracking/batch`, { operations });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
     "list_evidence_tasks",
     "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
     {
