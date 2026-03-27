@@ -45,14 +45,18 @@ export class ScfApiClient {
       Accept: "application/json",
     };
 
-    if (options?.body) {
+    // FastAPI endpoints that declare a Pydantic body parameter require
+    // Content-Type: application/json and at least `{}` — send both for all
+    // mutation methods so callers never hit a spurious 422 "body missing".
+    const isMutation = method === "POST" || method === "PUT" || method === "PATCH";
+    if (options?.body || isMutation) {
       headers["Content-Type"] = "application/json";
     }
 
     const response = await fetch(url.toString(), {
       method,
       headers,
-      body: options?.body ? JSON.stringify(options.body) : undefined,
+      body: isMutation ? JSON.stringify(options?.body ?? {}) : undefined,
     });
 
     if (!response.ok) {
