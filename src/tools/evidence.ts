@@ -26,13 +26,17 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "create_evidence",
-    "Create a new evidence item linked to a control. Evidence items track artifacts that demonstrate control implementation.",
+    "Create an evidence tracking record from the SCF evidence catalog. Uses a catalog evidence ID (e.g., 'E-IAM-01') to start tracking an evidence item for the organization.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      control_id: z.string().optional().describe("Scoped control ID to link evidence to"),
-      title: z.string().describe("Evidence title"),
-      description: z.string().optional().describe("Evidence description"),
-      evidence_type: z.string().optional().describe("Type of evidence (e.g., 'document', 'screenshot', 'log')"),
+      evidence_id: z.string().describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence_catalog"),
+      is_tracked: z.boolean().default(false).describe("Whether this evidence item is actively tracked"),
+      system_id: z.string().optional().describe("System ID (UUID) to link this evidence to — get from list_systems"),
+      method_of_collection: z.string().optional().describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
+      collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
+      owner: z.string().optional().describe("Person responsible for this evidence item"),
+      frequency: z.string().optional().describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
+      comments: z.string().optional().describe("Additional notes or context about this evidence item"),
     },
     async ({ org_id, ...body }) => {
       try {
