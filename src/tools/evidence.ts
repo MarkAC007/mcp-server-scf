@@ -187,6 +187,95 @@ export function registerEvidenceTools(server: McpServer) {
     },
   );
 
+  // ---------------------------------------------------------------------------
+  // AI Evidence Assessment
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "trigger_evidence_assessment",
+    "Trigger an AI-powered assessment of an evidence artifact file. The assessment evaluates relevance, completeness, and quality against mapped SCF controls. Returns immediately with a pending assessment record — poll with get_evidence_assessment until status changes to sufficient/partial/insufficient. Requires editor role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+      assessment_source: z.enum(["on_demand", "auto", "bulk"]).optional().default("on_demand").describe("Source of the assessment request"),
+    },
+    async ({ org_id, evidence_id, file_id, assessment_source }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(
+          `/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assess`,
+          { assessment_source },
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_evidence_assessment",
+    "Get the AI assessment result for an evidence artifact file. Returns status (pending/processing/sufficient/partial/insufficient/error), relevance score (0-100), structured findings with categories and suggestions, summary text, and full audit metadata (model, token counts, cost). Poll this after triggering an assessment.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+    },
+    async ({ org_id, evidence_id, file_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assessment`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "bulk_assess_evidence",
+    "Queue AI assessments for multiple evidence files at once (max 50 per request). Provide at least one of: evidence_id (assess all files for that evidence item), file_ids (specific file UUIDs), or assess_unassessed (all files without an existing assessment). Returns the count of queued assessments. Requires editor role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().optional().describe("Evidence ID — assess all files for this evidence item"),
+      file_ids: z.array(z.string()).optional().describe("Specific evidence file IDs (UUIDs) to assess"),
+      assess_unassessed: z.boolean().optional().default(false).describe("Assess all files that have no existing assessment"),
+    },
+    async ({ org_id, evidence_id, file_ids, assess_unassessed }) => {
+      try {
+        const client = getClient();
+        const body: Record<string, unknown> = {};
+        if (evidence_id) body.evidence_id = evidence_id;
+        if (file_ids) body.file_ids = file_ids;
+        if (assess_unassessed) body.assess_unassessed = assess_unassessed;
+        const data = await client.post(`/organizations/${org_id}/evidence/assess-bulk`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_evidence_assessment_summary",
+    "Get aggregate AI assessment metrics for the organisation dashboard. Returns total assessed count, counts by status (sufficient/partial/insufficient/pending/error), unassessed count, average relevance score, and total cost in cents.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/assessment/summary`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
   server.tool(
     "list_evidence_tasks",
     "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
