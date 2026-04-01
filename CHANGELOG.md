@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-04-01
+
+### Added
+- `get_evidence_validation` tool — retrieve validation result for a specific evidence file (status, completeness score, rule findings)
+- `revalidate_evidence_file` tool — re-run the validation engine against a specific evidence file (editor+ role required)
+- `get_evidence_validation_summary` tool — aggregate validation metrics for the org dashboard (counts by status, pass rate)
+
 ## [0.4.0] - 2026-03-28
 
 ### Fixed
