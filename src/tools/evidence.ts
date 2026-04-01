@@ -128,6 +128,65 @@ export function registerEvidenceTools(server: McpServer) {
     },
   );
 
+  // ---------------------------------------------------------------------------
+  // Evidence Validation (Issue #218)
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "get_evidence_validation",
+    "Get the validation result for a specific evidence file. Returns overall status (valid/warning/partial/invalid), completeness score, individual rule findings (catalog_exists, content_type_ok, field_coverage, freshness, s3_object_exists), validation source, and timestamp.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+    },
+    async ({ org_id, evidence_id, file_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/validation`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "revalidate_evidence_file",
+    "Re-run the validation engine against a specific evidence file. Checks catalog existence, content type, field coverage, freshness, and storage object existence. Upserts the validation result and returns the updated result. Requires editor role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+    },
+    async ({ org_id, evidence_id, file_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/validate`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_evidence_validation_summary",
+    "Get aggregate evidence validation metrics for the organisation dashboard. Returns total files validated, counts by status (valid, warning, partial, invalid), and overall pass rate (fraction of files with status=valid).",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/validation/summary`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
   server.tool(
     "list_evidence_tasks",
     "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
