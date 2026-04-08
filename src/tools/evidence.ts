@@ -120,7 +120,13 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, evidence_id, ...fields }) => {
       try {
         const client = getClient();
-        const data = await client.patch(`/organizations/${org_id}/evidence-tracking/${evidence_id}`, fields);
+        // POST (upsert) instead of PATCH — creates the tracking record if it
+        // doesn't exist yet, updates if it does.  PATCH returns 404 for evidence
+        // items that haven't been activated via the UI.
+        const data = await client.post(`/organizations/${org_id}/evidence-tracking`, {
+          evidence_id,
+          ...fields,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
