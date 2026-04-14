@@ -518,6 +518,43 @@ List the 11 KSI-aligned capability themes for an organization. Capability themes
 |-----------|------|----------|-------------|
 | `org_id` | string | Yes | Organization ID (UUID) |
 
+#### `get_capability_theme_scorecard`
+
+Multi-axis KSI scorecard for all capability themes in one call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with `Strong`/`Moderate`/`Developing` bands. Supersedes the dual-call pattern of `list_capability_themes` + `get_capability_theme_evidence_posture`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `org_id` | string | Yes | Organization ID (UUID) |
+
+#### `get_capability_theme`
+
+Get a single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `org_id` | string | Yes | Organization ID (UUID) |
+| `theme_code` | string | Yes | Capability theme code (e.g. `ACCESS_CONTROL`) |
+
+#### `list_capability_theme_controls`
+
+List SCF controls mapped to a capability theme (KSI) with their scoping status, implementation status, and maturity level. Useful for drilling from a KSI into its underlying controls.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `org_id` | string | Yes | Organization ID (UUID) |
+| `theme_code` | string | Yes | Capability theme code (e.g. `ACCESS_CONTROL`) |
+| `scope_status` | string | No | Filter: `in_scope` (default), `out_of_scope`, `all` |
+| `limit` | number | No | Max results per page (default: 50, max: 200) |
+| `offset` | number | No | Pagination offset (default: 0) |
+
+#### `get_capability_theme_evidence_posture`
+
+Per-theme evidence assessment metrics: controls with evidence, file counts by assessment status (sufficient/partial/insufficient/pending/unassessed), average relevance score, and derived evidence confidence level.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `org_id` | string | Yes | Organization ID (UUID) |
+
 #### `list_capabilities`
 
 List security capabilities mapped to systems and evidence, showing what security functions your infrastructure supports.
