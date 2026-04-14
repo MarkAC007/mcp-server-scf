@@ -112,4 +112,98 @@ export function registerCapabilityTools(server: McpServer) {
       }
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // KSI (Capability Theme) Scoring — issue #50
+  // Wraps multi-axis endpoints shipped in scf-controls-platform #549 Phase 1.
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "get_capability_theme_scorecard",
+    "Get the multi-axis KSI scorecard for all capability themes in one call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with Strong/Moderate/Developing bands. Replaces the dual-call pattern of list_capability_themes + evidence-posture. Source: scf-controls-platform #549 Phase 1.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/capability-themes/scorecard`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_capability_theme",
+    "Get a single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy posture_percentage. Use theme_code from list_capability_themes (e.g., 'ACCESS_CONTROL').",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      theme_code: z.string().describe("Capability theme code (e.g., 'ACCESS_CONTROL') — get from list_capability_themes"),
+    },
+    async ({ org_id, theme_code }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/capability-themes/${theme_code}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "list_capability_theme_controls",
+    "List SCF controls mapped to a capability theme (KSI) with their scoping status, implementation status, and maturity level. Use to enumerate controls under a KSI for drill-down into evidence. Supports pagination and scope filtering.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      theme_code: z.string().describe("Capability theme code (e.g., 'ACCESS_CONTROL') — get from list_capability_themes"),
+      scope_status: z
+        .enum(["in_scope", "out_of_scope", "all"])
+        .optional()
+        .default("in_scope")
+        .describe("Filter by scoping status (default: in_scope)"),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(200)
+        .optional()
+        .default(50)
+        .describe("Max results per page (default: 50, max: 200)"),
+      offset: z.number().int().min(0).optional().default(0).describe("Pagination offset (default: 0)"),
+    },
+    async ({ org_id, theme_code, scope_status, limit, offset }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/capability-themes/${theme_code}/controls`,
+          { scope_status, limit, offset },
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_capability_theme_evidence_posture",
+    "Get per-theme evidence assessment metrics — controls with evidence, file counts by assessment status (sufficient/partial/insufficient/pending/unassessed), average relevance score, and derived evidence confidence level (strong/moderate/weak/none). Use for KSI-centric evidence quality dashboards.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/capability-themes/evidence-posture`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }

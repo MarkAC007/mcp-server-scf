@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `get_capability_theme_scorecard` tool — multi-axis KSI scorecard for all capability themes in a single call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with Strong/Moderate/Developing bands. Wraps `GET /organizations/{org_id}/capability-themes/scorecard` (scf-controls-platform #549 Phase 1).
+- `get_capability_theme` tool — single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`. Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}`.
+- `list_capability_theme_controls` tool — SCF controls mapped to a capability theme with scoping status, implementation status, and maturity level. Supports pagination (`limit`, `offset`) and scope filtering (`scope_status`). Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}/controls`.
+- `get_capability_theme_evidence_posture` tool — per-theme evidence assessment rollup (file counts by status, average relevance score, derived evidence confidence). Wraps `GET /organizations/{org_id}/capability-themes/evidence-posture`.
+
+Closes #50.
+
 ## [0.5.0] - 2026-04-01
 
 ### Added
