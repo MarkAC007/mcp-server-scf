@@ -13,7 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `list_capability_theme_controls` tool — SCF controls mapped to a capability theme with scoping status, implementation status, and maturity level. Supports pagination (`limit`, `offset`) and scope filtering (`scope_status`). Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}/controls`.
 - `get_capability_theme_evidence_posture` tool — per-theme evidence assessment rollup (file counts by status, average relevance score, derived evidence confidence). Wraps `GET /organizations/{org_id}/capability-themes/evidence-posture`.
 
-Closes #50.
+### Fixed
+- **Server handshake now reports the correct version.** `src/index.ts` hardcoded `"0.1.0"` while `package.json` was on `0.5.0`; the server now reads `name` and `version` from `package.json` at startup via `createRequire`, so MCP clients always see the real published version. Closes #53.
+- **README tool count corrected from 38 to 67 (8 domains, not 7).** The domain table was missing Webhooks and understated Evidence, Risk Management, and Capabilities. A CI check (`Verify README tool count matches source`) now fails PRs that drift again. Closes #64.
+
+### Changed
+- **Branding aligned: SCF Controls Platform leads, ComplianceGenie credited as maintainer.** README hero copy updated to remove the `Built by X | Platform: Y` split. Closes #65.
+
+Closes #50, #53, #64, #65.
 
 ## [0.5.0] - 2026-04-01
 

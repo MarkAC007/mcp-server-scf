@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerCatalogTools } from "./tools/catalog.js";
@@ -11,9 +12,12 @@ import { registerOrganizationTools } from "./tools/organization.js";
 import { registerCapabilityTools } from "./tools/capabilities.js";
 import { registerWebhookTools } from "./tools/webhooks.js";
 
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { name: string; version: string };
+
 const server = new McpServer({
-  name: "mcp-server-scf",
-  version: "0.1.0",
+  name: pkg.name,
+  version: pkg.version,
 });
 
 // Register all tool groups

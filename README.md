@@ -18,7 +18,7 @@
 
 Give your AI assistant access to 1,451 SCF security controls, 354+ framework mappings (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR), evidence tracking, risk registers, and vendor risk management — all through the [Model Context Protocol](https://modelcontextprotocol.io).
 
-Built and maintained by [ComplianceGenie.io](https://compliancegenie.io) | Platform: [SCF Controls Platform](https://scfcontrolsplatform.com/)
+Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Maintained by [ComplianceGenie](https://compliancegenie.io).
 
 ---
 
@@ -26,17 +26,18 @@ Built and maintained by [ComplianceGenie.io](https://compliancegenie.io) | Platf
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**38 tools** across 7 domains:
+**67 tools** across 8 domains:
 
 | Domain | Tools | Description |
 |--------|-------|-------------|
 | [Catalog](#catalog-reference-data) | 6 | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives |
 | [Control Scoping](#control-scoping) | 6 | Track implementation status across an 8-state workflow |
-| [Evidence](#evidence-collection) | 4 | Manage evidence collection and maturity scoring |
-| [Risk Management](#risk-management) | 5 | 5x5 risk matrix, risk register, severity summaries |
+| [Evidence](#evidence-collection) | 14 | Manage evidence collection, validation, and maturity scoring |
+| [Risk Management](#risk-management) | 12 | 5x5 risk matrix, risk register, custom risks and control mapping |
 | [Vendor Risk (TPRM)](#vendor-risk-tprm) | 7 | Vendor registry, AI-powered security research, DPSIA |
 | [Organization](#organization--platform) | 7 | Users, orgs, audit trail, work queue, notifications |
-| [Capabilities](#capabilities--systems) | 4 | KSI capability themes, systems inventory |
+| [Capabilities](#capabilities--systems) | 9 | KSI capability themes, scorecards, evidence posture, systems inventory |
+| [Webhooks](#webhooks) | 6 | Webhook management, deliveries, secret rotation |
 
 ---
 
