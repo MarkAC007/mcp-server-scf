@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing! Here's how to get started.
 
+By participating in this project you agree to abide by the [Code of Conduct](CODE_OF_CONDUCT.md) (Contributor Covenant 2.1).
+
 ## Development Setup
 
 1. Fork and clone the repository
