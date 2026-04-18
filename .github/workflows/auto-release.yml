@@ -8,14 +8,14 @@ on:
 permissions:
   contents: write
   pull-requests: read
-  id-token: write # Required for npm OIDC trusted publishing
+  id-token: write  # Required for npm OIDC trusted publishing
 
 jobs:
   release:
     name: Release & Publish
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    environment: npm # Link to GitHub Environment for OIDC
+    environment: npm  # Link to GitHub Environment for OIDC
     permissions:
       contents: write
       id-token: write
@@ -95,8 +95,8 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: "npm"
-          registry-url: "https://registry.npmjs.org"
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Reconcile version with package.json and npm registry
         id: final_version
