@@ -79,15 +79,15 @@ fi
 
 # 8) Validate manifest before packing (fails fast if schema changed)
 echo "  · Validating manifest…"
-npx --yes @anthropic-ai/mcpb validate "$STAGING_DIR/manifest.json"
+npx mcpb validate "$STAGING_DIR/manifest.json"
 
 # 9) Pack
 echo "  · Packing…"
-npx --yes @anthropic-ai/mcpb pack "$STAGING_DIR" "$OUTPUT_MCPB"
+npx mcpb pack "$STAGING_DIR" "$OUTPUT_MCPB"
 
 # 10) Report
 BYTES=$(stat -f%z "$OUTPUT_MCPB" 2>/dev/null || stat -c%s "$OUTPUT_MCPB" 2>/dev/null)
 echo ""
 echo "✅ Built $OUTPUT_MCPB ($(( BYTES / 1024 )) KB)"
 echo ""
-npx --yes @anthropic-ai/mcpb info "$OUTPUT_MCPB"
+npx mcpb info "$OUTPUT_MCPB"
