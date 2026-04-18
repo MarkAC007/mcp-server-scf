@@ -33,8 +33,13 @@ jobs:
       - name: Get latest tag version
         id: latest_tag
         run: |
-          # Get latest tag, default to v0.0.0 if none exists
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          # Get highest semver tag, default to v0.0.0 if none exists.
+          # Uses --sort=-v:refname to pick the highest version independent of
+          # commit-graph proximity; `git describe --tags --abbrev=0` returns
+          # the nearest ancestor tag, which can be stale on branches with
+          # scattered tag history (see #88).
+          LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          LATEST_TAG="${LATEST_TAG:-v0.0.0}"
           VERSION="${LATEST_TAG#v}"
           echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
