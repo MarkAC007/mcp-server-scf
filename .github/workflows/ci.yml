@@ -38,6 +38,16 @@ jobs:
       - name: Check for type errors
         run: npx tsc --noEmit
 
+      - name: Verify README tool count matches source
+        run: |
+          ACTUAL=$(grep -c "server.tool(" src/tools/*.ts | awk -F: '{sum += $2} END {print sum}')
+          README_COUNT=$(grep -oE '\*\*[0-9]+ tools\*\*' README.md | head -n1 | grep -oE '[0-9]+')
+          if [ "$ACTUAL" != "$README_COUNT" ]; then
+            echo "::error::Tool count drift — README claims $README_COUNT tools, src/tools/ has $ACTUAL. Update README.md and the domain table."
+            exit 1
+          fi
+          echo "Tool count OK: $ACTUAL"
+
       - name: Audit dependencies
         run: npm audit --audit-level=high
         continue-on-error: true
