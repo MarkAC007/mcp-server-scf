@@ -15,7 +15,9 @@
 <!-- Tech Stack -->
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)
-![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen?logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen?logo=node.js&logoColor=white)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/MarkAC007/mcp-server-scf/badge)](https://scorecard.dev/viewer/?uri=github.com/MarkAC007/mcp-server-scf)
+[![Socket.dev](https://socket.dev/api/badge/npm/package/mcp-server-scf)](https://socket.dev/npm/package/mcp-server-scf)
 
 **Security compliance controls, frameworks, and risk management for AI agents.**
 
@@ -608,13 +610,24 @@ Once connected, try asking your AI assistant:
 
 ## Security
 
+Report vulnerabilities via the [GitHub Security tab](https://github.com/MarkAC007/mcp-server-scf/security) — see [SECURITY.md](./SECURITY.md) for the full policy and response timelines.
+
+**Runtime guarantees**
+
 - API keys are never logged or included in error messages
 - All communication uses HTTPS
 - Keys are SHA-256 hashed server-side
 - Rate limiting: 100 req/min (read), 20 req/min (write)
 - Multi-tenant: all operations scoped to your organization
+- Server uses stdio transport only — no network listener, no attack surface beyond the MCP client process
+
+**Supply-chain posture**
+
 - npm package published with [provenance attestation](https://docs.npmjs.com/generating-provenance-statements) via OIDC trusted publishing
-- CI includes Gitleaks secret detection, CodeQL analysis, and Semgrep SAST
+- Only two runtime dependencies: `@modelcontextprotocol/sdk` and `zod`
+- CI includes Gitleaks secret detection, CodeQL analysis, Semgrep SAST, `npm audit`, and `npm audit signatures`
+- All GitHub Actions pinned to full commit SHAs
+- Continuous scoring via [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/MarkAC007/mcp-server-scf) and [Socket.dev](https://socket.dev/npm/package/mcp-server-scf)
 
 ---
 

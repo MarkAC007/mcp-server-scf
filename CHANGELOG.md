@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Bumped `@modelcontextprotocol/sdk` to `^1.29.0`** — resolves transitive advisories in `hono` (path traversal, SSE CRLF injection, prototype pollution, cookie-attribute injection, IP matching), `@hono/node-server` (authz bypass, path traversal), and `express-rate-limit` (IPv6-mapped IPv4 bypass). `npm audit` now reports 0 vulnerabilities.
+- **Added `publishConfig.provenance: true`** to `package.json` so provenance is enforced regardless of how the publish command is invoked (belt-and-braces alongside `auto-release.yml`'s `--provenance` flag).
+- **Guarded `prepare: husky` script** (`husky || true`) so it no longer hard-fails consumer installs or `npm pack` when husky is absent. Removes the Socket.dev "install script risk" signal.
+- **Narrowed `engines.node` to `>=20.0.0`** — Node 18 reached end-of-life in April 2025. CI matrix dropped from [18, 20, 22] to [20, 22].
+- **All GitHub Actions pinned to full commit SHAs** with `# vX.Y.Z` trailing comments (for Dependabot) in `ci.yml`, `security.yml`, and `auto-release.yml`. Covers `actions/checkout`, `actions/setup-node`, `gitleaks/gitleaks-action`, `github/codeql-action`, `softprops/action-gh-release`.
+- **CI `npm audit` step is now a hard gate** — removed `continue-on-error: true`. Future high-severity transitive vulns block merge.
+- **Added `npm audit signatures` job** in `security.yml` — verifies every installed dependency has a valid registry signature on every push / PR / weekly cron.
+- **Added OpenSSF Scorecard workflow** (`.github/workflows/scorecard.yml`) — weekly + push analysis, publishes to scorecard.dev, uploads SARIF to GitHub code-scanning.
+- **README Security section expanded** with supply-chain posture details, OpenSSF Scorecard badge, and Socket.dev badge.
+- **SECURITY.md supported-versions table** updated from `0.1.x` to `1.x`.
+
 ### Added
 - `get_capability_theme_scorecard` tool — multi-axis KSI scorecard for all capability themes in a single call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with Strong/Moderate/Developing bands. Wraps `GET /organizations/{org_id}/capability-themes/scorecard` (scf-controls-platform #549 Phase 1).
 - `get_capability_theme` tool — single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`. Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}`.

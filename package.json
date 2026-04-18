@@ -19,7 +19,11 @@
     "format:check": "prettier --check \".\"",
     "prepublishOnly": "npm run build",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
-    "prepare": "husky"
+    "prepare": "husky || true"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "lint-staged": {
     "*.{ts,js,mjs,cjs}": [
@@ -58,10 +62,10 @@
     "url": "https://github.com/MarkAC007/mcp-server-scf/issues"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
