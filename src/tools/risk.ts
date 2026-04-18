@@ -6,12 +6,15 @@ import { errorResult } from "../lib/errors.js";
 export function registerRiskTools(server: McpServer) {
   server.tool(
     "scf_list_risks",
-    "List risk assessments in the organization's risk register. Returns risks with likelihood, impact, treatment status, and linked controls.",
+    "List risk assessments in the organization's risk register. Returns each risk's likelihood, impact, treatment status, and linked controls.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      status: z.string().optional().describe("Filter by treatment status"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      status: z
+        .string()
+        .optional()
+        .describe("Filter by treatment status (e.g., 'mitigate', 'accept', 'transfer', 'avoid')"),
+      page: z.number().int().min(1).default(1).describe("1-indexed page number (default 1)"),
+      per_page: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
     },
     async ({ org_id, status, page, per_page }) => {
       try {
@@ -26,10 +29,10 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_get_risk",
-    "Get detailed risk assessment including likelihood, impact scores (inherent and residual), treatment plan, owner, and review date.",
+    "Get one risk assessment in detail: likelihood, inherent and residual impact scores, treatment plan, owner, and review date.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      risk_id: z.string().describe("Risk assessment ID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_id: z.string().describe("Risk assessment ID — obtain from scf_list_risks"),
     },
     async ({ org_id, risk_id }) => {
       try {
@@ -44,19 +47,22 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_create_risk",
-    "Create a new risk assessment in the risk register. Requires likelihood and impact scores for the 5x5 risk matrix.",
+    "Create a new risk assessment in the risk register (write — editor+ role). Likelihood and impact scores populate the 5×5 risk matrix.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      title: z.string().describe("Risk title"),
-      description: z.string().describe("Risk description"),
-      likelihood: z.number().min(1).max(5).describe("Inherent likelihood (1-5)"),
-      impact: z.number().min(1).max(5).describe("Inherent impact (1-5)"),
-      owner: z.string().optional().describe("Risk owner"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      title: z.string().describe("Risk title (required, max ~100 chars)"),
+      description: z.string().describe("Risk description (required)"),
+      likelihood: z.number().int().min(1).max(5).describe("Inherent likelihood on a 1–5 scale"),
+      impact: z.number().int().min(1).max(5).describe("Inherent impact on a 1–5 scale"),
+      owner: z.string().optional().describe("Name or identifier of the risk owner"),
       treatment_status: z
         .string()
         .optional()
-        .describe("Treatment status (e.g., 'mitigate', 'accept', 'transfer', 'avoid')"),
-      control_id: z.string().optional().describe("Linked control ID"),
+        .describe("Treatment status: 'mitigate', 'accept', 'transfer', or 'avoid'"),
+      control_id: z
+        .string()
+        .optional()
+        .describe("SCF control ID to link (e.g., 'AST-01') — obtain from scf_list_controls"),
     },
     async ({ org_id, ...body }) => {
       try {
@@ -71,9 +77,9 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_get_risk_matrix",
-    "Get the 5x5 risk matrix visualization data for the organization. Shows risk distribution across likelihood and impact dimensions.",
+    "Get the 5×5 risk matrix data for the organization — risk distribution across likelihood × impact, ready for visualization.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -88,9 +94,9 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_get_risk_summary",
-    "Get aggregated risk summary for the organization — total risks by severity, treatment status breakdown, and trend data.",
+    "Get the organization's aggregate risk summary: totals by severity, treatment status breakdown, and trend data.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -109,9 +115,9 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_list_custom_risks",
-    "List custom (organization-defined) risk definitions. These are risks created by the org alongside the static SCF risk catalog, with auto-generated R-ORG-N codes.",
+    "List the organization's custom risk definitions — org-defined risks alongside the static SCF catalog, carrying auto-generated R-ORG-N codes.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -126,13 +132,16 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_create_custom_risk",
-    "Create a custom organization-defined risk. Auto-generates an R-ORG-N code and creates the corresponding risk assessment record.",
+    "Create a custom org-defined risk (write — editor+ role). Auto-generates an R-ORG-N code and creates the matching risk assessment record.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      title: z.string().describe("Risk title (max 100 chars)"),
-      description: z.string().describe("Risk description"),
-      category_name: z.string().optional().describe("Category label (default: 'Custom')"),
-      category_color: z.string().optional().describe("Hex color for category badge (default: '#6b7280')"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      title: z.string().max(100).describe("Risk title (required, max 100 chars)"),
+      description: z.string().describe("Risk description (required)"),
+      category_name: z.string().optional().describe("Category label shown in UI (default 'Custom')"),
+      category_color: z
+        .string()
+        .optional()
+        .describe("Hex color for the category badge, e.g., '#6b7280' (default '#6b7280')"),
     },
     async ({ org_id, ...body }) => {
       try {
@@ -147,14 +156,16 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_update_custom_risk",
-    "Update a custom risk definition's metadata (title, description, category).",
+    "Update a custom risk definition's metadata — title, description, category (write — editor+ role). Only provided fields are applied.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      risk_code: z.string().describe("Custom risk code (e.g., 'R-ORG-1')"),
-      title: z.string().optional().describe("Updated risk title"),
-      description: z.string().optional().describe("Updated risk description"),
-      category_name: z.string().optional().describe("Updated category label"),
-      category_color: z.string().optional().describe("Updated hex color"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z
+        .string()
+        .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
+      title: z.string().max(100).optional().describe("New risk title (max 100 chars)"),
+      description: z.string().optional().describe("New risk description"),
+      category_name: z.string().optional().describe("New category label"),
+      category_color: z.string().optional().describe("New hex color for the category badge"),
     },
     async ({ org_id, risk_code, ...body }) => {
       try {
@@ -169,10 +180,12 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_delete_custom_risk",
-    "Delete a custom risk definition and its assessment record. Also removes any control mappings.",
+    "Delete a custom risk definition, its assessment record, and every control mapping (destructive write — editor+ role). Irreversible.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      risk_code: z.string().describe("Custom risk code (e.g., 'R-ORG-1')"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z
+        .string()
+        .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
     },
     async ({ org_id, risk_code }) => {
       try {
@@ -191,10 +204,12 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_list_custom_risk_controls",
-    "List controls manually linked to a custom risk. Returns the same shape as controls-for-risk (catalog_control_ids + scoped_controls with implementation status).",
+    "List controls linked to a custom risk. Returns `catalog_control_ids` plus `scoped_controls` with implementation status — same shape as the built-in controls-for-risk endpoint.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      risk_code: z.string().describe("Custom risk code (e.g., 'R-ORG-1')"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z
+        .string()
+        .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
     },
     async ({ org_id, risk_code }) => {
       try {
@@ -209,11 +224,13 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_add_custom_risk_control",
-    "Link a scoped control to a custom risk. The control must be scoped (selected) for this organization.",
+    "Link a scoped control to a custom risk (write — editor+ role). The control must already be scoped (in-scope) for this organization.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      risk_code: z.string().describe("Custom risk code (e.g., 'R-ORG-1')"),
-      scf_id: z.string().describe("SCF control ID to link (e.g., 'AST-01')"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z
+        .string()
+        .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
+      scf_id: z.string().describe("SCF control ID to link (e.g., 'AST-01') — obtain from scf_list_scoped_controls"),
     },
     async ({ org_id, risk_code, scf_id }) => {
       try {
@@ -228,11 +245,15 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_remove_custom_risk_control",
-    "Remove a control link from a custom risk.",
+    "Unlink a scoped control from a custom risk (write — editor+ role). The control and risk both remain; only the mapping is removed.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      risk_code: z.string().describe("Custom risk code (e.g., 'R-ORG-1')"),
-      scf_id: z.string().describe("SCF control ID to unlink (e.g., 'AST-01')"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z
+        .string()
+        .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
+      scf_id: z
+        .string()
+        .describe("SCF control ID to unlink (e.g., 'AST-01') — obtain from scf_list_custom_risk_controls"),
     },
     async ({ org_id, risk_code, scf_id }) => {
       try {

@@ -6,13 +6,13 @@ import { errorResult } from "../lib/errors.js";
 export function registerVendorTools(server: McpServer) {
   server.tool(
     "scf_list_vendors",
-    "List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Filter by status, criticality, or category.",
+    "List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Optionally filter by status or criticality. Paginated.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("Vendor status filter"),
-      criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("Vendor criticality filter"),
-      page: z.number().min(1).default(1).describe("Page number"),
-      per_page: z.number().min(1).max(100).default(25).describe("Results per page"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("Lifecycle status filter"),
+      criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("Criticality tier filter"),
+      page: z.number().int().min(1).default(1).describe("1-indexed page number (default 1)"),
+      per_page: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
     },
     async ({ org_id, status, criticality, page, per_page }) => {
       try {
@@ -27,10 +27,10 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_get_vendor",
-    "Get detailed vendor information including certifications, assessments, risk score, and research results.",
+    "Get one vendor's detail: certifications, assessments, computed risk score, and latest research results.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      vendor_id: z.string().describe("Vendor ID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
     },
     async ({ org_id, vendor_id }) => {
       try {
@@ -45,19 +45,22 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_create_vendor",
-    "Add a new vendor to the TPRM registry. Triggers automatic risk scoring based on criticality and data handling.",
+    "Create a vendor in the TPRM registry (write — editor+ role). Platform auto-scores risk based on criticality and data handling.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      name: z.string().describe("Vendor name"),
-      description: z.string().optional().describe("Vendor description"),
-      category: z.string().optional().describe("Vendor category (e.g., 'SaaS', 'Infrastructure', 'Consulting')"),
-      criticality: z.enum(["critical", "high", "medium", "low"]).default("medium").describe("Vendor criticality"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      name: z.string().describe("Vendor legal or trading name (required)"),
+      description: z.string().optional().describe("Short free-text description of the vendor"),
+      category: z.string().optional().describe("Category label (e.g., 'SaaS', 'Infrastructure', 'Consulting')"),
+      criticality: z
+        .enum(["critical", "high", "medium", "low"])
+        .default("medium")
+        .describe("Business criticality tier (default 'medium')"),
       status: z
         .enum(["prospect", "active", "inactive", "under_review"])
         .default("prospect")
-        .describe("Vendor status — defaults to 'prospect'"),
+        .describe("Lifecycle status (default 'prospect')"),
       website: z.string().optional().describe("Vendor website URL"),
-      contact_email: z.string().optional().describe("Primary contact email"),
+      contact_email: z.string().optional().describe("Primary contact email address"),
     },
     async ({ org_id, ...body }) => {
       try {
@@ -72,17 +75,17 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_update_vendor",
-    "Update an existing vendor record. All fields are optional — only provided fields are updated.",
+    "Update an existing vendor record (write — editor+ role). Only provided fields are applied.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      vendor_id: z.string().describe("Vendor ID — get from list_vendors"),
-      name: z.string().optional().describe("Vendor name"),
-      description: z.string().optional().describe("Vendor description"),
-      category: z.string().optional().describe("Vendor category (e.g., 'SaaS', 'Infrastructure', 'Consulting')"),
-      criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("Vendor criticality"),
-      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("Vendor status"),
-      website: z.string().optional().describe("Vendor website URL"),
-      contact_email: z.string().optional().describe("Primary contact email"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      name: z.string().optional().describe("New vendor name"),
+      description: z.string().optional().describe("New free-text description"),
+      category: z.string().optional().describe("New category label"),
+      criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("New criticality tier"),
+      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("New lifecycle status"),
+      website: z.string().optional().describe("New website URL"),
+      contact_email: z.string().optional().describe("New primary contact email"),
     },
     async ({ org_id, vendor_id, ...fields }) => {
       try {
@@ -97,11 +100,14 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_trigger_vendor_research",
-    "Trigger AI-powered security research for a vendor. Checks HIBP (breach databases), NVD (vulnerability databases), and public security posture. Returns a task ID for status polling.",
+    "Queue AI security research for a vendor (write — editor+ role, async). Checks HIBP breach data, NVD vulnerabilities, and public posture. Returns a task ID; poll scf_get_vendor_research.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      vendor_id: z.string().describe("Vendor ID"),
-      domain_override: z.string().optional().describe("Override the vendor's website domain for research lookup"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      domain_override: z
+        .string()
+        .optional()
+        .describe("Override the vendor's website domain used for research lookup (e.g., 'example.com')"),
     },
     async ({ org_id, vendor_id, domain_override }) => {
       try {
@@ -118,10 +124,10 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_get_vendor_research",
-    "Get the latest AI-powered research results for a vendor, including breach history, known vulnerabilities, and security posture analysis.",
+    "Get the latest vendor research result: breach history, known vulnerabilities, and security posture analysis. Poll this after scf_trigger_vendor_research.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      vendor_id: z.string().describe("Vendor ID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
     },
     async ({ org_id, vendor_id }) => {
       try {
@@ -136,29 +142,29 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_trigger_dpsia",
-    "Trigger a Data Protection Security Impact Assessment (DPSIA) for a vendor. Evaluates vendor security posture against CIA triad and certification requirements.",
+    "Queue a Data Protection Security Impact Assessment (DPSIA) for a vendor (write — editor+ role, async). Scores posture against CIA triad and certification requirements.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      vendor_id: z.string().describe("Vendor ID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
       services_used: z
         .string()
         .optional()
-        .describe("Description of services the vendor provides (auto-derived from vendor description if omitted)"),
+        .describe("Description of services the vendor provides (auto-derived from the vendor record if omitted)"),
       assessment_type: z
         .enum(["new", "annual-review", "adhoc"])
         .optional()
         .default("new")
-        .describe("Type of assessment"),
+        .describe("Assessment type: 'new', 'annual-review', or 'adhoc' (default 'new')"),
       data_role: z
         .enum(["Processor", "Controller", "Joint Controller"])
         .optional()
         .default("Processor")
-        .describe("Vendor data role"),
-      client_name: z.string().optional().describe("Client/organisation name for the assessment"),
+        .describe("GDPR data role (default 'Processor')"),
+      client_name: z.string().optional().describe("Client or organization name appearing on the assessment"),
       additional_context: z
         .string()
         .optional()
-        .describe("Additional context for the assessment (e.g., specific concerns, scope notes)"),
+        .describe("Free-text context, scope notes, or specific concerns to feed the assessor"),
     },
     async ({ org_id, vendor_id, services_used, assessment_type, data_role, client_name, additional_context }) => {
       try {

@@ -14,7 +14,7 @@ The 12 tools split into three concerns:
 
 ## `scf_list_risks`
 
-List risk assessments in the organization's risk register. Returns risks with likelihood, impact, treatment status, and linked controls.
+List risk assessments in the organization's risk register. Returns each risk's likelihood, impact, treatment status, and linked controls.
 
 | Parameter  | Type   | Required | Description                                                |
 | ---------- | ------ | -------- | ---------------------------------------------------------- |
@@ -27,7 +27,7 @@ List risk assessments in the organization's risk register. Returns risks with li
 
 ## `scf_get_risk`
 
-Get detailed risk assessment including likelihood/impact scores (inherent and residual), treatment plan, owner, and review date.
+Get one risk assessment in detail: likelihood, inherent and residual impact scores, treatment plan, owner, and review date.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -38,7 +38,7 @@ Get detailed risk assessment including likelihood/impact scores (inherent and re
 
 ## `scf_create_risk`
 
-Create a new risk assessment in the risk register. Requires likelihood and impact scores for the 5x5 matrix.
+Create a new risk assessment in the risk register (write — editor+ role). Likelihood and impact scores populate the 5×5 risk matrix.
 
 | Parameter          | Type   | Required | Description                               |
 | ------------------ | ------ | -------- | ----------------------------------------- |
@@ -55,7 +55,7 @@ Create a new risk assessment in the risk register. Requires likelihood and impac
 
 ## `scf_get_risk_matrix`
 
-Get the 5x5 risk matrix visualization data. Shows risk distribution across likelihood and impact dimensions.
+Get the 5×5 risk matrix data for the organization — risk distribution across likelihood × impact, ready for visualization.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -65,7 +65,7 @@ Get the 5x5 risk matrix visualization data. Shows risk distribution across likel
 
 ## `scf_get_risk_summary`
 
-Aggregated risk summary — total risks by severity, treatment status breakdown, and trend data.
+Get the organization's aggregate risk summary: totals by severity, treatment status breakdown, and trend data.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -75,7 +75,7 @@ Aggregated risk summary — total risks by severity, treatment status breakdown,
 
 ## `scf_list_custom_risks`
 
-List custom (organization-defined) risk definitions. These are risks created by the org alongside the static SCF risk catalog, with auto-generated `R-ORG-N` codes.
+List the organization's custom risk definitions — org-defined risks alongside the static SCF catalog, carrying auto-generated R-ORG-N codes.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -85,7 +85,7 @@ List custom (organization-defined) risk definitions. These are risks created by 
 
 ## `scf_create_custom_risk`
 
-Create a custom organization-defined risk. Auto-generates an `R-ORG-N` code and creates the corresponding risk assessment record.
+Create a custom org-defined risk (write — editor+ role). Auto-generates an R-ORG-N code and creates the matching risk assessment record.
 
 | Parameter        | Type   | Required | Description                                       |
 | ---------------- | ------ | -------- | ------------------------------------------------- |
@@ -99,7 +99,7 @@ Create a custom organization-defined risk. Auto-generates an `R-ORG-N` code and 
 
 ## `scf_update_custom_risk`
 
-Update a custom risk definition's metadata (title, description, category).
+Update a custom risk definition's metadata — title, description, category (write — editor+ role). Only provided fields are applied.
 
 | Parameter        | Type   | Required | Description                        |
 | ---------------- | ------ | -------- | ---------------------------------- |
@@ -114,7 +114,7 @@ Update a custom risk definition's metadata (title, description, category).
 
 ## `scf_delete_custom_risk`
 
-Delete a custom risk definition and its assessment record. Also removes any control mappings.
+Delete a custom risk definition, its assessment record, and every control mapping (destructive write — editor+ role). Irreversible.
 
 | Parameter   | Type   | Required | Description                        |
 | ----------- | ------ | -------- | ---------------------------------- |
@@ -125,7 +125,7 @@ Delete a custom risk definition and its assessment record. Also removes any cont
 
 ## `scf_list_custom_risk_controls`
 
-List controls manually linked to a custom risk. Returns the same shape as controls-for-risk (`catalog_control_ids` + `scoped_controls` with implementation status).
+List controls linked to a custom risk. Returns `catalog_control_ids` plus `scoped_controls` with implementation status — same shape as the built-in controls-for-risk endpoint.
 
 | Parameter   | Type   | Required | Description                        |
 | ----------- | ------ | -------- | ---------------------------------- |
@@ -136,7 +136,7 @@ List controls manually linked to a custom risk. Returns the same shape as contro
 
 ## `scf_add_custom_risk_control`
 
-Link a scoped control to a custom risk. The control must be scoped (selected) for this organization.
+Link a scoped control to a custom risk (write — editor+ role). The control must already be scoped (in-scope) for this organization.
 
 | Parameter   | Type   | Required | Description                             |
 | ----------- | ------ | -------- | --------------------------------------- |
@@ -148,7 +148,7 @@ Link a scoped control to a custom risk. The control must be scoped (selected) fo
 
 ## `scf_remove_custom_risk_control`
 
-Remove a control link from a custom risk.
+Unlink a scoped control from a custom risk (write — editor+ role). The control and risk both remain; only the mapping is removed.
 
 | Parameter   | Type   | Required | Description                               |
 | ----------- | ------ | -------- | ----------------------------------------- |

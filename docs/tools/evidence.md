@@ -16,7 +16,7 @@ The 19 tools in this domain split into five concerns:
 
 ## `scf_list_evidence`
 
-List evidence items tracked for an organization's controls. Evidence demonstrates control implementation for audit readiness. Returns evidence with status, maturity, and linked controls.
+List evidence items tracked against an organization's controls. Returns each item's tracking status, maturity level, and linked controls. Optionally filter by system.
 
 | Parameter   | Type   | Required | Description                                                |
 | ----------- | ------ | -------- | ---------------------------------------------------------- |
@@ -27,7 +27,7 @@ List evidence items tracked for an organization's controls. Evidence demonstrate
 
 ## `scf_create_evidence`
 
-Create an evidence tracking record from the SCF evidence catalog. Uses a catalog evidence ID (e.g., `E-IAM-01`) to start tracking an evidence item.
+Create an evidence tracking record from a catalog evidence ID (write — editor+ role). Starts tracking an evidence item for the organization.
 
 | Parameter              | Type    | Required | Description                                                                   |
 | ---------------------- | ------- | -------- | ----------------------------------------------------------------------------- |
@@ -45,7 +45,7 @@ Create an evidence tracking record from the SCF evidence catalog. Uses a catalog
 
 ## `scf_update_evidence`
 
-Update an evidence item's tracking fields — toggle tracking, link to a system, set collection method, owner, frequency, etc. Identify by catalog evidence ID. All fields except `org_id`/`evidence_id` are optional. Uses POST-upsert semantics (creates the tracking row if it doesn't exist).
+Upsert an evidence item's tracking fields (write — editor+ role). Creates the tracking row if missing. All body fields are optional; only provided fields are applied.
 
 | Parameter              | Type    | Required | Description                                           |
 | ---------------------- | ------- | -------- | ----------------------------------------------------- |
@@ -63,7 +63,7 @@ Update an evidence item's tracking fields — toggle tracking, link to a system,
 
 ## `scf_get_evidence_maturity`
 
-Get evidence maturity summary — average maturity score, automation percentage, distribution by maturity level, and improvement opportunities.
+Get the organization's evidence maturity summary: average maturity score, automation percentage, distribution by maturity level, and improvement opportunities.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -73,7 +73,7 @@ Get evidence maturity summary — average maturity score, automation percentage,
 
 ## `scf_list_evidence_tasks`
 
-List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.
+List evidence collection tasks — the work queue showing what needs to be collected, by whom, and by when. Optionally filter by assignee or status.
 
 | Parameter  | Type   | Required | Description             |
 | ---------- | ------ | -------- | ----------------------- |
@@ -85,7 +85,7 @@ List evidence collection tasks — the work queue for gathering evidence. Shows 
 
 ## `scf_list_evidence_files`
 
-List all files uploaded or ingested for a specific evidence item. Returns file metadata including filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-minute expiry).
+List all files uploaded or ingested for an evidence item. Returns filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-min expiry).
 
 | Parameter     | Type   | Required | Description                       |
 | ------------- | ------ | -------- | --------------------------------- |
@@ -96,7 +96,7 @@ List all files uploaded or ingested for a specific evidence item. Returns file m
 
 ## `scf_get_evidence_file`
 
-Get metadata and a pre-signed download URL for a single evidence file. Download URL expires after 15 minutes.
+Get metadata and a pre-signed download URL (15-min expiry) for a single evidence file. Use to inspect or retrieve a specific uploaded artifact.
 
 | Parameter     | Type   | Required | Description                                                  |
 | ------------- | ------ | -------- | ------------------------------------------------------------ |
@@ -108,7 +108,7 @@ Get metadata and a pre-signed download URL for a single evidence file. Download 
 
 ## `scf_get_evidence_validation`
 
-Get the validation result for a specific evidence file. Returns overall status (`valid`/`warning`/`partial`/`invalid`), completeness score, individual rule findings (`catalog_exists`, `content_type_ok`, `field_coverage`, `freshness`, `s3_object_exists`), validation source, and timestamp.
+Get the validation result for a single evidence file: status (valid/warning/partial/invalid), completeness score, individual rule findings, source, and timestamp.
 
 | Parameter     | Type   | Required | Description             |
 | ------------- | ------ | -------- | ----------------------- |
@@ -120,7 +120,7 @@ Get the validation result for a specific evidence file. Returns overall status (
 
 ## `scf_revalidate_evidence_file`
 
-Re-run the validation engine against a specific evidence file. Checks catalog existence, content type, field coverage, freshness, and storage object existence. Upserts the validation result and returns it. **Requires editor role or higher.**
+Re-run the validation engine against an evidence file (write — editor+ role). Checks catalog existence, content type, field coverage, freshness, storage. Returns the updated result.
 
 | Parameter     | Type   | Required | Description             |
 | ------------- | ------ | -------- | ----------------------- |
@@ -132,7 +132,7 @@ Re-run the validation engine against a specific evidence file. Checks catalog ex
 
 ## `scf_get_evidence_validation_summary`
 
-Get aggregate evidence validation metrics for the organization dashboard. Returns total files validated, counts by status (`valid`, `warning`, `partial`, `invalid`), and overall pass rate.
+Get aggregate evidence validation metrics for the organization dashboard: total files validated, counts by status (valid/warning/partial/invalid), and overall pass rate.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -142,7 +142,7 @@ Get aggregate evidence validation metrics for the organization dashboard. Return
 
 ## `scf_trigger_evidence_assessment`
 
-Trigger an AI-powered assessment of an evidence artifact file. Evaluates relevance, completeness, and quality against mapped SCF controls. Returns a pending assessment record — poll `scf_get_evidence_assessment` until status changes. **Requires editor role or higher.**
+Queue an AI assessment of a single evidence file (write — editor+ role, async). Returns a pending record; poll scf_get_evidence_assessment until status is sufficient/partial/insufficient.
 
 | Parameter           | Type   | Required | Description                           |
 | ------------------- | ------ | -------- | ------------------------------------- |
@@ -155,7 +155,7 @@ Trigger an AI-powered assessment of an evidence artifact file. Evaluates relevan
 
 ## `scf_get_evidence_assessment`
 
-Get the AI assessment result for an evidence file. Returns status (`pending`/`processing`/`sufficient`/`partial`/`insufficient`/`error`), relevance score (0–100), structured findings, summary text, and full audit metadata (model, token counts, cost).
+Get the AI assessment for an evidence file: status, relevance score (0–100), structured findings, summary, and audit metadata (model, tokens, cost). Poll after scf_trigger_evidence_assessment.
 
 | Parameter     | Type   | Required | Description             |
 | ------------- | ------ | -------- | ----------------------- |
@@ -167,7 +167,7 @@ Get the AI assessment result for an evidence file. Returns status (`pending`/`pr
 
 ## `scf_bulk_assess_evidence`
 
-Queue AI assessments for multiple evidence files at once (max 50 per request). Provide at least one of: `evidence_id`, `file_ids`, or `assess_unassessed`. **Requires editor role or higher.**
+Queue AI assessments for multiple evidence files (write — editor+ role, async, max 50). Provide evidence_id, file_ids, and/or assess_unassessed. Returns count queued.
 
 | Parameter           | Type    | Required | Description                                     |
 | ------------------- | ------- | -------- | ----------------------------------------------- |
@@ -180,7 +180,7 @@ Queue AI assessments for multiple evidence files at once (max 50 per request). P
 
 ## `scf_get_evidence_assessment_summary`
 
-Get aggregate AI assessment metrics — total assessed count, counts by status, unassessed count, average relevance score, and total cost in cents.
+Get aggregate AI assessment metrics for the organization dashboard: total assessed, counts by status, unassessed count, average relevance score, and total cost in cents.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -190,7 +190,7 @@ Get aggregate AI assessment metrics — total assessed count, counts by status, 
 
 ## `scf_trigger_window_assessment`
 
-Queue a windowed AI assessment for an evidence item. Scores all files uploaded inside the frequency-derived window as a portfolio against the union of required artifact types across mapped SCF controls. Returns 202 — poll with `scf_list_window_assessments` or `scf_get_window_assessment`. **Requires editor role or higher.** Returns 422 if the evidence has no tracking row or no frequency set (set one via `scf_update_evidence`).
+Queue a windowed AI assessment that scores every file in the evidence item's frequency window as one portfolio (write — editor+ role, async). Returns 422 if tracking or frequency is missing.
 
 | Parameter           | Type   | Required | Description                                           |
 | ------------------- | ------ | -------- | ----------------------------------------------------- |
@@ -202,7 +202,7 @@ Queue a windowed AI assessment for an evidence item. Scores all files uploaded i
 
 ## `scf_list_window_assessments`
 
-List the most recent windowed AI assessments for a specific evidence ID (newest first). Each entry includes window boundaries, frequency used, file IDs in the window, source/artifact coverage, status, relevance score, findings, and cost.
+List recent windowed AI assessments for an evidence item (newest first). Each entry includes window bounds, frequency, file IDs, coverage, status, relevance score, findings, and cost.
 
 | Parameter     | Type   | Required | Description                   |
 | ------------- | ------ | -------- | ----------------------------- |
@@ -215,7 +215,7 @@ List the most recent windowed AI assessments for a specific evidence ID (newest 
 
 ## `scf_get_window_assessment`
 
-Get a single windowed AI assessment by its assessment ID. Returns full detail: window boundaries, frequency, file IDs, coverage metrics, status, relevance score, findings, summary, hashes, token counts, cost, and timing.
+Get one windowed AI assessment by ID. Returns full detail: window bounds, frequency, file IDs, coverage, expected artifact types, status, relevance score, findings, summary, hashes, tokens, cost.
 
 | Parameter       | Type   | Required | Description                                                            |
 | --------------- | ------ | -------- | ---------------------------------------------------------------------- |
@@ -226,7 +226,7 @@ Get a single windowed AI assessment by its assessment ID. Returns full detail: w
 
 ## `scf_bulk_assess_windows`
 
-Queue windowed AI assessments for multiple evidence IDs in one call (max 25 per request). Evidence items without a tracking row or frequency are skipped and reported under `skipped_detail`. **Requires editor role or higher.**
+Queue windowed AI assessments for up to 25 evidence IDs (write — editor+ role, async). Items without tracking or a frequency set are reported under `skipped_detail` in the response.
 
 | Parameter      | Type   | Required | Description                                         |
 | -------------- | ------ | -------- | --------------------------------------------------- |
@@ -237,7 +237,7 @@ Queue windowed AI assessments for multiple evidence IDs in one call (max 25 per 
 
 ## `scf_get_window_assessment_summary`
 
-Aggregate windowed-assessment metrics — total windows assessed, counts by status (`sufficient`/`partial`/`insufficient`/`insufficient_sample`/`pending`/`error`), average relevance score, and total cost in cents. `insufficient_sample` indicates the content was fine but the window had too few files to cover the controls' required artifact types.
+Get aggregate windowed-assessment metrics for the organization dashboard: total windows assessed, counts by status (including `insufficient_sample`), average relevance score, and total cost in cents.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |

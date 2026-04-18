@@ -6,7 +6,7 @@ import { errorResult } from "../lib/errors.js";
 export function registerOrganizationTools(server: McpServer) {
   server.tool(
     "scf_get_current_user",
-    "Get the current authenticated user's profile, including name, email, organizations, and role.",
+    "Get the authenticated caller's profile: name, email, organization memberships, and per-org role.",
     {},
     async () => {
       try {
@@ -21,7 +21,7 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_list_organizations",
-    "List organizations the current user has access to. Returns org ID, name, tier, and member count.",
+    "List every organization the caller has access to. Returns org UUID, name, subscription tier, and member count. Use this first to obtain the org_id other tools need.",
     {},
     async () => {
       try {
@@ -36,9 +36,9 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_organization",
-    "Get detailed organization information including subscription tier, member count, usage limits, and settings.",
+    "Get one organization's detail: subscription tier, member count, usage limits, and settings.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -53,9 +53,9 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_list_members",
-    "List members of an organization with their roles (admin, editor, viewer).",
+    "List members of one organization with their role (admin, editor, or viewer).",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -70,7 +70,7 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_work_queue",
-    "Get the authenticated user's work queue — a prioritized list of pending tasks, assignments, and action items across all their organizations.",
+    "Get the caller's work queue: prioritized pending tasks, assignments, and action items across every organization they belong to.",
     {},
     async () => {
       try {
@@ -85,11 +85,11 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_audit_log",
-    "Get the audit trail for an organization. Shows field-level changes to controls, evidence, and other entities with actor, timestamp, and before/after values. Pagination uses limit/offset.",
+    "Get one organization's audit trail: field-level changes to controls, evidence, and related entities, with actor, timestamp, and before/after values.",
     {
-      org_id: z.string().describe("Organization ID (UUID)"),
-      limit: z.number().min(1).max(100).default(50).describe("Number of results to return (max 100)"),
-      offset: z.number().min(0).default(0).describe("Number of results to skip for pagination"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      limit: z.number().int().min(1).max(100).default(50).describe("Page size (1–100, default 50)"),
+      offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
     async ({ org_id, limit, offset }) => {
       try {
@@ -104,10 +104,10 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_notifications",
-    "Get notifications for the current user — new assignments, comments, status changes, and system alerts.",
+    "Get the caller's notifications: new assignments, comments, status changes, and system alerts.",
     {
-      unread_only: z.boolean().default(false).describe("Only return unread notifications"),
-      limit: z.number().min(1).max(100).default(25).describe("Number of notifications to return (max 100)"),
+      unread_only: z.boolean().default(false).describe("Return only unread notifications (default false)"),
+      limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
     },
     async ({ unread_only, limit }) => {
       try {

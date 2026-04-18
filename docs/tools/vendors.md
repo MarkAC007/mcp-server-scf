@@ -8,7 +8,7 @@ Source: [`src/tools/vendors.ts`](../../src/tools/vendors.ts).
 
 ## `scf_list_vendors`
 
-List third-party vendors in the organization's TPRM registry. Filter by status, criticality, or category.
+List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Optionally filter by status or criticality. Paginated.
 
 | Parameter     | Type   | Required | Description                                      |
 | ------------- | ------ | -------- | ------------------------------------------------ |
@@ -22,7 +22,7 @@ List third-party vendors in the organization's TPRM registry. Filter by status, 
 
 ## `scf_get_vendor`
 
-Get detailed vendor information including certifications, assessments, risk score, and research results.
+Get one vendor's detail: certifications, assessments, computed risk score, and latest research results.
 
 | Parameter   | Type   | Required | Description            |
 | ----------- | ------ | -------- | ---------------------- |
@@ -33,7 +33,7 @@ Get detailed vendor information including certifications, assessments, risk scor
 
 ## `scf_create_vendor`
 
-Add a new vendor to the TPRM registry. Triggers automatic risk scoring based on criticality and data handling.
+Create a vendor in the TPRM registry (write — editor+ role). Platform auto-scores risk based on criticality and data handling.
 
 | Parameter       | Type   | Required | Description                                                |
 | --------------- | ------ | -------- | ---------------------------------------------------------- |
@@ -50,7 +50,7 @@ Add a new vendor to the TPRM registry. Triggers automatic risk scoring based on 
 
 ## `scf_update_vendor`
 
-Update an existing vendor record. All fields are optional — only provided fields are updated.
+Update an existing vendor record (write — editor+ role). Only provided fields are applied.
 
 | Parameter       | Type   | Required | Description                                      |
 | --------------- | ------ | -------- | ------------------------------------------------ |
@@ -68,7 +68,7 @@ Update an existing vendor record. All fields are optional — only provided fiel
 
 ## `scf_trigger_vendor_research`
 
-Trigger AI-powered security research for a vendor. Checks HIBP (breach databases), NVD (vulnerability databases), and public security posture. Returns a task ID for status polling.
+Queue AI security research for a vendor (write — editor+ role, async). Checks HIBP breach data, NVD vulnerabilities, and public posture. Returns a task ID; poll scf_get_vendor_research.
 
 | Parameter         | Type   | Required | Description                                              |
 | ----------------- | ------ | -------- | -------------------------------------------------------- |
@@ -80,7 +80,7 @@ Trigger AI-powered security research for a vendor. Checks HIBP (breach databases
 
 ## `scf_get_vendor_research`
 
-Get the latest AI-powered research results for a vendor — breach history, known vulnerabilities, and security posture analysis.
+Get the latest vendor research result: breach history, known vulnerabilities, and security posture analysis. Poll this after scf_trigger_vendor_research.
 
 | Parameter   | Type   | Required | Description            |
 | ----------- | ------ | -------- | ---------------------- |
@@ -91,7 +91,7 @@ Get the latest AI-powered research results for a vendor — breach history, know
 
 ## `scf_trigger_dpsia`
 
-Trigger a Data Protection Security Impact Assessment (DPSIA) for a vendor. Evaluates security posture against the CIA triad and certification requirements. If `services_used` is omitted, it's auto-derived from the vendor description.
+Queue a Data Protection Security Impact Assessment (DPSIA) for a vendor (write — editor+ role, async). Scores posture against CIA triad and certification requirements.
 
 | Parameter            | Type   | Required | Description                                                           |
 | -------------------- | ------ | -------- | --------------------------------------------------------------------- |

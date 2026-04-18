@@ -16,7 +16,7 @@ The 6 tools split into three concerns:
 
 ## `scf_create_webhook`
 
-Create a new webhook endpoint for evidence inbox ingestion. External systems push evidence via HMAC-authenticated POST requests. Returns the plaintext signing secret once — it cannot be retrieved later.
+Create a webhook endpoint for evidence-inbox ingestion (write — admin role). Returns the plaintext HMAC signing secret exactly once — store it immediately; it cannot be retrieved later.
 
 | Parameter               | Type   | Required | Description                                                                                         |
 | ----------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------- |
@@ -30,7 +30,7 @@ Create a new webhook endpoint for evidence inbox ingestion. External systems pus
 
 ## `scf_list_webhooks`
 
-List all webhook endpoints for an organization, ordered by creation date (newest first). Shows endpoint name, status, delivery count, and secret prefix.
+List the organization's webhook endpoints (newest first). Returns name, status, delivery count, and secret prefix.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -40,7 +40,7 @@ List all webhook endpoints for an organization, ordered by creation date (newest
 
 ## `scf_get_webhook`
 
-Get detailed information about a single webhook endpoint including delivery stats, allowed evidence IDs, and rate limit configuration.
+Get one webhook endpoint's detail: delivery stats, allowed evidence IDs, and rate-limit configuration.
 
 | Parameter     | Type   | Required | Description                                               |
 | ------------- | ------ | -------- | --------------------------------------------------------- |
@@ -51,7 +51,7 @@ Get detailed information about a single webhook endpoint including delivery stat
 
 ## `scf_delete_webhook`
 
-Revoke a webhook endpoint (soft-delete). Sets the endpoint to inactive — future deliveries will be rejected with 403. The endpoint record is preserved for audit trail.
+Revoke a webhook endpoint — soft-delete that marks it inactive (destructive write — admin role). Future deliveries return 403; the record remains for audit.
 
 | Parameter     | Type   | Required | Description                |
 | ------------- | ------ | -------- | -------------------------- |
@@ -62,7 +62,7 @@ Revoke a webhook endpoint (soft-delete). Sets the endpoint to inactive — futur
 
 ## `scf_rotate_webhook_secret`
 
-Generate a new HMAC signing secret for a webhook endpoint. The old secret is immediately invalidated. Returns the new plaintext secret once — store it securely.
+Rotate the HMAC signing secret for a webhook endpoint (write — admin role). The old secret is invalidated immediately. Returns the new plaintext secret exactly once.
 
 | Parameter     | Type   | Required | Description                |
 | ------------- | ------ | -------- | -------------------------- |
@@ -73,7 +73,7 @@ Generate a new HMAC signing secret for a webhook endpoint. The old secret is imm
 
 ## `scf_list_webhook_deliveries`
 
-List delivery logs for a webhook endpoint (newest first). Each entry shows signature validation result, processing status, evidence ID, and timestamps. Useful for debugging integration issues.
+List delivery logs for a webhook endpoint (newest first). Each entry shows signature validation result, processing status, evidence ID, and timestamps.
 
 | Parameter     | Type   | Required | Description                                             |
 | ------------- | ------ | -------- | ------------------------------------------------------- |

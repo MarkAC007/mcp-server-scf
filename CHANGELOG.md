@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Tool descriptions rewritten for agent tool-selection quality (all 72 tools).** Each description now follows Anthropic's tool-description guidance: front-loaded action verb, side effects and role requirements called out in the first sentence where relevant (`write — editor+ role`, `destructive write`, `async`, `admin role`), rate-limit notes on ingestion endpoints, and a hard ≤200 char ceiling (longest is 199). Parameter descriptions standardised — UUIDs get `.uuid()` + "obtain from scf_*" cross-references; enums spell out every value; ISO-8601 fields note the `YYYY-MM-DD` shape. `docs/tools/*.md` regenerated from the new source, `tests/registration.test.ts` gains a `<=200 char` length guard. Closes #74.
+
+## [1.0.0] - 2026-04-18
+
 ### BREAKING
 - **All 72 tools renamed with an `scf_` prefix.** `list_controls` → `scf_list_controls`, `create_vendor` → `scf_create_vendor`, and so on for every tool in every domain. Tool parameters, return shapes, handlers, and HTTP endpoints are unchanged. No deprecation aliases are shipped — old names are removed outright in this release. See [`docs/migration-scf-prefix.md`](docs/migration-scf-prefix.md) for the full before/after mapping and an explanation of the cutover strategy. Closes #62.
 

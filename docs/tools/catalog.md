@@ -8,7 +8,7 @@ Source: [`src/tools/catalog.ts`](../../src/tools/catalog.ts).
 
 ## `scf_list_controls`
 
-List SCF security controls from the reference catalog. Returns paginated controls with SCF ID, title, description, and mapped frameworks. Use domain or search filters to narrow results.
+List SCF security controls from the reference catalog. Returns paginated controls with SCF ID, title, description, and mapped frameworks. Filter by domain, framework, or free-text search.
 
 | Parameter   | Type   | Required | Description                                                        |
 | ----------- | ------ | -------- | ------------------------------------------------------------------ |
@@ -22,7 +22,7 @@ List SCF security controls from the reference catalog. Returns paginated control
 
 ## `scf_get_control`
 
-Get detailed information about a specific SCF control by its ID. Returns the control description, mapped frameworks, assessment objectives, and linked evidence items from the reference catalog.
+Get a single SCF control by ID. Returns description, mapped frameworks, assessment objectives, and linked evidence items from the reference catalog.
 
 | Parameter | Type   | Required | Description                                           |
 | --------- | ------ | -------- | ----------------------------------------------------- |
@@ -32,7 +32,7 @@ Get detailed information about a specific SCF control by its ID. Returns the con
 
 ## `scf_list_frameworks`
 
-List all compliance frameworks mapped in the SCF catalog. Returns framework identifiers and names. Includes NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR, and 350+ other frameworks.
+List every compliance framework mapped in the SCF catalog (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR, and 350+ more). Returns framework identifiers and display names.
 
 _No parameters._
 
@@ -40,7 +40,7 @@ _No parameters._
 
 ## `scf_list_domains`
 
-List all compliance domains in the SCF taxonomy. Domains group related security controls (e.g., `GOV` = Governance, `AST` = Asset Management, `IAC` = Identity & Access Control).
+List every compliance domain in the SCF taxonomy. Domains group related controls (e.g., GOV = Governance, AST = Asset Management, IAC = Identity & Access Control).
 
 _No parameters._
 
@@ -48,7 +48,7 @@ _No parameters._
 
 ## `scf_list_evidence_catalog`
 
-List evidence items from the SCF reference catalog — the 272 standard evidence types that can be collected to demonstrate control implementation.
+List evidence items from the SCF reference catalog — the 272 standard evidence types that can be collected to demonstrate control implementation. Supports free-text search and pagination.
 
 | Parameter | Type   | Required | Description                                                  |
 | --------- | ------ | -------- | ------------------------------------------------------------ |
@@ -60,7 +60,7 @@ List evidence items from the SCF reference catalog — the 272 standard evidence
 
 ## `scf_list_assessment_objectives`
 
-List assessment objectives from the SCF reference catalog — the 5,736 specific test criteria used to evaluate control implementation. Filter by SCF control ID to get objectives for a specific control.
+List SCF assessment objectives — the 5,736 test criteria used to evaluate control implementation. Optionally filter by control ID; supports free-text search and pagination.
 
 | Parameter    | Type   | Required | Description                                          |
 | ------------ | ------ | -------- | ---------------------------------------------------- |

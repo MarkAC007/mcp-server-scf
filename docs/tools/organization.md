@@ -8,7 +8,7 @@ Source: [`src/tools/organization.ts`](../../src/tools/organization.ts).
 
 ## `scf_get_current_user`
 
-Get the current authenticated user's profile, including name, email, organizations, and role.
+Get the authenticated caller's profile: name, email, organization memberships, and per-org role.
 
 _No parameters._
 
@@ -16,7 +16,7 @@ _No parameters._
 
 ## `scf_list_organizations`
 
-List organizations the current user has access to. Returns org ID, name, tier, and member count.
+List every organization the caller has access to. Returns org UUID, name, subscription tier, and member count. Use this first to obtain the org_id other tools need.
 
 _No parameters._
 
@@ -24,7 +24,7 @@ _No parameters._
 
 ## `scf_get_organization`
 
-Get detailed organization information including subscription tier, member count, usage limits, and settings.
+Get one organization's detail: subscription tier, member count, usage limits, and settings.
 
 | Parameter | Type   | Required | Description                                                |
 | --------- | ------ | -------- | ---------------------------------------------------------- |
@@ -34,7 +34,7 @@ Get detailed organization information including subscription tier, member count,
 
 ## `scf_list_members`
 
-List members of an organization with their roles (`admin`, `editor`, `viewer`).
+List members of one organization with their role (admin, editor, or viewer).
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -44,7 +44,7 @@ List members of an organization with their roles (`admin`, `editor`, `viewer`).
 
 ## `scf_get_work_queue`
 
-Get the authenticated user's work queue — a prioritized list of pending tasks, assignments, and action items across all their organizations.
+Get the caller's work queue: prioritized pending tasks, assignments, and action items across every organization they belong to.
 
 _No parameters._
 
@@ -52,7 +52,7 @@ _No parameters._
 
 ## `scf_get_audit_log`
 
-Get the audit trail for an organization. Field-level changes to controls, evidence, and other entities with actor, timestamp, and before/after values.
+Get one organization's audit trail: field-level changes to controls, evidence, and related entities, with actor, timestamp, and before/after values.
 
 | Parameter | Type   | Required | Description                                |
 | --------- | ------ | -------- | ------------------------------------------ |
@@ -64,7 +64,7 @@ Get the audit trail for an organization. Field-level changes to controls, eviden
 
 ## `scf_get_notifications`
 
-Get notifications for the current user — new assignments, comments, status changes, and system alerts.
+Get the caller's notifications: new assignments, comments, status changes, and system alerts.
 
 | Parameter     | Type    | Required | Description                                        |
 | ------------- | ------- | -------- | -------------------------------------------------- |
