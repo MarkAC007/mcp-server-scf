@@ -10,6 +10,8 @@
 
 [![CI](https://github.com/MarkAC007/mcp-server-scf/actions/workflows/ci.yml/badge.svg)](https://github.com/MarkAC007/mcp-server-scf/actions/workflows/ci.yml)
 [![Security](https://github.com/MarkAC007/mcp-server-scf/actions/workflows/security.yml/badge.svg)](https://github.com/MarkAC007/mcp-server-scf/actions/workflows/security.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/MarkAC007/mcp-server-scf/badge)](https://scorecard.dev/viewer/?uri=github.com/MarkAC007/mcp-server-scf)
+[![Socket.dev](https://socket.dev/api/badge/npm/package/mcp-server-scf)](https://socket.dev/npm/package/mcp-server-scf)
 
 <!-- Package & License -->
 
@@ -26,7 +28,7 @@
 <!-- Tech Stack -->
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)
-![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen?logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen?logo=node.js&logoColor=white)
 
 **Security compliance controls, frameworks, and risk management for AI agents.**
 

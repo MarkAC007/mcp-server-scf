@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Added `publishConfig.provenance: true`** to `package.json` so provenance is enforced regardless of how publish is invoked (belt-and-braces alongside `auto-release.yml`'s `--provenance` flag).
+- **Guarded `prepare: husky` script** (`husky || true`) so it no longer hard-fails consumer installs or `npm pack` when husky is absent. Removes the Socket.dev "install script risk" signal.
+- **Narrowed `engines.node` to `>=20.0.0`** — Node 18 reached end-of-life in April 2025. CI matrix dropped from [18, 20, 22] to [20, 22].
+- **All GitHub Actions pinned to full commit SHAs** with `# vX.Y.Z` trailing comments (for Dependabot) in `ci.yml`, `security.yml`, `auto-release.yml`, `claude.yml`, `scorecard.yml`. Covers `actions/checkout`, `actions/setup-node`, `gitleaks/gitleaks-action`, `github/codeql-action`, `softprops/action-gh-release`, `anthropics/claude-code-action`, `ossf/scorecard-action`, `actions/upload-artifact`.
+- **CI `npm audit` step is now a hard gate** — removed `continue-on-error: true`. Future high-severity transitive vulns in the runtime dependency tree block merge. (Dev-only moderate/low vulns still pass the gate.)
+- **Added `npm audit signatures` job** in `security.yml` — verifies every installed dependency has a valid registry signature on every push / PR / weekly cron.
+- **Added OpenSSF Scorecard workflow** (`.github/workflows/scorecard.yml`) — weekly + push analysis, publishes to scorecard.dev, uploads SARIF to GitHub code-scanning.
+- **Bumped `@modelcontextprotocol/sdk` to `^1.29.0` in `package.json`** (was `^1.27.1`, though the lockfile had already hoisted to 1.29.0 via #45 — this aligns the declared range). Resolves transitive advisories in `hono`, `@hono/node-server`, `express-rate-limit`: `npm audit --audit-level=high` now exits 0.
+- **README Security badges added** — OpenSSF Scorecard + Socket.dev; Node badge bumped to `>=20`.
+- **SECURITY.md supported-versions table** updated from `0.1.x` to `1.x`.
+
 ### Changed
 - **Tool descriptions rewritten for agent tool-selection quality (all 72 tools).** Each description now follows Anthropic's tool-description guidance: front-loaded action verb, side effects and role requirements called out in the first sentence where relevant (`write — editor+ role`, `destructive write`, `async`, `admin role`), rate-limit notes on ingestion endpoints, and a hard ≤200 char ceiling (longest is 199). Parameter descriptions standardised — UUIDs get `.uuid()` + "obtain from scf_*" cross-references; enums spell out every value; ISO-8601 fields note the `YYYY-MM-DD` shape. `docs/tools/*.md` regenerated from the new source, `tests/registration.test.ts` gains a `<=200 char` length guard. Closes #74.
 
