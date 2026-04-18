@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a new capability for mcp-server-scf (non-tool enhancements — for new MCP tools, use the "New MCP tool request" template)
+title: "[feat] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for server-level enhancements: transport options, auth flows, logging, packaging, CLI ergonomics, etc.
+
+        For a request to add a **new MCP tool** that wraps a Platform API endpoint, please use the **"New MCP tool request"** template instead.
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What problem are you trying to solve? Who is the end user? Concrete workflows beat abstract descriptions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-api
+    attributes:
+      label: Proposed API or behaviour
+      description: |
+        What would the interface look like? A config key, a new environment variable, a CLI flag, a change to an existing tool's schema — be as specific as you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing tools, workarounds, or upstream features you evaluated and why they fell short.
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, links, related issues, prior art from other MCP servers.
+    validations:
+      required: false

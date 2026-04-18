@@ -1,0 +1,76 @@
+name: New MCP tool request
+description: Request a new MCP tool that wraps an SCF Controls Platform API endpoint
+title: "[tool] Add `"
+labels: ["enhancement", "type/new-tool", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to propose a new tool exposing an SCF Platform API capability through MCP. The more of the fields below you can fill in, the faster it can be scoped and shipped.
+
+  - type: input
+    id: tool-name
+    attributes:
+      label: Proposed tool name
+      description: "`snake_case`, matches the platform verb/resource (e.g. `list_foo`, `get_foo`, `create_foo`, `trigger_foo`)."
+      placeholder: "list_new_thing"
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: What should the tool do?
+      description: One-paragraph description of the capability from the AI assistant's point of view. Include the natural-language prompt that would trigger it.
+    validations:
+      required: true
+
+  - type: input
+    id: platform-endpoint
+    attributes:
+      label: Platform API endpoint
+      description: The REST endpoint this tool should wrap, if known.
+      placeholder: "GET /api/v1/orgs/:orgId/new_thing"
+    validations:
+      required: false
+
+  - type: textarea
+    id: inputs
+    attributes:
+      label: Input parameters
+      description: |
+        List each parameter with type, required/optional, and a one-line description. This maps directly to the Zod schema.
+      placeholder: |
+        - org_id (string, required) — Organization ID (UUID)
+        - status (string, optional) — Filter by status
+        - limit (number, optional, default 25, max 100) — Page size
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: outputs
+    attributes:
+      label: Expected output
+      description: Shape of the data returned to the model. Paste a representative API response if you have one (redact secrets).
+    validations:
+      required: true
+
+  - type: dropdown
+    id: read-write
+    attributes:
+      label: Read or write?
+      options:
+        - Read-only
+        - Write (creates or mutates platform state)
+        - Trigger (long-running job)
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why is this needed?
+      description: What workflow does this unlock that the existing tools cannot?
+    validations:
+      required: true
