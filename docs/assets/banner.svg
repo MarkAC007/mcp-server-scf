@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A1930"/>
+      <stop offset="60%" stop-color="#0A1930"/>
+      <stop offset="100%" stop-color="#061021"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4FC3F7"/>
+      <stop offset="100%" stop-color="#1E88E5"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#4FC3F7" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#4FC3F7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- Ambient glow behind logo -->
+  <ellipse cx="230" cy="320" rx="260" ry="260" fill="url(#glow)"/>
+
+  <!-- Subtle horizontal rules -->
+  <g opacity="0.04" stroke="#4FC3F7" stroke-width="1">
+    <line x1="0" y1="160" x2="1280" y2="160"/>
+    <line x1="0" y1="480" x2="1280" y2="480"/>
+  </g>
+
+  <!-- ComplianceGenie logo -->
+  <image x="80" y="170" width="300" height="300"
+         xlink:href="logo.png"/>
+
+  <!-- Command tag -->
+  <text x="440" y="220" font-family="SF Mono, Menlo, Consolas, monospace"
+        font-size="20" fill="#4FC3F7" letter-spacing="3">$ npx -y mcp-server-scf</text>
+
+  <!-- Main title -->
+  <text x="440" y="305" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="68" font-weight="700" fill="#FFFFFF" letter-spacing="-1.5">SCF Controls Platform</text>
+
+  <!-- Subtitle -->
+  <text x="440" y="360" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="24" fill="#B0BEC5">MCP server — security compliance, frameworks,</text>
+  <text x="440" y="392" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="24" fill="#B0BEC5">and risk management for AI agents.</text>
+
+  <!-- Accent rule -->
+  <rect x="440" y="425" width="140" height="3" fill="url(#accent)"/>
+
+  <!-- Stats -->
+  <text x="440" y="475" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="19" fill="#90A4AE">72 tools  ·  1,451 controls  ·  354+ frameworks</text>
+
+  <!-- Maintained by -->
+  <text x="440" y="555" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="13" fill="#546E7A" letter-spacing="3.5">MAINTAINED BY</text>
+  <text x="440" y="587" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="22" font-weight="600" fill="#ECEFF1">ComplianceGenie</text>
+</svg>

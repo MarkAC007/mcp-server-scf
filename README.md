@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://scfcontrolsplatform.com/">
+    <img src="https://raw.githubusercontent.com/MarkAC007/mcp-server-scf/main/docs/assets/banner.png" alt="SCF Controls Platform — MCP server for security compliance, frameworks, and risk management for AI agents. Maintained by ComplianceGenie." width="100%">
+  </a>
+</p>
+
 # mcp-server-scf
 
 <!-- Build & Security -->
