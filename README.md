@@ -88,7 +88,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
 4. Claude Desktop restarts the server and all 72 tools are available.
 
-To uninstall or swap regions later: **Settings → Extensions → SCF Controls Platform → Configure**. The `Platform URL` field lets you switch between `https://uk.scfcontrolsplatform.app` (default, UK data residency) and `https://scfcontrolsplatform.com` (US).
+To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 
 ### 3. Manual config
 
