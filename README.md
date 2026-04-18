@@ -69,15 +69,19 @@ Full walkthrough (rotation, region selection, scopes): [**docs/authentication.md
 
 ### 2. Install — one-click
 
-Pick the button for your client. The deeplink opens the relevant IDE/app with a pre-filled install prompt — just paste your key when asked.
+Pick the route for your client.
 
-[![Install in Claude Desktop](https://img.shields.io/badge/Install-Claude_Desktop-D97757?logo=anthropic&logoColor=white)](claude://mcp/install?name=scf&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-server-scf%22%5D%2C%22env%22%3A%7B%22SCF_API_KEY%22%3A%22scf_your_api_key_here%22%2C%22SCF_API_URL%22%3A%22https%3A%2F%2Fuk.scfcontrolsplatform.app%22%7D%7D)
+**Claude Desktop** — the one-click path is the signed **[.mcpb Desktop Extension](#claude-desktop-extension-mcpb)** below. Claude Desktop does not register a custom URL scheme, so there is no clickable deeplink; instead you drag the `.mcpb` onto **Settings → Extensions** and paste your API key once. See [anthropics/claude-code#26952](https://github.com/anthropics/claude-code/issues/26952) for the upstream tracking issue.
+
+**Cursor** — click the badge below. Cursor registers the `cursor://` scheme, so the deeplink opens the IDE with the server config pre-filled:
+
 [![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cHM6Ly91ay5zY2Zjb250cm9sc3BsYXRmb3JtLmFwcCJ9fQ%3D%3D)
+
+**Smithery** — managed hosted deployment:
+
 [![Try on Smithery](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
 
 Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Docker)? See **[3. Manual config](#3-manual-config)** below.
-
-Claude Desktop user who'd rather skip JSON entirely? See **[Claude Desktop Extension (.mcpb)](#claude-desktop-extension-mcpb)** below.
 
 ### Claude Desktop Extension (.mcpb)
 
