@@ -77,7 +77,7 @@ body:
     attributes:
       label: SCF_API_URL
       description: Which platform endpoint are you hitting? (Do NOT paste the API key.)
-      placeholder: "https://eu.scfcontrolsplatform.app"
+      placeholder: "https://uk.scfcontrolsplatform.app"
     validations:
       required: true
 

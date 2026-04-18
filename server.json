@@ -24,10 +24,10 @@
         },
         {
           "name": "SCF_API_URL",
-          "description": "Platform API endpoint. Defaults to the EU region; set to https://scfcontrolsplatform.com for US.",
+          "description": "Platform API endpoint. Defaults to the UK region; set to https://scfcontrolsplatform.com for US.",
           "isRequired": false,
           "format": "string",
-          "default": "https://eu.scfcontrolsplatform.app"
+          "default": "https://uk.scfcontrolsplatform.app"
         }
       ]
     }

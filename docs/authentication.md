@@ -7,7 +7,7 @@
 ## Getting an API key
 
 1. Sign up or sign in at your region's platform URL:
-   - **EU (default):** [eu.scfcontrolsplatform.app](https://eu.scfcontrolsplatform.app)
+   - **UK (default):** [uk.scfcontrolsplatform.app](https://uk.scfcontrolsplatform.app)
    - **US:** [scfcontrolsplatform.com](https://scfcontrolsplatform.com)
 2. Open **Settings → API Keys**.
 3. Click **Generate New Key**.
@@ -39,7 +39,7 @@ The server reads the environment only when the first tool is called ([`src/lib/a
       "args": ["-y", "mcp-server-scf"],
       "env": {
         "SCF_API_KEY": "scf_your_api_key_here",
-        "SCF_API_URL": "https://eu.scfcontrolsplatform.app"
+        "SCF_API_URL": "https://uk.scfcontrolsplatform.app"
       }
     }
   }
@@ -56,7 +56,7 @@ Config paths:
 ```bash
 claude mcp add scf -- npx -y mcp-server-scf
 export SCF_API_KEY="scf_your_api_key_here"
-export SCF_API_URL="https://eu.scfcontrolsplatform.app"
+export SCF_API_URL="https://uk.scfcontrolsplatform.app"
 ```
 
 Claude Code inherits your shell environment, so `export` in your shell profile works here. Claude Desktop does not.
@@ -71,7 +71,7 @@ Claude Code inherits your shell environment, so `export` in your shell profile w
       "args": ["-y", "mcp-server-scf"],
       "env": {
         "SCF_API_KEY": "scf_your_api_key_here",
-        "SCF_API_URL": "https://eu.scfcontrolsplatform.app"
+        "SCF_API_URL": "https://uk.scfcontrolsplatform.app"
       }
     }
   }
@@ -106,7 +106,7 @@ The `-e SCF_API_KEY` flag (without a value) passes the variable through from the
 
 | Region | `SCF_API_URL`                                  | Platform console             |
 | ------ | ---------------------------------------------- | ---------------------------- |
-| EU     | `https://eu.scfcontrolsplatform.app` (default) | `eu.scfcontrolsplatform.app` |
+| UK     | `https://uk.scfcontrolsplatform.app` (default) | `uk.scfcontrolsplatform.app` |
 | US     | `https://scfcontrolsplatform.com`              | `scfcontrolsplatform.com`    |
 
 An API key issued in one region **will not work** against the other. Using the wrong URL produces `401 Authentication failed` — the most common cause of a working account reporting auth errors.

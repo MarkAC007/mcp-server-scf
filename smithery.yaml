@@ -20,10 +20,10 @@ startCommand:
       SCF_API_URL:
         type: string
         title: Platform URL
-        default: "https://eu.scfcontrolsplatform.app"
+        default: "https://uk.scfcontrolsplatform.app"
         description: "SCF Controls Platform API endpoint. Use https://scfcontrolsplatform.com for US region."
         enum:
-          - "https://eu.scfcontrolsplatform.app"
+          - "https://uk.scfcontrolsplatform.app"
           - "https://scfcontrolsplatform.com"
     required:
       - SCF_API_KEY
@@ -33,6 +33,6 @@ startCommand:
       args: ["build/index.js"],
       env: {
         SCF_API_KEY: config.SCF_API_KEY,
-        SCF_API_URL: config.SCF_API_URL || "https://eu.scfcontrolsplatform.app"
+        SCF_API_URL: config.SCF_API_URL || "https://uk.scfcontrolsplatform.app"
       }
     })

@@ -104,12 +104,12 @@ let _client: ScfApiClient | null = null;
 export function getClient(): ScfApiClient {
   if (!_client) {
     const apiKey = process.env.SCF_API_KEY;
-    const baseUrl = process.env.SCF_API_URL || "https://eu.scfcontrolsplatform.app";
+    const baseUrl = process.env.SCF_API_URL || "https://uk.scfcontrolsplatform.app";
 
     if (!apiKey) {
       throw new Error(
         "SCF_API_KEY environment variable is required. " +
-          "Generate one at https://eu.scfcontrolsplatform.app/settings/api-keys",
+          "Generate one at https://uk.scfcontrolsplatform.app/settings/api-keys",
       );
     }
 
