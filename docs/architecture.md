@@ -15,7 +15,7 @@ MCP client (Claude Desktop / Code / Cursor)
 mcp-server-scf  (Node.js ≥18, ESM, single long-lived process)
       │  (HTTPS, Bearer token)
       ▼
-SCF Controls Platform API  (eu.scfcontrolsplatform.app by default)
+SCF Controls Platform API  (uk.scfcontrolsplatform.app by default)
 ```
 
 Because stdio is the transport, **anything written to `stdout` corrupts the protocol frame**. All logging in this server goes to `stderr` via `console.error` — including the startup banner ([`src/index.ts:44`](../src/index.ts:44)). When adding new tools, never introduce `console.log` or raw `process.stdout.write` calls.
@@ -93,7 +93,7 @@ Configuration is environment-only — there is no config file. See [`docs/authen
 | Variable      | Required | Default                              | Purpose                                                  |
 | ------------- | -------- | ------------------------------------ | -------------------------------------------------------- |
 | `SCF_API_KEY` | Yes      | —                                    | Bearer token for every request (format: `scf_…`)         |
-| `SCF_API_URL` | No       | `https://eu.scfcontrolsplatform.app` | Platform endpoint; switch to the US endpoint if required |
+| `SCF_API_URL` | No       | `https://uk.scfcontrolsplatform.app` | Platform endpoint; switch to the US endpoint if required |
 
 ---
 

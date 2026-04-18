@@ -61,7 +61,7 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 ### 1. Get an API key
 
-1. Sign up at [scfcontrolsplatform.com](https://scfcontrolsplatform.com/) (or [eu.scfcontrolsplatform.app](https://eu.scfcontrolsplatform.app) for EU data residency).
+1. Sign up at [scfcontrolsplatform.com](https://scfcontrolsplatform.com/) (or [uk.scfcontrolsplatform.app](https://uk.scfcontrolsplatform.app) for UK data residency).
 2. **Settings → API Keys → Generate New Key.**
 3. Copy the key — shown once. Starts with `scf_`.
 
@@ -71,11 +71,24 @@ Full walkthrough (rotation, region selection, scopes): [**docs/authentication.md
 
 Pick the button for your client. The deeplink opens the relevant IDE/app with a pre-filled install prompt — just paste your key when asked.
 
-[![Install in Claude Desktop](https://img.shields.io/badge/Install-Claude_Desktop-D97757?logo=anthropic&logoColor=white)](claude://mcp/install?name=scf&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-server-scf%22%5D%2C%22env%22%3A%7B%22SCF_API_KEY%22%3A%22scf_your_api_key_here%22%2C%22SCF_API_URL%22%3A%22https%3A%2F%2Feu.scfcontrolsplatform.app%22%7D%7D)
-[![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cHM6Ly9ldS5zY2Zjb250cm9sc3BsYXRmb3JtLmFwcCJ9fQ%3D%3D)
+[![Install in Claude Desktop](https://img.shields.io/badge/Install-Claude_Desktop-D97757?logo=anthropic&logoColor=white)](claude://mcp/install?name=scf&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-server-scf%22%5D%2C%22env%22%3A%7B%22SCF_API_KEY%22%3A%22scf_your_api_key_here%22%2C%22SCF_API_URL%22%3A%22https%3A%2F%2Fuk.scfcontrolsplatform.app%22%7D%7D)
+[![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cHM6Ly91ay5zY2Zjb250cm9sc3BsYXRmb3JtLmFwcCJ9fQ%3D%3D)
 [![Try on Smithery](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
 
 Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Docker)? See **[3. Manual config](#3-manual-config)** below.
+
+Claude Desktop user who'd rather skip JSON entirely? See **[Claude Desktop Extension (.mcpb)](#claude-desktop-extension-mcpb)** below.
+
+### Claude Desktop Extension (.mcpb)
+
+For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle — no JSON editing, no `npx` runtime, no Node required on the host:
+
+1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
+2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
+3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
+4. Claude Desktop restarts the server and all 72 tools are available.
+
+To uninstall or swap regions later: **Settings → Extensions → SCF Controls Platform → Configure**. The `Platform URL` field lets you switch between `https://uk.scfcontrolsplatform.app` (default, UK data residency) and `https://scfcontrolsplatform.com` (US).
 
 ### 3. Manual config
 
@@ -89,7 +102,7 @@ Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Dock
       "args": ["-y", "mcp-server-scf"],
       "env": {
         "SCF_API_KEY": "scf_your_api_key_here",
-        "SCF_API_URL": "https://eu.scfcontrolsplatform.app"
+        "SCF_API_URL": "https://uk.scfcontrolsplatform.app"
       }
     }
   }
@@ -101,7 +114,7 @@ Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Dock
 ```bash
 claude mcp add scf -- npx -y mcp-server-scf
 export SCF_API_KEY="scf_your_api_key_here"
-export SCF_API_URL="https://eu.scfcontrolsplatform.app"
+export SCF_API_URL="https://uk.scfcontrolsplatform.app"
 ```
 
 **Cursor / Windsurf** — same JSON shape as Claude Desktop in `.cursor/mcp.json` (or the equivalent Windsurf path).
@@ -127,7 +140,7 @@ export SCF_API_URL="https://eu.scfcontrolsplatform.app"
 | Variable      | Required | Default                              | Description                                    |
 | ------------- | -------- | ------------------------------------ | ---------------------------------------------- |
 | `SCF_API_KEY` | Yes      | —                                    | Your SCF platform API key (starts with `scf_`) |
-| `SCF_API_URL` | No       | `https://eu.scfcontrolsplatform.app` | Platform API endpoint                          |
+| `SCF_API_URL` | No       | `https://uk.scfcontrolsplatform.app` | Platform API endpoint                          |
 
 ---
 

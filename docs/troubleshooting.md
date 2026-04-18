@@ -30,20 +30,20 @@ One of:
 
 ---
 
-## Region selection: EU vs US
+## Region selection: UK vs US
 
 **Symptom**
 Key looks correct (starts with `scf_`, length matches) but every request returns `401`.
 
 **Cause**
-API keys are region-scoped. A key minted on `eu.scfcontrolsplatform.app` will not authenticate against `scfcontrolsplatform.com` (US) and vice versa.
+API keys are region-scoped. A key minted on `uk.scfcontrolsplatform.app` will not authenticate against `scfcontrolsplatform.com` (US) and vice versa.
 
 **Fix**
 Set `SCF_API_URL` to match the region where the key was issued:
 
 | Region | `SCF_API_URL`                                  |
 | ------ | ---------------------------------------------- |
-| EU     | `https://eu.scfcontrolsplatform.app` (default) |
+| UK     | `https://uk.scfcontrolsplatform.app` (default) |
 | US     | `https://scfcontrolsplatform.com`              |
 
 If you're unsure, log into the platform console — the domain in the browser tells you the region.

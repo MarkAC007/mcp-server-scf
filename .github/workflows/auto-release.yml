@@ -184,6 +184,16 @@ jobs:
         if: steps.check_published.outputs.skip != 'true'
         run: npm publish --provenance --access public
 
+      - name: Build .mcpb Desktop Extension bundle
+        id: build_mcpb
+        run: |
+          NEW_VERSION="${{ steps.final_version.outputs.version }}"
+          npm run build:mcpb
+          # Rename to include the version so the GitHub Release asset is self-describing.
+          mv dist/mcp-server-scf.mcpb "dist/mcp-server-scf-${NEW_VERSION}.mcpb"
+          echo "path=dist/mcp-server-scf-${NEW_VERSION}.mcpb" >> $GITHUB_OUTPUT
+          ls -lh "dist/mcp-server-scf-${NEW_VERSION}.mcpb"
+
       - name: Generate release notes
         id: release_notes
         run: |
@@ -249,6 +259,7 @@ jobs:
           echo "---" >> release_notes.md
           echo "**Merged by:** @${PR_AUTHOR}" >> release_notes.md
           echo "**npm:** [mcp-server-scf@${NEW_VERSION}](https://www.npmjs.com/package/mcp-server-scf/v/${NEW_VERSION})" >> release_notes.md
+          echo "**Claude Desktop Extension:** \`mcp-server-scf-${NEW_VERSION}.mcpb\` (see release assets below)" >> release_notes.md
 
           if [ "$PREVIOUS_TAG" != "v0.0.0" ]; then
             echo "**Full Changelog:** https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...v${NEW_VERSION}" >> release_notes.md
@@ -265,6 +276,7 @@ jobs:
           body_path: release_notes.md
           draft: false
           prerelease: false
+          files: ${{ steps.build_mcpb.outputs.path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -279,6 +291,7 @@ jobs:
           echo "| Bump Type | ${{ steps.bump_type.outputs.bump }} |" >> $GITHUB_STEP_SUMMARY
           echo "| PR | #${{ github.event.pull_request.number }} |" >> $GITHUB_STEP_SUMMARY
           echo "| npm | [mcp-server-scf@${{ steps.final_version.outputs.version }}](https://www.npmjs.com/package/mcp-server-scf/v/${{ steps.final_version.outputs.version }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| .mcpb | [mcp-server-scf-${{ steps.final_version.outputs.version }}.mcpb](https://github.com/${{ github.repository }}/releases/download/v${{ steps.final_version.outputs.version }}/mcp-server-scf-${{ steps.final_version.outputs.version }}.mcpb) |" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.check_published.outputs.skip }}" = "true" ]; then
             echo "| npm | Skipped (already published) |" >> $GITHUB_STEP_SUMMARY
           else
