@@ -300,4 +300,128 @@ export function registerEvidenceTools(server: McpServer) {
       }
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // Windowed AI Evidence Assessment (M1a)
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "trigger_window_assessment",
+    "Queue a windowed AI assessment for an evidence item. Scores all files uploaded inside the frequency-derived window as a portfolio against the union of required artifact types across mapped SCF controls. Returns 202 — poll list_window_assessments or get_window_assessment for the result. Requires editor role or higher. Returns 422 if the evidence has no tracking row or no frequency set (use update_evidence to set a frequency like 'daily', 'weekly', 'monthly' first).",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'E-IAM-01') — must have tracking with a frequency set"),
+      assessment_source: z
+        .enum(["on_demand", "auto", "bulk"])
+        .optional()
+        .default("on_demand")
+        .describe("Source of the assessment request"),
+    },
+    async ({ org_id, evidence_id, assessment_source }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(
+          `/organizations/${org_id}/evidence/${evidence_id}/assess-window`,
+          { assessment_source },
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "list_window_assessments",
+    "List the most recent windowed AI assessments for a specific evidence ID (newest first). Each entry includes the window boundaries, frequency used, file IDs in the window, source/artifact coverage, status (pending/processing/sufficient/partial/insufficient/insufficient_sample/error), relevance score, findings, and cost. Requires viewer role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'E-IAM-01') — get from list_evidence"),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .optional()
+        .default(10)
+        .describe("Maximum number of assessments to return (1-100, default 10)"),
+      offset: z.number().int().min(0).optional().default(0).describe("Number of assessments to skip for pagination (default 0)"),
+    },
+    async ({ org_id, evidence_id, limit, offset }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/evidence/${evidence_id}/window-assessments`,
+          { limit, offset },
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_window_assessment",
+    "Get a single windowed AI assessment by its assessment ID. Returns full detail: window boundaries, frequency, file IDs, source coverage, artifact type coverage, expected artifact types, status, relevance score, findings, summary, model/prompt/window hashes, token counts, cost, and timing. Requires viewer role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      assessment_id: z.string().describe("Windowed assessment ID (UUID) — get from list_window_assessments"),
+    },
+    async ({ org_id, assessment_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/evidence/window-assessments/${assessment_id}`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "bulk_assess_windows",
+    "Queue windowed AI assessments for multiple evidence IDs in one call. Capped at 25 evidence IDs per request. Evidence items without a tracking row or without a frequency set are skipped and reported in the response under `skipped_detail`. Returns the counts and lists of queued/skipped evidence IDs. Requires editor role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      evidence_ids: z
+        .array(z.string())
+        .min(1)
+        .max(25)
+        .describe("Evidence IDs to assess (e.g., ['E-IAM-01','E-BCM-11']). Min 1, max 25 per request."),
+    },
+    async ({ org_id, evidence_ids }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(
+          `/organizations/${org_id}/evidence/assess-windows-bulk`,
+          { evidence_ids },
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_window_assessment_summary",
+    "Get aggregate windowed-assessment metrics for the organisation dashboard. Returns total windows assessed, counts by status (sufficient/partial/insufficient/insufficient_sample/pending/error), average relevance score, and total cost in cents. `insufficient_sample` is a new bucket indicating the content was fine but the window had too few files to prove the controls' required artifact types. Requires viewer role or higher.",
+    {
+      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/evidence/window-assessments/summary`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }
