@@ -26,13 +26,13 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**67 tools** across 8 domains:
+**72 tools** across 8 domains:
 
 | Domain | Tools | Description |
 |--------|-------|-------------|
 | [Catalog](#catalog-reference-data) | 6 | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives |
 | [Control Scoping](#control-scoping) | 6 | Track implementation status across an 8-state workflow |
-| [Evidence](#evidence-collection) | 14 | Manage evidence collection, validation, and maturity scoring |
+| [Evidence](#evidence-collection) | 19 | Manage evidence collection, validation, maturity scoring, and windowed AI assessments |
 | [Risk Management](#risk-management) | 12 | 5x5 risk matrix, risk register, custom risks and control mapping |
 | [Vendor Risk (TPRM)](#vendor-risk-tprm) | 7 | Vendor registry, AI-powered security research, DPSIA |
 | [Organization](#organization--platform) | 7 | Users, orgs, audit trail, work queue, notifications |

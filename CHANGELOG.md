@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Server handshake now reports the correct version.** `src/index.ts` hardcoded `"0.1.0"` while `package.json` was on `0.5.0`; the server now reads `name` and `version` from `package.json` at startup via `createRequire`, so MCP clients always see the real published version. Closes #53.
-- **README tool count corrected from 38 to 67 (8 domains, not 7).** The domain table was missing Webhooks and understated Evidence, Risk Management, and Capabilities. A CI check (`Verify README tool count matches source`) now fails PRs that drift again. Closes #64.
+- **README tool count corrected from 38 to 72 (8 domains, not 7).** The domain table was missing Webhooks and understated Evidence, Risk Management, and Capabilities; Evidence also gained 5 windowed-assessment tools via the recent `main` merge. A CI check (`Verify README tool count matches source`) now fails PRs that drift again. Closes #64.
 
 ### Changed
 - **Branding aligned: SCF Controls Platform leads, ComplianceGenie credited as maintainer.** README hero copy updated to remove the `Built by X | Platform: Y` split. Closes #65.
