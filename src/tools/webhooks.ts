@@ -6,21 +6,22 @@ import { errorResult } from "../lib/errors.js";
 export function registerWebhookTools(server: McpServer) {
   server.tool(
     "scf_create_webhook",
-    "Create a new webhook endpoint for evidence inbox ingestion. External systems use this endpoint to push evidence via HMAC-authenticated POST requests. Returns the plaintext signing secret once — it cannot be retrieved later.",
+    "Create a webhook endpoint for evidence-inbox ingestion (write — admin role). Returns the plaintext HMAC signing secret exactly once — store it immediately; it cannot be retrieved later.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      name: z.string().describe("Human-readable label for the endpoint (e.g., 'Splunk SIEM', 'AWS Config')"),
-      description: z.string().optional().describe("Optional description of the endpoint's purpose"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      name: z.string().describe("Human-readable label (e.g., 'Splunk SIEM', 'AWS Config')"),
+      description: z.string().optional().describe("Free-text description of what this endpoint is for"),
       allowed_evidence_ids: z
         .array(z.string())
         .optional()
-        .describe("Restrict ingestion to specific evidence IDs (e.g., ['ERL-IAM-001']). Null allows any evidence ID."),
+        .describe("Restrict ingestion to specific evidence IDs (e.g., ['ERL-IAM-001']); omit to allow any"),
       rate_limit_per_minute: z
         .number()
+        .int()
         .min(1)
         .max(10000)
         .optional()
-        .describe("Per-endpoint rate limit (requests/min). Null uses the organization default."),
+        .describe("Per-endpoint rate limit in requests/min (1–10000); omit to use the org default"),
     },
     async ({ org_id, ...body }) => {
       try {
@@ -35,9 +36,9 @@ export function registerWebhookTools(server: McpServer) {
 
   server.tool(
     "scf_list_webhooks",
-    "List all webhook endpoints for an organization, ordered by creation date (newest first). Shows endpoint name, status, delivery count, and secret prefix.",
+    "List the organization's webhook endpoints (newest first). Returns name, status, delivery count, and secret prefix.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -52,10 +53,10 @@ export function registerWebhookTools(server: McpServer) {
 
   server.tool(
     "scf_get_webhook",
-    "Get detailed information about a single webhook endpoint including delivery stats, allowed evidence IDs, and rate limit configuration.",
+    "Get one webhook endpoint's detail: delivery stats, allowed evidence IDs, and rate-limit configuration.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      endpoint_id: z.string().describe("Webhook endpoint ID (UUID) — get from list_webhooks"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
     },
     async ({ org_id, endpoint_id }) => {
       try {
@@ -70,10 +71,10 @@ export function registerWebhookTools(server: McpServer) {
 
   server.tool(
     "scf_delete_webhook",
-    "Revoke a webhook endpoint (soft-delete). Sets the endpoint to inactive — future deliveries will be rejected with 403. The endpoint record is preserved for audit trail purposes.",
+    "Revoke a webhook endpoint — soft-delete that marks it inactive (destructive write — admin role). Future deliveries return 403; the record remains for audit.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      endpoint_id: z.string().describe("Webhook endpoint ID (UUID) — get from list_webhooks"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
     },
     async ({ org_id, endpoint_id }) => {
       try {
@@ -88,10 +89,10 @@ export function registerWebhookTools(server: McpServer) {
 
   server.tool(
     "scf_rotate_webhook_secret",
-    "Generate a new HMAC signing secret for a webhook endpoint. The old secret is immediately invalidated. Returns the new plaintext secret once — store it securely.",
+    "Rotate the HMAC signing secret for a webhook endpoint (write — admin role). The old secret is invalidated immediately. Returns the new plaintext secret exactly once.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      endpoint_id: z.string().describe("Webhook endpoint ID (UUID) — get from list_webhooks"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
     },
     async ({ org_id, endpoint_id }) => {
       try {
@@ -106,12 +107,17 @@ export function registerWebhookTools(server: McpServer) {
 
   server.tool(
     "scf_list_webhook_deliveries",
-    "List delivery logs for a webhook endpoint (newest first). Each entry shows signature validation result, processing status, evidence ID, and timestamps. Useful for debugging integration issues.",
+    "List delivery logs for a webhook endpoint (newest first). Each entry shows signature validation result, processing status, evidence ID, and timestamps.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      endpoint_id: z.string().describe("Webhook endpoint ID (UUID) — get from list_webhooks"),
-      limit: z.number().min(1).max(200).default(50).describe("Number of deliveries to return (max 200)"),
-      offset: z.number().min(0).default(0).describe("Number of deliveries to skip for pagination"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
+      limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
+      offset: z
+        .number()
+        .int()
+        .min(0)
+        .default(0)
+        .describe("Pagination offset — number of deliveries to skip (default 0)"),
     },
     async ({ org_id, endpoint_id, limit, offset }) => {
       try {

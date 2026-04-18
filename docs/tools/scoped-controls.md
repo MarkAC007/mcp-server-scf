@@ -8,7 +8,7 @@ Source: [`src/tools/scoped-controls.ts`](../../src/tools/scoped-controls.ts).
 
 ## `scf_list_scoped_controls`
 
-List controls scoped to your organization with their implementation status. Supports filtering by scope status, domain, framework, CSF function, control weighting, and search. Use `scope_status='in_scope'` to return only controls where `selected=True`.
+List controls scoped to the organization with implementation status. Filter by scope status, domain, framework, CSF function, weighting, or free-text search. Paginated.
 
 | Parameter           | Type   | Required | Description                                                 |
 | ------------------- | ------ | -------- | ----------------------------------------------------------- |
@@ -26,7 +26,7 @@ List controls scoped to your organization with their implementation status. Supp
 
 ## `scf_get_scoped_control`
 
-Get detailed implementation status of a specific scoped control, including owner, notes, evidence links, and audit history. Identify by `scf_id` (e.g., `AST-01`), not by UUID.
+Get one scoped control in detail: owner, implementation notes, evidence links, and audit history. Identify by scf_id, not by UUID.
 
 | Parameter | Type   | Required | Description                                                |
 | --------- | ------ | -------- | ---------------------------------------------------------- |
@@ -37,7 +37,7 @@ Get detailed implementation status of a specific scoped control, including owner
 
 ## `scf_update_scoped_control`
 
-Update a scoped control's implementation tracking fields. Status values are lowercase. Maturity uses the `L0`–`L5` prefix format. All fields are optional — only provided fields are updated.
+Update a scoped control's implementation fields (write — editor+ role). Identify by scf_id, not UUID. Only provided fields are applied.
 
 | Parameter               | Type   | Required | Description                                                                                                                      |
 | ----------------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -57,7 +57,7 @@ Update a scoped control's implementation tracking fields. Status values are lowe
 
 ## `scf_get_scoping_stats`
 
-Get implementation statistics for an organization — counts by status, completion percentage, and framework coverage breakdown.
+Get the organization's implementation statistics: counts by status, overall completion percentage, and per-framework coverage breakdown.
 
 | Parameter | Type   | Required | Description                                                |
 | --------- | ------ | -------- | ---------------------------------------------------------- |
@@ -67,7 +67,7 @@ Get implementation statistics for an organization — counts by status, completi
 
 ## `scf_scope_framework`
 
-Bulk-scope every control from a framework into your organization. Creates scoped-control entries for all controls in the framework.
+Bulk-scope every control mapped to a framework into the organization (write — editor+ role). Creates a scoped-control entry for each control in the framework.
 
 | Parameter      | Type   | Required | Description                                    |
 | -------------- | ------ | -------- | ---------------------------------------------- |
@@ -78,7 +78,7 @@ Bulk-scope every control from a framework into your organization. Creates scoped
 
 ## `scf_batch_update_controls`
 
-Batch update multiple scoped controls in a single transaction. Maximum 500 operations per request. Status values must be lowercase; maturity uses the `L` prefix format.
+Batch-update up to 500 scoped controls in one transaction (write — editor+ role). Each operation identifies its target by scf_id; status values are lowercase.
 
 | Parameter    | Type   | Required | Description                                       |
 | ------------ | ------ | -------- | ------------------------------------------------- |

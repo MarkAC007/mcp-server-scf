@@ -46,6 +46,19 @@ describe("tool registration", () => {
         expect((description as string).length, `description length for ${toolName}`).toBeGreaterThan(0);
       }
     });
+
+    it(`every ${name} tool description is <=200 chars (Anthropic tool-description guidance)`, () => {
+      const server = makeMockServer();
+      register(server);
+      for (const call of server.tool.mock.calls) {
+        const [toolName, description] = call;
+        const len = (description as string).length;
+        expect(
+          len,
+          `description for ${toolName} is ${len} chars (limit 200). Shorten it in src/tools/${name}.ts.`,
+        ).toBeLessThanOrEqual(200);
+      }
+    });
   }
 
   it("total tool count equals 72", () => {

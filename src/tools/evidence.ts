@@ -6,10 +6,10 @@ import { errorResult } from "../lib/errors.js";
 export function registerEvidenceTools(server: McpServer) {
   server.tool(
     "scf_list_evidence",
-    "List evidence items tracked for an organization's controls. Evidence demonstrates control implementation for audit readiness. Returns evidence with status, maturity, and linked controls.",
+    "List evidence items tracked against an organization's controls. Returns each item's tracking status, maturity level, and linked controls. Optionally filter by system.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      system_id: z.string().optional().describe("Filter by system ID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      system_id: z.string().uuid().optional().describe("System UUID to filter by — obtain from scf_list_systems"),
     },
     async ({ org_id, system_id }) => {
       try {
@@ -26,23 +26,26 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_create_evidence",
-    "Create an evidence tracking record from the SCF evidence catalog. Uses a catalog evidence ID (e.g., 'E-IAM-01') to start tracking an evidence item for the organization.",
+    "Create an evidence tracking record from a catalog evidence ID (write — editor+ role). Starts tracking an evidence item for the organization.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence_catalog"),
-      is_tracked: z.boolean().default(false).describe("Whether this evidence item is actively tracked"),
-      system_id: z.string().optional().describe("System ID (UUID) to link this evidence to — get from list_systems"),
-      method_of_collection: z
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z
         .string()
+        .describe("Catalog evidence ID (e.g., 'E-IAM-01') — obtain from scf_list_evidence_catalog"),
+      is_tracked: z.boolean().default(false).describe("Start actively tracking this item (default false)"),
+      system_id: z
+        .string()
+        .uuid()
         .optional()
-        .describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
-      collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
-      owner: z.string().optional().describe("Person responsible for this evidence item"),
+        .describe("System UUID to link this evidence to — obtain from scf_list_systems"),
+      method_of_collection: z.string().optional().describe("Collection approach: 'automated', 'manual', or 'hybrid'"),
+      collecting_system: z.string().optional().describe("Name of the tool or system that collects the evidence"),
+      owner: z.string().optional().describe("Person accountable for this evidence item"),
       frequency: z
         .string()
         .optional()
-        .describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
-      comments: z.string().optional().describe("Additional notes or context about this evidence item"),
+        .describe("Collection cadence: 'daily', 'weekly', 'monthly', 'quarterly', or 'annually'"),
+      comments: z.string().optional().describe("Free-text notes or context"),
     },
     async ({ org_id, ...body }) => {
       try {
@@ -57,9 +60,9 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_maturity",
-    "Get evidence maturity summary for an organization. Shows average maturity score, automation percentage, distribution by maturity level, and improvement opportunities.",
+    "Get the organization's evidence maturity summary: average maturity score, automation percentage, distribution by maturity level, and improvement opportunities.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -74,10 +77,10 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_list_evidence_files",
-    "List all evidence files uploaded or ingested for a specific evidence item. Returns file metadata including filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-min expiry). Use this to see what artifacts have been collected for an evidence item.",
+    "List all files uploaded or ingested for an evidence item. Returns filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-min expiry).",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
     },
     async ({ org_id, evidence_id }) => {
       try {
@@ -92,11 +95,11 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_file",
-    "Get metadata and a pre-signed download URL for a single evidence file. The download URL expires after 15 minutes. Use this to inspect or retrieve a specific uploaded artifact.",
+    "Get metadata and a pre-signed download URL (15-min expiry) for a single evidence file. Use to inspect or retrieve a specific uploaded artifact.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
-      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
     async ({ org_id, evidence_id, file_id }) => {
       try {
@@ -111,28 +114,28 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_update_evidence",
-    "Update an evidence item's tracking fields — toggle tracking, link to a system, set collection method, owner, frequency, etc. Use the catalog evidence ID (e.g., 'E-IAM-01') as the identifier. All fields except org_id and evidence_id are optional — only provided fields are updated.",
+    "Upsert an evidence item's tracking fields (write — editor+ role). Creates the tracking row if missing. All body fields are optional; only provided fields are applied.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z
         .string()
-        .describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence or list_evidence_catalog"),
-      is_tracked: z
-        .boolean()
-        .optional()
-        .describe("Whether this evidence item is actively tracked for the organization"),
-      system_id: z.string().optional().describe("System ID (UUID) to link this evidence to — get from list_systems"),
-      method_of_collection: z
+        .describe(
+          "Catalog evidence ID (e.g., 'E-IAM-01') — obtain from scf_list_evidence or scf_list_evidence_catalog",
+        ),
+      is_tracked: z.boolean().optional().describe("Toggle active tracking for this item"),
+      system_id: z
         .string()
+        .uuid()
         .optional()
-        .describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
-      collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
-      owner: z.string().optional().describe("Person responsible for this evidence item"),
+        .describe("System UUID to link this evidence to — obtain from scf_list_systems"),
+      method_of_collection: z.string().optional().describe("Collection approach: 'automated', 'manual', or 'hybrid'"),
+      collecting_system: z.string().optional().describe("Name of the tool or system that collects the evidence"),
+      owner: z.string().optional().describe("Person accountable for this evidence item"),
       frequency: z
         .string()
         .optional()
-        .describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
-      comments: z.string().optional().describe("Additional notes or context about this evidence item"),
+        .describe("Collection cadence: 'daily', 'weekly', 'monthly', 'quarterly', or 'annually'"),
+      comments: z.string().optional().describe("Free-text notes or context"),
     },
     async ({ org_id, evidence_id, ...fields }) => {
       try {
@@ -157,11 +160,11 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_validation",
-    "Get the validation result for a specific evidence file. Returns overall status (valid/warning/partial/invalid), completeness score, individual rule findings (catalog_exists, content_type_ok, field_coverage, freshness, s3_object_exists), validation source, and timestamp.",
+    "Get the validation result for a single evidence file: status (valid/warning/partial/invalid), completeness score, individual rule findings, source, and timestamp.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
-      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
     async ({ org_id, evidence_id, file_id }) => {
       try {
@@ -176,11 +179,11 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_revalidate_evidence_file",
-    "Re-run the validation engine against a specific evidence file. Checks catalog existence, content type, field coverage, freshness, and storage object existence. Upserts the validation result and returns the updated result. Requires editor role or higher.",
+    "Re-run the validation engine against an evidence file (write — editor+ role). Checks catalog existence, content type, field coverage, freshness, storage. Returns the updated result.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
-      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
     async ({ org_id, evidence_id, file_id }) => {
       try {
@@ -195,9 +198,9 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_validation_summary",
-    "Get aggregate evidence validation metrics for the organisation dashboard. Returns total files validated, counts by status (valid, warning, partial, invalid), and overall pass rate (fraction of files with status=valid).",
+    "Get aggregate evidence validation metrics for the organization dashboard: total files validated, counts by status (valid/warning/partial/invalid), and overall pass rate.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -216,16 +219,16 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_trigger_evidence_assessment",
-    "Trigger an AI-powered assessment of an evidence artifact file. The assessment evaluates relevance, completeness, and quality against mapped SCF controls. Returns immediately with a pending assessment record — poll with get_evidence_assessment until status changes to sufficient/partial/insufficient. Requires editor role or higher.",
+    "Queue an AI assessment of a single evidence file (write — editor+ role, async). Returns a pending record; poll scf_get_evidence_assessment until status is sufficient/partial/insufficient.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
-      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
       assessment_source: z
         .enum(["on_demand", "auto", "bulk"])
         .optional()
         .default("on_demand")
-        .describe("Source of the assessment request"),
+        .describe("Origin tag for the request (default on_demand)"),
     },
     async ({ org_id, evidence_id, file_id, assessment_source }) => {
       try {
@@ -242,11 +245,11 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_assessment",
-    "Get the AI assessment result for an evidence artifact file. Returns status (pending/processing/sufficient/partial/insufficient/error), relevance score (0-100), structured findings with categories and suggestions, summary text, and full audit metadata (model, token counts, cost). Poll this after triggering an assessment.",
+    "Get the AI assessment for an evidence file: status, relevance score (0–100), structured findings, summary, and audit metadata (model, tokens, cost). Poll after scf_trigger_evidence_assessment.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
-      file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
     async ({ org_id, evidence_id, file_id }) => {
       try {
@@ -261,16 +264,16 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_bulk_assess_evidence",
-    "Queue AI assessments for multiple evidence files at once (max 50 per request). Provide at least one of: evidence_id (assess all files for that evidence item), file_ids (specific file UUIDs), or assess_unassessed (all files without an existing assessment). Returns the count of queued assessments. Requires editor role or higher.",
+    "Queue AI assessments for multiple evidence files (write — editor+ role, async, max 50). Provide evidence_id, file_ids, and/or assess_unassessed. Returns count queued.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().optional().describe("Evidence ID — assess all files for this evidence item"),
-      file_ids: z.array(z.string()).optional().describe("Specific evidence file IDs (UUIDs) to assess"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().optional().describe("Evidence ID — assesses every file under this evidence item"),
+      file_ids: z.array(z.string().uuid()).optional().describe("Specific evidence file UUIDs to assess"),
       assess_unassessed: z
         .boolean()
         .optional()
         .default(false)
-        .describe("Assess all files that have no existing assessment"),
+        .describe("Also assess every file that has no existing assessment (default false)"),
     },
     async ({ org_id, evidence_id, file_ids, assess_unassessed }) => {
       try {
@@ -289,9 +292,9 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_assessment_summary",
-    "Get aggregate AI assessment metrics for the organisation dashboard. Returns total assessed count, counts by status (sufficient/partial/insufficient/pending/error), unassessed count, average relevance score, and total cost in cents.",
+    "Get aggregate AI assessment metrics for the organization dashboard: total assessed, counts by status, unassessed count, average relevance score, and total cost in cents.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -306,11 +309,11 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_list_evidence_tasks",
-    "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
+    "List evidence collection tasks — the work queue showing what needs to be collected, by whom, and by when. Optionally filter by assignee or status.",
     {
-      org_id: z.string().optional().describe("Organization ID (UUID)"),
-      assignee: z.string().optional().describe("Filter by assigned user"),
-      status: z.string().optional().describe("Filter by task status"),
+      org_id: z.string().uuid().optional().describe("Organization UUID — obtain from scf_list_organizations"),
+      assignee: z.string().optional().describe("Filter by assigned user ID"),
+      status: z.string().optional().describe("Filter by task status (e.g., 'open', 'in_progress', 'done')"),
     },
     async ({ org_id, assignee, status }) => {
       try {
@@ -329,15 +332,19 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_trigger_window_assessment",
-    "Queue a windowed AI assessment for an evidence item. Scores all files uploaded inside the frequency-derived window as a portfolio against the union of required artifact types across mapped SCF controls. Returns 202 — poll list_window_assessments or get_window_assessment for the result. Requires editor role or higher. Returns 422 if the evidence has no tracking row or no frequency set (use update_evidence to set a frequency like 'daily', 'weekly', 'monthly' first).",
+    "Queue a windowed AI assessment that scores every file in the evidence item's frequency window as one portfolio (write — editor+ role, async). Returns 422 if tracking or frequency is missing.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'E-IAM-01') — must have tracking with a frequency set"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z
+        .string()
+        .describe(
+          "Evidence ID (e.g., 'E-IAM-01'). Tracking row with a frequency must exist — set via scf_update_evidence first",
+        ),
       assessment_source: z
         .enum(["on_demand", "auto", "bulk"])
         .optional()
         .default("on_demand")
-        .describe("Source of the assessment request"),
+        .describe("Origin tag for the request (default on_demand)"),
     },
     async ({ org_id, evidence_id, assessment_source }) => {
       try {
@@ -354,25 +361,18 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_list_window_assessments",
-    "List the most recent windowed AI assessments for a specific evidence ID (newest first). Each entry includes the window boundaries, frequency used, file IDs in the window, source/artifact coverage, status (pending/processing/sufficient/partial/insufficient/insufficient_sample/error), relevance score, findings, and cost. Requires viewer role or higher.",
+    "List recent windowed AI assessments for an evidence item (newest first). Each entry includes window bounds, frequency, file IDs, coverage, status, relevance score, findings, and cost.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Evidence ID (e.g., 'E-IAM-01') — get from list_evidence"),
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(100)
-        .optional()
-        .default(10)
-        .describe("Maximum number of assessments to return (1-100, default 10)"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'E-IAM-01') — obtain from scf_list_evidence"),
+      limit: z.number().int().min(1).max(100).optional().default(10).describe("Page size (1–100, default 10)"),
       offset: z
         .number()
         .int()
         .min(0)
         .optional()
         .default(0)
-        .describe("Number of assessments to skip for pagination (default 0)"),
+        .describe("Pagination offset — number of results to skip (default 0)"),
     },
     async ({ org_id, evidence_id, limit, offset }) => {
       try {
@@ -390,10 +390,10 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_window_assessment",
-    "Get a single windowed AI assessment by its assessment ID. Returns full detail: window boundaries, frequency, file IDs, source coverage, artifact type coverage, expected artifact types, status, relevance score, findings, summary, model/prompt/window hashes, token counts, cost, and timing. Requires viewer role or higher.",
+    "Get one windowed AI assessment by ID. Returns full detail: window bounds, frequency, file IDs, coverage, expected artifact types, status, relevance score, findings, summary, hashes, tokens, cost.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      assessment_id: z.string().describe("Windowed assessment ID (UUID) — get from list_window_assessments"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      assessment_id: z.string().uuid().describe("Windowed assessment UUID — obtain from scf_list_window_assessments"),
     },
     async ({ org_id, assessment_id }) => {
       try {
@@ -408,14 +408,14 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_bulk_assess_windows",
-    "Queue windowed AI assessments for multiple evidence IDs in one call. Capped at 25 evidence IDs per request. Evidence items without a tracking row or without a frequency set are skipped and reported in the response under `skipped_detail`. Returns the counts and lists of queued/skipped evidence IDs. Requires editor role or higher.",
+    "Queue windowed AI assessments for up to 25 evidence IDs (write — editor+ role, async). Items without tracking or a frequency set are reported under `skipped_detail` in the response.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_ids: z
         .array(z.string())
         .min(1)
         .max(25)
-        .describe("Evidence IDs to assess (e.g., ['E-IAM-01','E-BCM-11']). Min 1, max 25 per request."),
+        .describe("Evidence IDs to assess (e.g., ['E-IAM-01','E-BCM-11']); 1–25 per request"),
     },
     async ({ org_id, evidence_ids }) => {
       try {
@@ -430,9 +430,9 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_window_assessment_summary",
-    "Get aggregate windowed-assessment metrics for the organisation dashboard. Returns total windows assessed, counts by status (sufficient/partial/insufficient/insufficient_sample/pending/error), average relevance score, and total cost in cents. `insufficient_sample` is a new bucket indicating the content was fine but the window had too few files to prove the controls' required artifact types. Requires viewer role or higher.",
+    "Get aggregate windowed-assessment metrics for the organization dashboard: total windows assessed, counts by status (including `insufficient_sample`), average relevance score, and total cost in cents.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {

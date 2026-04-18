@@ -8,7 +8,7 @@ Source: [`src/tools/capabilities.ts`](../../src/tools/capabilities.ts).
 
 ## `scf_list_capability_themes`
 
-List the 11 KSI-aligned capability themes for an organization. Capability themes group NIST 800-53 controls into security capability areas, providing a high-level view of security posture.
+List an organization's 11 KSI capability themes. Themes group NIST 800-53 controls into security capability areas for a high-level posture view.
 
 | Parameter | Type   | Required | Description                                                |
 | --------- | ------ | -------- | ---------------------------------------------------------- |
@@ -18,7 +18,7 @@ List the 11 KSI-aligned capability themes for an organization. Capability themes
 
 ## `scf_get_capability_theme_scorecard`
 
-Multi-axis KSI scorecard for all capability themes in one call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with `Strong`/`Moderate`/`Developing` bands. Replaces the dual-call pattern of `scf_list_capability_themes` + `scf_get_capability_theme_evidence_posture`.
+Get the multi-axis KSI scorecard for every capability theme. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score bands.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -28,7 +28,7 @@ Multi-axis KSI scorecard for all capability themes in one call. Returns per-them
 
 ## `scf_get_capability_theme`
 
-Get a single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`.
+Get a single capability theme (KSI) with full posture, multi-axis scores, band, and legacy posture_percentage.
 
 | Parameter    | Type   | Required | Description                                                                            |
 | ------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
@@ -39,7 +39,7 @@ Get a single capability theme (KSI) with full posture, multi-axis scores, bands,
 
 ## `scf_list_capability_theme_controls`
 
-List SCF controls mapped to a capability theme (KSI) with scoping status, implementation status, and maturity level. Useful for drilling from a KSI into its underlying controls.
+List SCF controls mapped to a capability theme (KSI), with scoping status, implementation status, and maturity level. Supports pagination and scope filtering — ideal for KSI drill-down.
 
 | Parameter      | Type   | Required | Description                                    |
 | -------------- | ------ | -------- | ---------------------------------------------- |
@@ -53,7 +53,7 @@ List SCF controls mapped to a capability theme (KSI) with scoping status, implem
 
 ## `scf_get_capability_theme_evidence_posture`
 
-Per-theme evidence assessment metrics — controls with evidence, file counts by assessment status (`sufficient`/`partial`/`insufficient`/`pending`/`unassessed`), average relevance score, and derived evidence confidence level (`strong`/`moderate`/`weak`/`none`). Useful for KSI-centric evidence quality dashboards.
+Get per-theme evidence metrics: controls with evidence, file counts by assessment status, average relevance score, and derived confidence (strong/moderate/weak/none). Use for KSI evidence dashboards.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -63,7 +63,7 @@ Per-theme evidence assessment metrics — controls with evidence, file counts by
 
 ## `scf_list_capabilities`
 
-List capabilities for an organization. Capabilities map to systems and evidence, showing what security functions your infrastructure supports.
+List an organization's capabilities. Capabilities map to systems and evidence, showing what security functions the infrastructure supports.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -73,7 +73,7 @@ List capabilities for an organization. Capabilities map to systems and evidence,
 
 ## `scf_list_systems`
 
-List infrastructure systems in the organization's inventory. Systems are the tools and platforms that implement security capabilities.
+List the organization's infrastructure systems — the tools and platforms that implement security capabilities.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -83,7 +83,7 @@ List infrastructure systems in the organization's inventory. Systems are the too
 
 ## `scf_create_system`
 
-Add a system to the organization's infrastructure inventory. Systems can be linked to capabilities and evidence.
+Create a system in the organization's infrastructure inventory (write — editor+ role). Systems can be linked to capabilities and evidence.
 
 | Parameter     | Type   | Required | Description                                                                                                                        |
 | ------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -99,7 +99,7 @@ Add a system to the organization's infrastructure inventory. Systems can be link
 
 ## `scf_update_system`
 
-Update an existing system record. All fields are optional — only provided fields are updated.
+Update an existing system record (write — editor+ role). All fields are optional; only provided fields are applied.
 
 | Parameter     | Type   | Required | Description                             |
 | ------------- | ------ | -------- | --------------------------------------- |

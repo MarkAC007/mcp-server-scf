@@ -21,19 +21,22 @@ const ScopeStatus = z.enum(["in_scope", "out_of_scope", "all"]);
 export function registerScopedControlTools(server: McpServer) {
   server.tool(
     "scf_list_scoped_controls",
-    "List controls scoped to your organization with their implementation status. Supports filtering by scope status, domain, framework, CSF function, control weighting, and search. Use scope_status='in_scope' to return only controls where selected=True. Returns paginated results. Pagination uses limit/offset.",
+    "List controls scoped to the organization with implementation status. Filter by scope status, domain, framework, CSF function, weighting, or free-text search. Paginated.",
     {
-      org_id: z.string().describe("Organization ID (UUID)"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scope_status: ScopeStatus.optional().describe(
-        "Filter by scoping status: 'in_scope' (selected=True only), 'out_of_scope' (not selected), 'all' (default — returns everything)",
+        "Scope filter: 'in_scope' (selected), 'out_of_scope' (deselected), or 'all' (default — everything)",
       ),
-      domain: z.string().optional().describe("Filter by SCF domain (e.g., 'GOV', 'AST', 'IAC')"),
-      framework: z.string().optional().describe("Filter by framework mapping"),
-      csf_function: z.string().optional().describe("Filter by NIST CSF function"),
-      control_weighting: z.number().min(0).max(10).optional().describe("Filter by control weighting (0-10)"),
-      search: z.string().optional().describe("Search term to filter by control ID, name, or description"),
-      limit: z.number().min(1).max(200).default(50).describe("Number of results to return (max 200)"),
-      offset: z.number().min(0).default(0).describe("Number of results to skip for pagination"),
+      domain: z.string().optional().describe("SCF domain code (e.g., 'GOV', 'AST', 'IAC')"),
+      framework: z.string().optional().describe("Framework slug (e.g., 'nist-800-53') to filter mapped controls"),
+      csf_function: z
+        .string()
+        .optional()
+        .describe("NIST CSF function: 'GOVERN', 'IDENTIFY', 'PROTECT', 'DETECT', 'RESPOND', or 'RECOVER'"),
+      control_weighting: z.number().int().min(0).max(10).optional().describe("Weighting threshold on a 0–10 scale"),
+      search: z.string().optional().describe("Free-text filter applied to control ID, name, or description"),
+      limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
+      offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
     async ({ org_id, scope_status, domain, framework, csf_function, control_weighting, search, limit, offset }) => {
       try {
@@ -57,10 +60,12 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_get_scoped_control",
-    "Get detailed implementation status of a specific scoped control, including owner, notes, evidence links, and audit history. Use the scf_id (e.g., 'AST-01') as the identifier.",
+    "Get one scoped control in detail: owner, implementation notes, evidence links, and audit history. Identify by scf_id, not by UUID.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z
+        .string()
+        .describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
     },
     async ({ org_id, scf_id }) => {
       try {
@@ -75,26 +80,28 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_update_scoped_control",
-    "Update a scoped control's implementation tracking fields. Use the scf_id (e.g., 'AST-01', 'GOV-02') as the identifier — NOT the UUID. Status values are lowercase (e.g., 'not_started', 'in_progress'). All fields are optional — only provided fields are updated.",
+    "Update a scoped control's implementation fields (write — editor+ role). Identify by scf_id, not UUID. Only provided fields are applied.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z
+        .string()
+        .describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
       implementation_status: ImplementationStatus.optional().describe(
-        "New implementation status (lowercase: not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred)",
+        "New implementation status (lowercase): not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, or deferred",
       ),
-      priority: z.string().optional().describe("Implementation priority (e.g., 'high', 'medium', 'low')"),
+      priority: z.string().optional().describe("Implementation priority: 'high', 'medium', or 'low'"),
       maturity_level: MaturityLevel.optional().describe(
-        "Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)",
+        "Maturity level with L prefix: L0 Not Performed, L1 Performed, L2 Planned, L3 Well Defined, L4 Quantitatively Controlled, L5 Continuously Improving",
       ),
-      owner: z.string().optional().describe("Control owner (person accountable)"),
-      assigned_to: z.string().optional().describe("Assignee (person responsible for implementation)"),
-      implementation_notes: z.string().optional().describe("Implementation notes and context"),
-      target_date: z.string().optional().describe("Target completion date (YYYY-MM-DD)"),
-      completion_date: z.string().optional().describe("Actual completion date (YYYY-MM-DD)"),
+      owner: z.string().optional().describe("Accountable owner of the control"),
+      assigned_to: z.string().optional().describe("Assignee responsible for implementation"),
+      implementation_notes: z.string().optional().describe("Free-text implementation notes and context"),
+      target_date: z.string().optional().describe("Target completion date in ISO-8601 (YYYY-MM-DD)"),
+      completion_date: z.string().optional().describe("Actual completion date in ISO-8601 (YYYY-MM-DD)"),
       selection_reason: z
         .string()
         .optional()
-        .describe("Justification for scoping selection or status (required for not_applicable, deferred)"),
+        .describe("Justification for scoping decision — required for not_applicable or deferred"),
     },
     async ({ org_id, scf_id, ...fields }) => {
       try {
@@ -109,9 +116,9 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_get_scoping_stats",
-    "Get implementation statistics for an organization — counts by status, completion percentage, framework coverage breakdown.",
+    "Get the organization's implementation statistics: counts by status, overall completion percentage, and per-framework coverage breakdown.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
     async ({ org_id }) => {
       try {
@@ -126,10 +133,12 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_scope_framework",
-    "Bulk-scope all controls from a framework to your organization. This creates scoped control entries for every control in the selected framework.",
+    "Bulk-scope every control mapped to a framework into the organization (write — editor+ role). Creates a scoped-control entry for each control in the framework.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      framework_id: z.string().describe("Framework ID to scope (e.g., 'nist-800-53-r5')"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      framework_id: z
+        .string()
+        .describe("Framework slug to scope (e.g., 'nist-800-53-r5') — obtain from scf_list_frameworks"),
     },
     async ({ org_id, framework_id }) => {
       try {
@@ -146,30 +155,35 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_batch_update_controls",
-    "Batch update multiple scoped controls in a single transaction. Maximum 500 operations per request. Use scf_id (e.g., 'AST-01') to identify controls. Status values must be lowercase.",
+    "Batch-update up to 500 scoped controls in one transaction (write — editor+ role). Each operation identifies its target by scf_id; status values are lowercase.",
     {
-      org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       operations: z
         .array(
           z.object({
-            scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01') — required"),
-            selected: z.boolean().optional().describe("Whether the control is in scope"),
-            implementation_status: ImplementationStatus.optional().describe("Implementation status (lowercase)"),
-            selection_reason: z.string().optional().describe("Justification for selection or status"),
-            priority: z.string().optional().describe("Implementation priority"),
-            owner: z.string().optional().describe("Control owner"),
-            assigned_to: z.string().optional().describe("Assignee"),
-            maturity_level: MaturityLevel.optional().describe(
-              "Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)",
+            scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (required, e.g., 'AST-01')"),
+            selected: z.boolean().optional().describe("Toggle in-scope membership"),
+            implementation_status: ImplementationStatus.optional().describe(
+              "Implementation status (lowercase): not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred",
             ),
-            target_date: z.string().optional().describe("Target date (YYYY-MM-DD)"),
-            completion_date: z.string().optional().describe("Completion date (YYYY-MM-DD)"),
-            implementation_notes: z.string().optional().describe("Implementation notes"),
+            selection_reason: z
+              .string()
+              .optional()
+              .describe("Justification for selection — required for not_applicable or deferred"),
+            priority: z.string().optional().describe("Implementation priority: 'high', 'medium', or 'low'"),
+            owner: z.string().optional().describe("Accountable owner of the control"),
+            assigned_to: z.string().optional().describe("Assignee responsible for implementation"),
+            maturity_level: MaturityLevel.optional().describe(
+              "Maturity level with L prefix: L0 Not Performed, L1 Performed, L2 Planned, L3 Well Defined, L4 Quantitatively Controlled, L5 Continuously Improving",
+            ),
+            target_date: z.string().optional().describe("Target date in ISO-8601 (YYYY-MM-DD)"),
+            completion_date: z.string().optional().describe("Completion date in ISO-8601 (YYYY-MM-DD)"),
+            implementation_notes: z.string().optional().describe("Free-text implementation notes"),
           }),
         )
         .min(1)
         .max(500)
-        .describe("Array of update operations"),
+        .describe("Update operations to apply (1–500 per call)"),
     },
     async ({ org_id, operations }) => {
       try {
