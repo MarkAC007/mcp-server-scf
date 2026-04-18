@@ -21,10 +21,7 @@ startCommand:
         type: string
         title: Platform URL
         default: "https://uk.scfcontrolsplatform.app"
-        description: "SCF Controls Platform API endpoint. Use https://scfcontrolsplatform.com for US region."
-        enum:
-          - "https://uk.scfcontrolsplatform.app"
-          - "https://scfcontrolsplatform.com"
+        description: "SCF Controls Platform API endpoint (UK data residency)."
     required:
       - SCF_API_KEY
   commandFunction: |-
