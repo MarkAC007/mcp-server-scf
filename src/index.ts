@@ -15,10 +15,17 @@ import { registerWebhookTools } from "./tools/webhooks.js";
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { name: string; version: string };
 
-const server = new McpServer({
-  name: pkg.name,
-  version: pkg.version,
-});
+const server = new McpServer(
+  {
+    name: pkg.name,
+    version: pkg.version,
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  },
+);
 
 // Register all tool groups
 registerCatalogTools(server);

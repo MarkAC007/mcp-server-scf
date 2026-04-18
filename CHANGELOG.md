@@ -25,8 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Branding aligned: SCF Controls Platform leads, ComplianceGenie credited as maintainer.** README hero copy updated to remove the `Built by X | Platform: Y` split. Closes #65.
 - **Code-quality toolchain wired up.** ESLint 9 (flat config, `typescript-eslint`) actually runs in CI now — the silent `|| echo "eslint not installed"` guard has been removed. Prettier 3 added with `.prettierrc.json` (120-col width matching existing style) and enforced in CI via `npm run format:check`. Husky + lint-staged pre-commit hook runs `eslint --fix` and `prettier --write` on staged files only. Whole repo reformatted in a single pass. Closes #67, #68, #69.
+- **Tests: vitest suite added and required in CI.** 29 tests across `tests/registration.test.ts` (per-domain tool registration + name/description conformance), `tests/errors.test.ts` (every `formatError` branch + `errorResult` shape), and `tests/handshake.test.ts` (spawns the built server over stdio and validates the MCP `initialize` response). The handshake test is also a regression guard against the `0.1.0` version-drift bug. Coverage reporting via `@vitest/coverage-v8` available through `npm run test:coverage`. Closes #66.
+- **Explicit MCP capabilities declaration.** `McpServer` is now constructed with `{ capabilities: { tools: {} } }` so clients don't rely on inferred capabilities — asserted by the new handshake test. Closes #54.
 
-Closes #50, #53, #64, #65, #67, #68, #69.
+Closes #50, #53, #54, #64, #65, #66, #67, #68, #69.
 
 ## [0.5.0] - 2026-04-01
 
