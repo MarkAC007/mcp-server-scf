@@ -5,9 +5,25 @@ Thank you for your interest in contributing! Here's how to get started.
 ## Development Setup
 
 1. Fork and clone the repository
-2. Install dependencies: `npm install`
+2. Install dependencies: `npm install` (automatically installs the husky pre-commit hook via the `prepare` script)
 3. Build: `npm run build`
 4. Test with MCP Inspector: `SCF_API_KEY=your_key npm run inspector`
+
+### Everyday scripts
+
+| Script                 | What it does                                  |
+| ---------------------- | --------------------------------------------- |
+| `npm run build`        | Type-check + compile to `build/`              |
+| `npm run dev`          | Watch-mode rebuild with `tsx`                 |
+| `npm run lint`         | Run ESLint on the repo                        |
+| `npm run lint:fix`     | ESLint with `--fix`                           |
+| `npm run format`       | Run Prettier `--write` on the repo            |
+| `npm run format:check` | Run Prettier `--check` (CI-friendly)          |
+| `npm run inspector`    | Launch MCP Inspector against the built server |
+
+### Pre-commit hook
+
+A `husky` + `lint-staged` pre-commit hook automatically runs `eslint --fix` and `prettier --write` on **staged files only** — no full-repo passes on every commit. If a violation can't be auto-fixed, the commit is aborted so you can address it. Bypass with `git commit --no-verify` only in emergencies; CI will still enforce lint + format on the PR.
 
 ## Adding a New Tool
 
@@ -40,6 +56,7 @@ Releases use two separate GitHub Actions workflows — version bumping and npm p
 ### Step 1: Version Bump
 
 Go to **Actions → Version Bump → Run workflow** and provide:
+
 - **Bump type:** patch, minor, or major
 - **Changelog entry:** what changed
 
@@ -50,6 +67,7 @@ This creates a PR with the bumped version and updated CHANGELOG. Merge the PR to
 Go to **Actions → Publish to npm → Run workflow**. The version is read from `package.json` on main automatically (or you can override it).
 
 This will:
+
 - Validate the version matches `package.json`
 - Verify the version isn't already published
 - Create a git tag if one doesn't exist
@@ -60,6 +78,7 @@ This will:
 ### Why two steps?
 
 Version bumping goes through a PR (respects branch protection). Publishing to npm is a separate manual trigger. This lets you:
+
 - Batch multiple merges before bumping the version
 - Review the version PR before merging
 - Publish when ready, not on every merge
@@ -74,6 +93,7 @@ Version bumping goes through a PR (respects branch protection). Publishing to np
 ## Reporting Issues
 
 Open an issue on GitHub with:
+
 - What you expected to happen
 - What actually happened
 - Steps to reproduce

@@ -140,7 +140,9 @@ export function registerCapabilityTools(server: McpServer) {
     "Get a single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy posture_percentage. Use theme_code from list_capability_themes (e.g., 'ACCESS_CONTROL').",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      theme_code: z.string().describe("Capability theme code (e.g., 'ACCESS_CONTROL') — get from list_capability_themes"),
+      theme_code: z
+        .string()
+        .describe("Capability theme code (e.g., 'ACCESS_CONTROL') — get from list_capability_themes"),
     },
     async ({ org_id, theme_code }) => {
       try {
@@ -158,7 +160,9 @@ export function registerCapabilityTools(server: McpServer) {
     "List SCF controls mapped to a capability theme (KSI) with their scoping status, implementation status, and maturity level. Use to enumerate controls under a KSI for drill-down into evidence. Supports pagination and scope filtering.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      theme_code: z.string().describe("Capability theme code (e.g., 'ACCESS_CONTROL') — get from list_capability_themes"),
+      theme_code: z
+        .string()
+        .describe("Capability theme code (e.g., 'ACCESS_CONTROL') — get from list_capability_themes"),
       scope_status: z
         .enum(["in_scope", "out_of_scope", "all"])
         .optional()
@@ -177,10 +181,11 @@ export function registerCapabilityTools(server: McpServer) {
     async ({ org_id, theme_code, scope_status, limit, offset }) => {
       try {
         const client = getClient();
-        const data = await client.get(
-          `/organizations/${org_id}/capability-themes/${theme_code}/controls`,
-          { scope_status, limit, offset },
-        );
+        const data = await client.get(`/organizations/${org_id}/capability-themes/${theme_code}/controls`, {
+          scope_status,
+          limit,
+          offset,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -197,9 +202,7 @@ export function registerCapabilityTools(server: McpServer) {
     async ({ org_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(
-          `/organizations/${org_id}/capability-themes/evidence-posture`,
-        );
+        const data = await client.get(`/organizations/${org_id}/capability-themes/evidence-posture`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

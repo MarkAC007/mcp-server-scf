@@ -24,7 +24,9 @@ export function registerScopedControlTools(server: McpServer) {
     "List controls scoped to your organization with their implementation status. Supports filtering by scope status, domain, framework, CSF function, control weighting, and search. Use scope_status='in_scope' to return only controls where selected=True. Returns paginated results. Pagination uses limit/offset.",
     {
       org_id: z.string().describe("Organization ID (UUID)"),
-      scope_status: ScopeStatus.optional().describe("Filter by scoping status: 'in_scope' (selected=True only), 'out_of_scope' (not selected), 'all' (default — returns everything)"),
+      scope_status: ScopeStatus.optional().describe(
+        "Filter by scoping status: 'in_scope' (selected=True only), 'out_of_scope' (not selected), 'all' (default — returns everything)",
+      ),
       domain: z.string().optional().describe("Filter by SCF domain (e.g., 'GOV', 'AST', 'IAC')"),
       framework: z.string().optional().describe("Filter by framework mapping"),
       csf_function: z.string().optional().describe("Filter by NIST CSF function"),
@@ -77,16 +79,22 @@ export function registerScopedControlTools(server: McpServer) {
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       scf_id: z.string().describe("SCF control identifier (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
-      implementation_status: ImplementationStatus.optional().describe("New implementation status (lowercase: not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred)"),
+      implementation_status: ImplementationStatus.optional().describe(
+        "New implementation status (lowercase: not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred)",
+      ),
       priority: z.string().optional().describe("Implementation priority (e.g., 'high', 'medium', 'low')"),
-      maturity_level: MaturityLevel.optional()
-        .describe("Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)"),
+      maturity_level: MaturityLevel.optional().describe(
+        "Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)",
+      ),
       owner: z.string().optional().describe("Control owner (person accountable)"),
       assigned_to: z.string().optional().describe("Assignee (person responsible for implementation)"),
       implementation_notes: z.string().optional().describe("Implementation notes and context"),
       target_date: z.string().optional().describe("Target completion date (YYYY-MM-DD)"),
       completion_date: z.string().optional().describe("Actual completion date (YYYY-MM-DD)"),
-      selection_reason: z.string().optional().describe("Justification for scoping selection or status (required for not_applicable, deferred)"),
+      selection_reason: z
+        .string()
+        .optional()
+        .describe("Justification for scoping selection or status (required for not_applicable, deferred)"),
     },
     async ({ org_id, scf_id, ...fields }) => {
       try {
@@ -151,8 +159,9 @@ export function registerScopedControlTools(server: McpServer) {
             priority: z.string().optional().describe("Implementation priority"),
             owner: z.string().optional().describe("Control owner"),
             assigned_to: z.string().optional().describe("Assignee"),
-            maturity_level: MaturityLevel.optional()
-              .describe("Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)"),
+            maturity_level: MaturityLevel.optional().describe(
+              "Control maturity level — must use L prefix format (L0=Not Performed, L1=Performed, L2=Planned, L3=Well Defined, L4=Quantitatively Controlled, L5=Continuously Improving)",
+            ),
             target_date: z.string().optional().describe("Target date (YYYY-MM-DD)"),
             completion_date: z.string().optional().describe("Completion date (YYYY-MM-DD)"),
             implementation_notes: z.string().optional().describe("Implementation notes"),

@@ -24,8 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Branding aligned: SCF Controls Platform leads, ComplianceGenie credited as maintainer.** README hero copy updated to remove the `Built by X | Platform: Y` split. Closes #65.
+- **Code-quality toolchain wired up.** ESLint 9 (flat config, `typescript-eslint`) actually runs in CI now — the silent `|| echo "eslint not installed"` guard has been removed. Prettier 3 added with `.prettierrc.json` (120-col width matching existing style) and enforced in CI via `npm run format:check`. Husky + lint-staged pre-commit hook runs `eslint --fix` and `prettier --write` on staged files only. Whole repo reformatted in a single pass. Closes #67, #68, #69.
 
-Closes #50, #53, #64, #65.
+Closes #50, #53, #64, #65, #67, #68, #69.
 
 ## [0.5.0] - 2026-04-01
 
