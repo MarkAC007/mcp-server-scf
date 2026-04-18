@@ -82,7 +82,7 @@ Non-`ScfApiError` errors (network failures, JSON parse errors) fall through to `
 
 ## Rate limiting
 
-The platform enforces **100 read requests/min and 20 write requests/min** per API key. When exceeded, the server returns `429` and this server surfaces it as "Rate limited. Please wait before retrying." Clients should back off and retry. The server does not implement automatic retry — batch operations (`batch_update_controls`, `bulk_assess_evidence`, `bulk_assess_windows`) exist specifically to avoid hitting these limits when mutating many records.
+The platform enforces **100 read requests/min and 20 write requests/min** per API key. When exceeded, the server returns `429` and this server surfaces it as "Rate limited. Please wait before retrying." Clients should back off and retry. The server does not implement automatic retry — batch operations (`scf_batch_update_controls`, `scf_bulk_assess_evidence`, `scf_bulk_assess_windows`) exist specifically to avoid hitting these limits when mutating many records.
 
 ---
 
@@ -100,7 +100,7 @@ Configuration is environment-only — there is no config file. See [`docs/authen
 ## What this server does **not** do
 
 - No persistent storage. Every request hits the platform.
-- No caching. Successive `list_controls` calls re-fetch.
-- No background jobs. Long-running platform tasks (`trigger_vendor_research`, `trigger_dpsia`, `trigger_window_assessment`) return a task ID; the client polls via the corresponding `get_*` tool.
-- No webhook receiver. `create_webhook` provisions a platform-side endpoint; external systems POST directly to the platform, not to this server.
+- No caching. Successive `scf_list_controls` calls re-fetch.
+- No background jobs. Long-running platform tasks (`scf_trigger_vendor_research`, `scf_trigger_dpsia`, `scf_trigger_window_assessment`) return a task ID; the client polls via the corresponding `get_*` tool.
+- No webhook receiver. `scf_create_webhook` provisions a platform-side endpoint; external systems POST directly to the platform, not to this server.
 - No streaming. All responses are buffered JSON.

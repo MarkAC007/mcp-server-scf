@@ -6,13 +6,13 @@ Source: [`src/tools/scoped-controls.ts`](../../src/tools/scoped-controls.ts).
 
 ---
 
-## `list_scoped_controls`
+## `scf_list_scoped_controls`
 
 List controls scoped to your organization with their implementation status. Supports filtering by scope status, domain, framework, CSF function, control weighting, and search. Use `scope_status='in_scope'` to return only controls where `selected=True`.
 
 | Parameter           | Type   | Required | Description                                                 |
 | ------------------- | ------ | -------- | ----------------------------------------------------------- |
-| `org_id`            | string | Yes      | Organization ID (UUID) — get from `list_organizations`      |
+| `org_id`            | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`  |
 | `scope_status`      | string | No       | `in_scope` (selected only), `out_of_scope`, `all` (default) |
 | `domain`            | string | No       | Filter by SCF domain (e.g., `GOV`, `AST`, `IAC`)            |
 | `framework`         | string | No       | Filter by framework mapping                                 |
@@ -24,18 +24,18 @@ List controls scoped to your organization with their implementation status. Supp
 
 ---
 
-## `get_scoped_control`
+## `scf_get_scoped_control`
 
 Get detailed implementation status of a specific scoped control, including owner, notes, evidence links, and audit history. Identify by `scf_id` (e.g., `AST-01`), not by UUID.
 
-| Parameter | Type   | Required | Description                                            |
-| --------- | ------ | -------- | ------------------------------------------------------ |
-| `org_id`  | string | Yes      | Organization ID (UUID) — get from `list_organizations` |
-| `scf_id`  | string | Yes      | SCF control identifier (e.g., `AST-01`) — NOT the UUID |
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+| `scf_id`  | string | Yes      | SCF control identifier (e.g., `AST-01`) — NOT the UUID     |
 
 ---
 
-## `update_scoped_control`
+## `scf_update_scoped_control`
 
 Update a scoped control's implementation tracking fields. Status values are lowercase. Maturity uses the `L0`–`L5` prefix format. All fields are optional — only provided fields are updated.
 
@@ -55,17 +55,17 @@ Update a scoped control's implementation tracking fields. Status values are lowe
 
 ---
 
-## `get_scoping_stats`
+## `scf_get_scoping_stats`
 
 Get implementation statistics for an organization — counts by status, completion percentage, and framework coverage breakdown.
 
-| Parameter | Type   | Required | Description                                            |
-| --------- | ------ | -------- | ------------------------------------------------------ |
-| `org_id`  | string | Yes      | Organization ID (UUID) — get from `list_organizations` |
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
 
 ---
 
-## `scope_framework`
+## `scf_scope_framework`
 
 Bulk-scope every control from a framework into your organization. Creates scoped-control entries for all controls in the framework.
 
@@ -76,7 +76,7 @@ Bulk-scope every control from a framework into your organization. Creates scoped
 
 ---
 
-## `batch_update_controls`
+## `scf_batch_update_controls`
 
 Batch update multiple scoped controls in a single transaction. Maximum 500 operations per request. Status values must be lowercase; maturity uses the `L` prefix format.
 

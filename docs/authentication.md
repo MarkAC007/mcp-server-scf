@@ -118,7 +118,7 @@ There is no automated rotation hook in this server — secrets are expected to l
 
 ## Scopes and permissions
 
-Today there is one key type with full access to any organization the user belongs to; fine-grained scopes are planned but not shipped. Role-based access (`admin`, `editor`, `viewer`) is enforced **per organization membership**, not per key — a `viewer` membership cannot invoke write-tagged tools like `update_scoped_control` or `revalidate_evidence_file` regardless of which key they use. A `403 Access denied` response usually means the authenticated user lacks the required role in the target org.
+Today there is one key type with full access to any organization the user belongs to; fine-grained scopes are planned but not shipped. Role-based access (`admin`, `editor`, `viewer`) is enforced **per organization membership**, not per key — a `viewer` membership cannot invoke write-tagged tools like `scf_update_scoped_control` or `scf_revalidate_evidence_file` regardless of which key they use. A `403 Access denied` response usually means the authenticated user lacks the required role in the target org.
 
 ---
 
@@ -127,5 +127,5 @@ Today there is one key type with full access to any organization the user belong
 - **Never logged.** `SCF_API_KEY` is never printed to stderr, never included in error messages, never appears in `--debug` output.
 - **Server-side hashing.** Keys are stored as SHA-256 hashes; the platform operator cannot retrieve your plaintext key.
 - **HTTPS only.** The platform rejects plain HTTP. The client does not support custom CAs.
-- **Short-lived mutations.** Pre-signed download URLs returned by `get_evidence_file` expire after 15 minutes.
+- **Short-lived mutations.** Pre-signed download URLs returned by `scf_get_evidence_file` expire after 15 minutes.
 - **npm provenance.** Every published version is cryptographically linked to its source commit via [npm provenance attestations](https://docs.npmjs.com/generating-provenance-statements) issued through GitHub Actions OIDC — no long-lived npm tokens anywhere in the release pipeline.

@@ -16,7 +16,7 @@ const SystemType = z.enum([
 
 export function registerCapabilityTools(server: McpServer) {
   server.tool(
-    "list_capability_themes",
+    "scf_list_capability_themes",
     "List the 11 KSI-aligned capability themes for an organization. Capability themes group NIST 800-53 controls into security capability areas, providing a high-level view of security posture.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -33,7 +33,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "list_capabilities",
+    "scf_list_capabilities",
     "List capabilities for an organization. Capabilities map to systems and evidence, showing what security functions your infrastructure supports.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -50,7 +50,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "list_systems",
+    "scf_list_systems",
     "List infrastructure systems in the organization's inventory. Systems are the tools and platforms that implement security capabilities.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -67,7 +67,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "create_system",
+    "scf_create_system",
     "Add a system to the organization's infrastructure inventory. Systems can be linked to capabilities and evidence.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -90,7 +90,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "update_system",
+    "scf_update_system",
     "Update an existing system record. All fields are optional — only provided fields are updated.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -119,7 +119,7 @@ export function registerCapabilityTools(server: McpServer) {
   // ---------------------------------------------------------------------------
 
   server.tool(
-    "get_capability_theme_scorecard",
+    "scf_get_capability_theme_scorecard",
     "Get the multi-axis KSI scorecard for all capability themes in one call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with Strong/Moderate/Developing bands. Replaces the dual-call pattern of list_capability_themes + evidence-posture. Source: scf-controls-platform #549 Phase 1.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -136,7 +136,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "get_capability_theme",
+    "scf_get_capability_theme",
     "Get a single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy posture_percentage. Use theme_code from list_capability_themes (e.g., 'ACCESS_CONTROL').",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -156,7 +156,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "list_capability_theme_controls",
+    "scf_list_capability_theme_controls",
     "List SCF controls mapped to a capability theme (KSI) with their scoping status, implementation status, and maturity level. Use to enumerate controls under a KSI for drill-down into evidence. Supports pagination and scope filtering.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -194,7 +194,7 @@ export function registerCapabilityTools(server: McpServer) {
   );
 
   server.tool(
-    "get_capability_theme_evidence_posture",
+    "scf_get_capability_theme_evidence_posture",
     "Get per-theme evidence assessment metrics — controls with evidence, file counts by assessment status (sufficient/partial/insufficient/pending/unassessed), average relevance score, and derived evidence confidence level (strong/moderate/weak/none). Use for KSI-centric evidence quality dashboards.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),

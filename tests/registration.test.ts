@@ -36,12 +36,12 @@ describe("tool registration", () => {
       expect(server.tool).toHaveBeenCalledTimes(expected);
     });
 
-    it(`every ${name} tool has snake_case name and non-empty description`, () => {
+    it(`every ${name} tool is scf_-prefixed snake_case with a non-empty description`, () => {
       const server = makeMockServer();
       register(server);
       for (const call of server.tool.mock.calls) {
         const [toolName, description] = call;
-        expect(toolName, `tool name ${toolName}`).toMatch(/^[a-z][a-z0-9_]*$/);
+        expect(toolName, `tool name ${toolName}`).toMatch(/^scf_[a-z][a-z0-9_]*$/);
         expect(description, `description for ${toolName}`).toBeTypeOf("string");
         expect((description as string).length, `description length for ${toolName}`).toBeGreaterThan(0);
       }

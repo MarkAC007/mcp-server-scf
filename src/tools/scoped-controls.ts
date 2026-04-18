@@ -20,7 +20,7 @@ const ScopeStatus = z.enum(["in_scope", "out_of_scope", "all"]);
 
 export function registerScopedControlTools(server: McpServer) {
   server.tool(
-    "list_scoped_controls",
+    "scf_list_scoped_controls",
     "List controls scoped to your organization with their implementation status. Supports filtering by scope status, domain, framework, CSF function, control weighting, and search. Use scope_status='in_scope' to return only controls where selected=True. Returns paginated results. Pagination uses limit/offset.",
     {
       org_id: z.string().describe("Organization ID (UUID)"),
@@ -56,7 +56,7 @@ export function registerScopedControlTools(server: McpServer) {
   );
 
   server.tool(
-    "get_scoped_control",
+    "scf_get_scoped_control",
     "Get detailed implementation status of a specific scoped control, including owner, notes, evidence links, and audit history. Use the scf_id (e.g., 'AST-01') as the identifier.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -74,7 +74,7 @@ export function registerScopedControlTools(server: McpServer) {
   );
 
   server.tool(
-    "update_scoped_control",
+    "scf_update_scoped_control",
     "Update a scoped control's implementation tracking fields. Use the scf_id (e.g., 'AST-01', 'GOV-02') as the identifier — NOT the UUID. Status values are lowercase (e.g., 'not_started', 'in_progress'). All fields are optional — only provided fields are updated.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -108,7 +108,7 @@ export function registerScopedControlTools(server: McpServer) {
   );
 
   server.tool(
-    "get_scoping_stats",
+    "scf_get_scoping_stats",
     "Get implementation statistics for an organization — counts by status, completion percentage, framework coverage breakdown.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -125,7 +125,7 @@ export function registerScopedControlTools(server: McpServer) {
   );
 
   server.tool(
-    "scope_framework",
+    "scf_scope_framework",
     "Bulk-scope all controls from a framework to your organization. This creates scoped control entries for every control in the selected framework.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -145,7 +145,7 @@ export function registerScopedControlTools(server: McpServer) {
   );
 
   server.tool(
-    "batch_update_controls",
+    "scf_batch_update_controls",
     "Batch update multiple scoped controls in a single transaction. Maximum 500 operations per request. Use scf_id (e.g., 'AST-01') to identify controls. Status values must be lowercase.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),

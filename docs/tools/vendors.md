@@ -6,7 +6,7 @@ Source: [`src/tools/vendors.ts`](../../src/tools/vendors.ts).
 
 ---
 
-## `list_vendors`
+## `scf_list_vendors`
 
 List third-party vendors in the organization's TPRM registry. Filter by status, criticality, or category.
 
@@ -20,7 +20,7 @@ List third-party vendors in the organization's TPRM registry. Filter by status, 
 
 ---
 
-## `get_vendor`
+## `scf_get_vendor`
 
 Get detailed vendor information including certifications, assessments, risk score, and research results.
 
@@ -31,7 +31,7 @@ Get detailed vendor information including certifications, assessments, risk scor
 
 ---
 
-## `create_vendor`
+## `scf_create_vendor`
 
 Add a new vendor to the TPRM registry. Triggers automatic risk scoring based on criticality and data handling.
 
@@ -48,14 +48,14 @@ Add a new vendor to the TPRM registry. Triggers automatic risk scoring based on 
 
 ---
 
-## `update_vendor`
+## `scf_update_vendor`
 
 Update an existing vendor record. All fields are optional — only provided fields are updated.
 
 | Parameter       | Type   | Required | Description                                      |
 | --------------- | ------ | -------- | ------------------------------------------------ |
 | `org_id`        | string | Yes      | Organization ID (UUID)                           |
-| `vendor_id`     | string | Yes      | Vendor ID — get from `list_vendors`              |
+| `vendor_id`     | string | Yes      | Vendor ID — get from `scf_list_vendors`          |
 | `name`          | string | No       | Vendor name                                      |
 | `description`   | string | No       | Vendor description                               |
 | `category`      | string | No       | Category                                         |
@@ -66,7 +66,7 @@ Update an existing vendor record. All fields are optional — only provided fiel
 
 ---
 
-## `trigger_vendor_research`
+## `scf_trigger_vendor_research`
 
 Trigger AI-powered security research for a vendor. Checks HIBP (breach databases), NVD (vulnerability databases), and public security posture. Returns a task ID for status polling.
 
@@ -78,7 +78,7 @@ Trigger AI-powered security research for a vendor. Checks HIBP (breach databases
 
 ---
 
-## `get_vendor_research`
+## `scf_get_vendor_research`
 
 Get the latest AI-powered research results for a vendor — breach history, known vulnerabilities, and security posture analysis.
 
@@ -89,7 +89,7 @@ Get the latest AI-powered research results for a vendor — breach history, know
 
 ---
 
-## `trigger_dpsia`
+## `scf_trigger_dpsia`
 
 Trigger a Data Protection Security Impact Assessment (DPSIA) for a vendor. Evaluates security posture against the CIA triad and certification requirements. If `services_used` is omitted, it's auto-derived from the vendor description.
 

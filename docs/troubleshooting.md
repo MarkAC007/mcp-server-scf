@@ -57,8 +57,8 @@ The platform enforces **100 read requests/min and 20 write requests/min per API 
 
 **Fix**
 
-- For bulk work, use the batch tools — `batch_update_controls` (up to 500 operations), `bulk_assess_evidence` (up to 50 files), `bulk_assess_windows` (up to 25 evidence IDs). They count as a single request.
-- If you're looping `update_scoped_control` in a script, wait 60 seconds or switch to `batch_update_controls`.
+- For bulk work, use the batch tools — `scf_batch_update_controls` (up to 500 operations), `scf_bulk_assess_evidence` (up to 50 files), `scf_bulk_assess_windows` (up to 25 evidence IDs). They count as a single request.
+- If you're looping `scf_update_scoped_control` in a script, wait 60 seconds or switch to `scf_batch_update_controls`.
 - Persistent 429s on modest traffic suggest a second process is sharing the key — rotate and investigate.
 
 ---
