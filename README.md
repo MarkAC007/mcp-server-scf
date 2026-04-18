@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://scfcontrolsplatform.com/">
+    <img src="https://raw.githubusercontent.com/MarkAC007/mcp-server-scf/main/docs/assets/banner.png" alt="SCF Controls Platform — MCP server for security compliance, frameworks, and risk management for AI agents. Maintained by ComplianceGenie.io." width="100%">
+  </a>
+</p>
+
 # mcp-server-scf
 
 <!-- Build & Security -->
@@ -26,7 +32,7 @@
 
 Give your AI assistant access to 1,451 SCF security controls, 354+ framework mappings (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR), evidence tracking, risk registers, and vendor risk management — all through the [Model Context Protocol](https://modelcontextprotocol.io).
 
-Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Maintained by [ComplianceGenie](https://compliancegenie.io).
+Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Maintained by [ComplianceGenie.io](https://compliancegenie.io).
 
 > Having trouble? → [**docs/troubleshooting.md**](docs/troubleshooting.md) · API key setup → [**docs/authentication.md**](docs/authentication.md) · How it works → [**docs/architecture.md**](docs/architecture.md)
 
@@ -206,7 +212,7 @@ MIT — see [LICENSE](LICENSE).
 ## Links
 
 - [SCF Controls Platform](https://scfcontrolsplatform.com/) — the compliance platform
-- [ComplianceGenie.io](https://compliancegenie.io) — maintained by Compliance Genie
+- [ComplianceGenie.io](https://compliancegenie.io) — maintainer
 - [Model Context Protocol](https://modelcontextprotocol.io) — MCP specification
 - [SCF Framework](https://securecontrolsframework.com) — Secure Controls Framework
 - [npm Package](https://www.npmjs.com/package/mcp-server-scf) — npm registry
