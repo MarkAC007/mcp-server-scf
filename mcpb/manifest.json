@@ -55,7 +55,7 @@
     "api_url": {
       "type": "string",
       "title": "Platform URL",
-      "description": "SCF Controls Platform endpoint. Defaults to the UK region (https://uk.scfcontrolsplatform.app). Use https://scfcontrolsplatform.com for the US region.",
+      "description": "SCF Controls Platform endpoint. Defaults to https://uk.scfcontrolsplatform.app (UK data residency).",
       "required": false,
       "default": "https://uk.scfcontrolsplatform.app"
     }

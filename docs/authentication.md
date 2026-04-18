@@ -6,9 +6,7 @@
 
 ## Getting an API key
 
-1. Sign up or sign in at your region's platform URL:
-   - **UK (default):** [uk.scfcontrolsplatform.app](https://uk.scfcontrolsplatform.app)
-   - **US:** [scfcontrolsplatform.com](https://scfcontrolsplatform.com)
+1. Sign up or sign in at [uk.scfcontrolsplatform.app](https://uk.scfcontrolsplatform.app) (UK data residency).
 2. Open **Settings → API Keys**.
 3. Click **Generate New Key**.
 4. Copy the key immediately — it's shown once. Keys are stored server-side as SHA-256 hashes and cannot be recovered after the dialog closes.
@@ -100,16 +98,9 @@ The `-e SCF_API_KEY` flag (without a value) passes the variable through from the
 
 ---
 
-## Region selection
+## Platform URL
 
-`SCF_API_URL` selects the platform region. Pick the endpoint that matches where your data is hosted:
-
-| Region | `SCF_API_URL`                                  | Platform console             |
-| ------ | ---------------------------------------------- | ---------------------------- |
-| UK     | `https://uk.scfcontrolsplatform.app` (default) | `uk.scfcontrolsplatform.app` |
-| US     | `https://scfcontrolsplatform.com`              | `scfcontrolsplatform.com`    |
-
-An API key issued in one region **will not work** against the other. Using the wrong URL produces `401 Authentication failed` — the most common cause of a working account reporting auth errors.
+The platform runs in the UK (`https://uk.scfcontrolsplatform.app`) — this is the default and currently the only region. `SCF_API_URL` exists so future regions can be selected without a code change; for now, leave it unset or set it to the UK URL explicitly.
 
 ---
 
