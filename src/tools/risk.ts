@@ -52,7 +52,10 @@ export function registerRiskTools(server: McpServer) {
       likelihood: z.number().min(1).max(5).describe("Inherent likelihood (1-5)"),
       impact: z.number().min(1).max(5).describe("Inherent impact (1-5)"),
       owner: z.string().optional().describe("Risk owner"),
-      treatment_status: z.string().optional().describe("Treatment status (e.g., 'mitigate', 'accept', 'transfer', 'avoid')"),
+      treatment_status: z
+        .string()
+        .optional()
+        .describe("Treatment status (e.g., 'mitigate', 'accept', 'transfer', 'avoid')"),
       control_id: z.string().optional().describe("Linked control ID"),
     },
     async ({ org_id, ...body }) => {

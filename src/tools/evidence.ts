@@ -32,10 +32,16 @@ export function registerEvidenceTools(server: McpServer) {
       evidence_id: z.string().describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence_catalog"),
       is_tracked: z.boolean().default(false).describe("Whether this evidence item is actively tracked"),
       system_id: z.string().optional().describe("System ID (UUID) to link this evidence to — get from list_systems"),
-      method_of_collection: z.string().optional().describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
+      method_of_collection: z
+        .string()
+        .optional()
+        .describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
       collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
       owner: z.string().optional().describe("Person responsible for this evidence item"),
-      frequency: z.string().optional().describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
+      frequency: z
+        .string()
+        .optional()
+        .describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
       comments: z.string().optional().describe("Additional notes or context about this evidence item"),
     },
     async ({ org_id, ...body }) => {
@@ -108,13 +114,24 @@ export function registerEvidenceTools(server: McpServer) {
     "Update an evidence item's tracking fields — toggle tracking, link to a system, set collection method, owner, frequency, etc. Use the catalog evidence ID (e.g., 'E-IAM-01') as the identifier. All fields except org_id and evidence_id are optional — only provided fields are updated.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
-      evidence_id: z.string().describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence or list_evidence_catalog"),
-      is_tracked: z.boolean().optional().describe("Whether this evidence item is actively tracked for the organization"),
+      evidence_id: z
+        .string()
+        .describe("Catalog evidence ID (e.g., 'E-IAM-01') — get from list_evidence or list_evidence_catalog"),
+      is_tracked: z
+        .boolean()
+        .optional()
+        .describe("Whether this evidence item is actively tracked for the organization"),
       system_id: z.string().optional().describe("System ID (UUID) to link this evidence to — get from list_systems"),
-      method_of_collection: z.string().optional().describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
+      method_of_collection: z
+        .string()
+        .optional()
+        .describe("How the evidence is collected (e.g., 'automated', 'manual', 'hybrid')"),
       collecting_system: z.string().optional().describe("System or tool used to collect the evidence"),
       owner: z.string().optional().describe("Person responsible for this evidence item"),
-      frequency: z.string().optional().describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
+      frequency: z
+        .string()
+        .optional()
+        .describe("How often evidence is collected (e.g., 'daily', 'weekly', 'monthly', 'quarterly', 'annually')"),
       comments: z.string().optional().describe("Additional notes or context about this evidence item"),
     },
     async ({ org_id, evidence_id, ...fields }) => {
@@ -204,15 +221,18 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — get from list_evidence"),
       file_id: z.string().describe("Evidence file ID (UUID) — get from list_evidence_files"),
-      assessment_source: z.enum(["on_demand", "auto", "bulk"]).optional().default("on_demand").describe("Source of the assessment request"),
+      assessment_source: z
+        .enum(["on_demand", "auto", "bulk"])
+        .optional()
+        .default("on_demand")
+        .describe("Source of the assessment request"),
     },
     async ({ org_id, evidence_id, file_id, assessment_source }) => {
       try {
         const client = getClient();
-        const data = await client.post(
-          `/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assess`,
-          { assessment_source },
-        );
+        const data = await client.post(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assess`, {
+          assessment_source,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -231,9 +251,7 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, evidence_id, file_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(
-          `/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assessment`,
-        );
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assessment`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -248,7 +266,11 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       evidence_id: z.string().optional().describe("Evidence ID — assess all files for this evidence item"),
       file_ids: z.array(z.string()).optional().describe("Specific evidence file IDs (UUIDs) to assess"),
-      assess_unassessed: z.boolean().optional().default(false).describe("Assess all files that have no existing assessment"),
+      assess_unassessed: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Assess all files that have no existing assessment"),
     },
     async ({ org_id, evidence_id, file_ids, assess_unassessed }) => {
       try {
@@ -320,10 +342,9 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, evidence_id, assessment_source }) => {
       try {
         const client = getClient();
-        const data = await client.post(
-          `/organizations/${org_id}/evidence/${evidence_id}/assess-window`,
-          { assessment_source },
-        );
+        const data = await client.post(`/organizations/${org_id}/evidence/${evidence_id}/assess-window`, {
+          assessment_source,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -345,15 +366,21 @@ export function registerEvidenceTools(server: McpServer) {
         .optional()
         .default(10)
         .describe("Maximum number of assessments to return (1-100, default 10)"),
-      offset: z.number().int().min(0).optional().default(0).describe("Number of assessments to skip for pagination (default 0)"),
+      offset: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .default(0)
+        .describe("Number of assessments to skip for pagination (default 0)"),
     },
     async ({ org_id, evidence_id, limit, offset }) => {
       try {
         const client = getClient();
-        const data = await client.get(
-          `/organizations/${org_id}/evidence/${evidence_id}/window-assessments`,
-          { limit, offset },
-        );
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/window-assessments`, {
+          limit,
+          offset,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -371,9 +398,7 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, assessment_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(
-          `/organizations/${org_id}/evidence/window-assessments/${assessment_id}`,
-        );
+        const data = await client.get(`/organizations/${org_id}/evidence/window-assessments/${assessment_id}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -395,10 +420,7 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, evidence_ids }) => {
       try {
         const client = getClient();
-        const data = await client.post(
-          `/organizations/${org_id}/evidence/assess-windows-bulk`,
-          { evidence_ids },
-        );
+        const data = await client.post(`/organizations/${org_id}/evidence/assess-windows-bulk`, { evidence_ids });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -415,9 +437,7 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(
-          `/organizations/${org_id}/evidence/window-assessments/summary`,
-        );
+        const data = await client.get(`/organizations/${org_id}/evidence/window-assessments/summary`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

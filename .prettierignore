@@ -1,0 +1,11 @@
+build/
+node_modules/
+coverage/
+.nyc_output/
+package-lock.json
+CHANGELOG.md
+Plans/
+# GitHub Actions workflows: claude-review requires the file contents to
+# exactly match the default branch for OIDC app-token exchange. Formatting
+# them triggers auth failures on every PR until the next merge to main.
+.github/workflows/

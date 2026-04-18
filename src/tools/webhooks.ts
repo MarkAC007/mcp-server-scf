@@ -11,8 +11,16 @@ export function registerWebhookTools(server: McpServer) {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       name: z.string().describe("Human-readable label for the endpoint (e.g., 'Splunk SIEM', 'AWS Config')"),
       description: z.string().optional().describe("Optional description of the endpoint's purpose"),
-      allowed_evidence_ids: z.array(z.string()).optional().describe("Restrict ingestion to specific evidence IDs (e.g., ['ERL-IAM-001']). Null allows any evidence ID."),
-      rate_limit_per_minute: z.number().min(1).max(10000).optional().describe("Per-endpoint rate limit (requests/min). Null uses the organization default."),
+      allowed_evidence_ids: z
+        .array(z.string())
+        .optional()
+        .describe("Restrict ingestion to specific evidence IDs (e.g., ['ERL-IAM-001']). Null allows any evidence ID."),
+      rate_limit_per_minute: z
+        .number()
+        .min(1)
+        .max(10000)
+        .optional()
+        .describe("Per-endpoint rate limit (requests/min). Null uses the organization default."),
     },
     async ({ org_id, ...body }) => {
       try {
@@ -108,7 +116,10 @@ export function registerWebhookTools(server: McpServer) {
     async ({ org_id, endpoint_id, limit, offset }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/webhook-endpoints/${endpoint_id}/deliveries`, { limit, offset });
+        const data = await client.get(`/organizations/${org_id}/webhook-endpoints/${endpoint_id}/deliveries`, {
+          limit,
+          offset,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

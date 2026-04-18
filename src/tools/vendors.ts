@@ -52,7 +52,9 @@ export function registerVendorTools(server: McpServer) {
       description: z.string().optional().describe("Vendor description"),
       category: z.string().optional().describe("Vendor category (e.g., 'SaaS', 'Infrastructure', 'Consulting')"),
       criticality: z.enum(["critical", "high", "medium", "low"]).default("medium").describe("Vendor criticality"),
-      status: z.enum(["prospect", "active", "inactive", "under_review"]).default("prospect")
+      status: z
+        .enum(["prospect", "active", "inactive", "under_review"])
+        .default("prospect")
         .describe("Vendor status — defaults to 'prospect'"),
       website: z.string().optional().describe("Vendor website URL"),
       contact_email: z.string().optional().describe("Primary contact email"),
@@ -138,11 +140,25 @@ export function registerVendorTools(server: McpServer) {
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
       vendor_id: z.string().describe("Vendor ID"),
-      services_used: z.string().optional().describe("Description of services the vendor provides (auto-derived from vendor description if omitted)"),
-      assessment_type: z.enum(["new", "annual-review", "adhoc"]).optional().default("new").describe("Type of assessment"),
-      data_role: z.enum(["Processor", "Controller", "Joint Controller"]).optional().default("Processor").describe("Vendor data role"),
+      services_used: z
+        .string()
+        .optional()
+        .describe("Description of services the vendor provides (auto-derived from vendor description if omitted)"),
+      assessment_type: z
+        .enum(["new", "annual-review", "adhoc"])
+        .optional()
+        .default("new")
+        .describe("Type of assessment"),
+      data_role: z
+        .enum(["Processor", "Controller", "Joint Controller"])
+        .optional()
+        .default("Processor")
+        .describe("Vendor data role"),
       client_name: z.string().optional().describe("Client/organisation name for the assessment"),
-      additional_context: z.string().optional().describe("Additional context for the assessment (e.g., specific concerns, scope notes)"),
+      additional_context: z
+        .string()
+        .optional()
+        .describe("Additional context for the assessment (e.g., specific concerns, scope notes)"),
     },
     async ({ org_id, vendor_id, services_used, assessment_type, data_role, client_name, additional_context }) => {
       try {

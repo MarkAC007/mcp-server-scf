@@ -33,7 +33,10 @@ jobs:
         run: npm run build
 
       - name: Lint
-        run: npx eslint --version > /dev/null 2>&1 && npm run lint || echo "eslint not installed, skipping lint"
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Check for type errors
         run: npx tsc --noEmit
