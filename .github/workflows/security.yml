@@ -8,14 +8,17 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly Monday 06:00 UTC
 
+# Workflow-level: minimum (read). Job-level escalates only where required.
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   gitleaks:
     name: Secret Detection
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # gitleaks-action uploads SARIF
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -29,6 +32,8 @@ jobs:
   npm-signatures:
     name: Registry Signature Verification
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
@@ -68,6 +73,8 @@ jobs:
   semgrep:
     name: SAST Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: semgrep/semgrep
     steps:

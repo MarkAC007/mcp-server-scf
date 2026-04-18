@@ -5,10 +5,9 @@ on:
     types: [closed]
     branches: [main]
 
+# Workflow-level: minimum (read). Job-level escalates only where required.
 permissions:
-  contents: write
-  pull-requests: read
-  id-token: write  # Required for npm OIDC trusted publishing
+  contents: read
 
 jobs:
   release:
@@ -17,8 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm  # Link to GitHub Environment for OIDC
     permissions:
-      contents: write
-      id-token: write
+      contents: write       # push version bump commit + git tag + GitHub Release
+      id-token: write       # npm OIDC trusted publishing (provenance)
+      pull-requests: read   # read merged PR metadata for release notes
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -47,10 +47,12 @@ jobs:
 
       - name: Determine version bump
         id: bump_type
+        env:
+          # Pass untrusted PR fields via env, never interpolate into shell.
+          # See https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
-
           # Check labels first
           if [[ "$PR_LABELS" == *"major"* ]] || [[ "$PR_LABELS" == *"breaking"* ]]; then
             echo "bump=major" >> $GITHUB_OUTPUT
@@ -196,12 +198,15 @@ jobs:
 
       - name: Generate release notes
         id: release_notes
+        env:
+          # Pass untrusted PR fields via env, never interpolate into shell.
+          # See https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           NEW_VERSION="${{ steps.final_version.outputs.version }}"
           PREVIOUS_TAG="${{ steps.latest_tag.outputs.tag }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
 
           # Categorize commits since last release
           FEATURES=""
