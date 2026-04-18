@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "app.scfcontrolsplatform/mcp-server-scf",
   "description": "MCP server for the SCF Controls Platform — 72 tools for controls, evidence, risk, and TPRM.",
-  "version": "0.6.0",
+  "version": "0.5.12",
   "repository": {
     "url": "https://github.com/MarkAC007/mcp-server-scf",
     "source": "github"
@@ -12,7 +12,7 @@
     {
       "registryType": "npm",
       "identifier": "mcp-server-scf",
-      "version": "0.6.0",
+      "version": "0.5.12",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         {

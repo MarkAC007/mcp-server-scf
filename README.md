@@ -14,7 +14,7 @@
 
 <!-- Registries & Marketplaces -->
 
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listing_pending-lightgrey)](https://github.com/MarkAC007/mcp-server-scf/issues/58)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-green)](https://registry.modelcontextprotocol.io/v0/servers?search=scfcontrolsplatform)
 [![smithery badge](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
 
 <!-- Tech Stack -->
