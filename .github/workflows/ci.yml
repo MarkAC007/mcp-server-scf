@@ -41,6 +41,9 @@ jobs:
       - name: Check for type errors
         run: npx tsc --noEmit
 
+      - name: Run tests
+        run: npm test
+
       - name: Verify README tool count matches source
         run: |
           ACTUAL=$(grep -c "server.tool(" src/tools/*.ts | awk -F: '{sum += $2} END {print sum}')
