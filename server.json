@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "app.scfcontrolsplatform/mcp-server-scf",
+  "description": "MCP server for the SCF Controls Platform — 72 tools for controls, evidence, risk, and TPRM.",
+  "status": "active",
+  "version": "0.5.0",
+  "repository": {
+    "url": "https://github.com/MarkAC007/mcp-server-scf",
+    "source": "github"
+  },
+  "website_url": "https://scfcontrolsplatform.com",
+  "packages": [
+    {
+      "registry_type": "npm",
+      "identifier": "mcp-server-scf",
+      "version": "0.5.0",
+      "transport": { "type": "stdio" },
+      "environment_variables": [
+        {
+          "name": "SCF_API_KEY",
+          "description": "Your SCF Controls Platform API key. Generate at Settings > API Keys. Starts with the scf_ prefix.",
+          "is_required": true,
+          "is_secret": true,
+          "format": "string"
+        },
+        {
+          "name": "SCF_API_URL",
+          "description": "Platform API endpoint. Defaults to the EU region; set to https://scfcontrolsplatform.com for US.",
+          "is_required": false,
+          "format": "string",
+          "default": "https://eu.scfcontrolsplatform.app"
+        }
+      ]
+    }
+  ]
+}

@@ -1,15 +1,30 @@
+name: mcp-server-scf
+description: |
+  SCF Controls Platform MCP server — 72 tools that give AI assistants
+  access to 1,451 security controls, 354+ framework mappings
+  (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR), evidence tracking,
+  a 5x5 risk register, and third-party vendor risk management.
+homepage: https://github.com/MarkAC007/mcp-server-scf
+license: MIT
 startCommand:
   type: stdio
   configSchema:
     type: object
+    title: SCF Controls Platform configuration
     properties:
       SCF_API_KEY:
         type: string
-        description: "Your SCF platform API key (scf_ prefix). Generate at Settings > API Keys."
+        title: API key
+        description: Your SCF platform API key (scf_ prefix). Generate at Settings > API Keys.
+        format: password
       SCF_API_URL:
         type: string
+        title: Platform URL
         default: "https://eu.scfcontrolsplatform.app"
-        description: "SCF Controls Platform API URL"
+        description: "SCF Controls Platform API endpoint. Use https://scfcontrolsplatform.com for US region."
+        enum:
+          - "https://eu.scfcontrolsplatform.app"
+          - "https://scfcontrolsplatform.com"
     required:
       - SCF_API_KEY
   commandFunction: |-

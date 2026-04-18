@@ -12,6 +12,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-compatible-green.svg)](https://modelcontextprotocol.io)
 
+<!-- Registries & Marketplaces -->
+
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listing_pending-lightgrey)](https://github.com/MarkAC007/mcp-server-scf/issues/58)
+[![smithery badge](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
+
 <!-- Tech Stack -->
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)
@@ -56,7 +61,17 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 Full walkthrough (rotation, region selection, scopes): [**docs/authentication.md**](docs/authentication.md).
 
-### 2. Add the server to your MCP client
+### 2. Install — one-click
+
+Pick the button for your client. The deeplink opens the relevant IDE/app with a pre-filled install prompt — just paste your key when asked.
+
+[![Install in Claude Desktop](https://img.shields.io/badge/Install-Claude_Desktop-D97757?logo=anthropic&logoColor=white)](claude://mcp/install?name=scf&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-server-scf%22%5D%2C%22env%22%3A%7B%22SCF_API_KEY%22%3A%22scf_your_api_key_here%22%2C%22SCF_API_URL%22%3A%22https%3A%2F%2Feu.scfcontrolsplatform.app%22%7D%7D)
+[![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cHM6Ly9ldS5zY2Zjb250cm9sc3BsYXRmb3JtLmFwcCJ9fQ%3D%3D)
+[![Try on Smithery](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
+
+Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Docker)? See **[3. Manual config](#3-manual-config)** below.
+
+### 3. Manual config
 
 **Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
