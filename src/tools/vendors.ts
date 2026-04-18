@@ -5,7 +5,7 @@ import { errorResult } from "../lib/errors.js";
 
 export function registerVendorTools(server: McpServer) {
   server.tool(
-    "list_vendors",
+    "scf_list_vendors",
     "List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Filter by status, criticality, or category.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -26,7 +26,7 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "get_vendor",
+    "scf_get_vendor",
     "Get detailed vendor information including certifications, assessments, risk score, and research results.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -44,7 +44,7 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "create_vendor",
+    "scf_create_vendor",
     "Add a new vendor to the TPRM registry. Triggers automatic risk scoring based on criticality and data handling.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -71,7 +71,7 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "update_vendor",
+    "scf_update_vendor",
     "Update an existing vendor record. All fields are optional — only provided fields are updated.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -96,7 +96,7 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "trigger_vendor_research",
+    "scf_trigger_vendor_research",
     "Trigger AI-powered security research for a vendor. Checks HIBP (breach databases), NVD (vulnerability databases), and public security posture. Returns a task ID for status polling.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -117,7 +117,7 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "get_vendor_research",
+    "scf_get_vendor_research",
     "Get the latest AI-powered research results for a vendor, including breach history, known vulnerabilities, and security posture analysis.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -135,7 +135,7 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "trigger_dpsia",
+    "scf_trigger_dpsia",
     "Trigger a Data Protection Security Impact Assessment (DPSIA) for a vendor. Evaluates vendor security posture against CIA triad and certification requirements.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),

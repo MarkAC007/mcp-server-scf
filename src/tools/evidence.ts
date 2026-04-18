@@ -5,7 +5,7 @@ import { errorResult } from "../lib/errors.js";
 
 export function registerEvidenceTools(server: McpServer) {
   server.tool(
-    "list_evidence",
+    "scf_list_evidence",
     "List evidence items tracked for an organization's controls. Evidence demonstrates control implementation for audit readiness. Returns evidence with status, maturity, and linked controls.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -25,7 +25,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "create_evidence",
+    "scf_create_evidence",
     "Create an evidence tracking record from the SCF evidence catalog. Uses a catalog evidence ID (e.g., 'E-IAM-01') to start tracking an evidence item for the organization.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -56,7 +56,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_evidence_maturity",
+    "scf_get_evidence_maturity",
     "Get evidence maturity summary for an organization. Shows average maturity score, automation percentage, distribution by maturity level, and improvement opportunities.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -73,7 +73,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "list_evidence_files",
+    "scf_list_evidence_files",
     "List all evidence files uploaded or ingested for a specific evidence item. Returns file metadata including filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-min expiry). Use this to see what artifacts have been collected for an evidence item.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -91,7 +91,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_evidence_file",
+    "scf_get_evidence_file",
     "Get metadata and a pre-signed download URL for a single evidence file. The download URL expires after 15 minutes. Use this to inspect or retrieve a specific uploaded artifact.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -110,7 +110,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "update_evidence",
+    "scf_update_evidence",
     "Update an evidence item's tracking fields — toggle tracking, link to a system, set collection method, owner, frequency, etc. Use the catalog evidence ID (e.g., 'E-IAM-01') as the identifier. All fields except org_id and evidence_id are optional — only provided fields are updated.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -156,7 +156,7 @@ export function registerEvidenceTools(server: McpServer) {
   // ---------------------------------------------------------------------------
 
   server.tool(
-    "get_evidence_validation",
+    "scf_get_evidence_validation",
     "Get the validation result for a specific evidence file. Returns overall status (valid/warning/partial/invalid), completeness score, individual rule findings (catalog_exists, content_type_ok, field_coverage, freshness, s3_object_exists), validation source, and timestamp.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -175,7 +175,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "revalidate_evidence_file",
+    "scf_revalidate_evidence_file",
     "Re-run the validation engine against a specific evidence file. Checks catalog existence, content type, field coverage, freshness, and storage object existence. Upserts the validation result and returns the updated result. Requires editor role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -194,7 +194,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_evidence_validation_summary",
+    "scf_get_evidence_validation_summary",
     "Get aggregate evidence validation metrics for the organisation dashboard. Returns total files validated, counts by status (valid, warning, partial, invalid), and overall pass rate (fraction of files with status=valid).",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -215,7 +215,7 @@ export function registerEvidenceTools(server: McpServer) {
   // ---------------------------------------------------------------------------
 
   server.tool(
-    "trigger_evidence_assessment",
+    "scf_trigger_evidence_assessment",
     "Trigger an AI-powered assessment of an evidence artifact file. The assessment evaluates relevance, completeness, and quality against mapped SCF controls. Returns immediately with a pending assessment record — poll with get_evidence_assessment until status changes to sufficient/partial/insufficient. Requires editor role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -241,7 +241,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_evidence_assessment",
+    "scf_get_evidence_assessment",
     "Get the AI assessment result for an evidence artifact file. Returns status (pending/processing/sufficient/partial/insufficient/error), relevance score (0-100), structured findings with categories and suggestions, summary text, and full audit metadata (model, token counts, cost). Poll this after triggering an assessment.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -260,7 +260,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "bulk_assess_evidence",
+    "scf_bulk_assess_evidence",
     "Queue AI assessments for multiple evidence files at once (max 50 per request). Provide at least one of: evidence_id (assess all files for that evidence item), file_ids (specific file UUIDs), or assess_unassessed (all files without an existing assessment). Returns the count of queued assessments. Requires editor role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -288,7 +288,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_evidence_assessment_summary",
+    "scf_get_evidence_assessment_summary",
     "Get aggregate AI assessment metrics for the organisation dashboard. Returns total assessed count, counts by status (sufficient/partial/insufficient/pending/error), unassessed count, average relevance score, and total cost in cents.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -305,7 +305,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "list_evidence_tasks",
+    "scf_list_evidence_tasks",
     "List evidence collection tasks — the work queue for gathering evidence. Shows what needs to be collected, by whom, and by when.",
     {
       org_id: z.string().optional().describe("Organization ID (UUID)"),
@@ -328,7 +328,7 @@ export function registerEvidenceTools(server: McpServer) {
   // ---------------------------------------------------------------------------
 
   server.tool(
-    "trigger_window_assessment",
+    "scf_trigger_window_assessment",
     "Queue a windowed AI assessment for an evidence item. Scores all files uploaded inside the frequency-derived window as a portfolio against the union of required artifact types across mapped SCF controls. Returns 202 — poll list_window_assessments or get_window_assessment for the result. Requires editor role or higher. Returns 422 if the evidence has no tracking row or no frequency set (use update_evidence to set a frequency like 'daily', 'weekly', 'monthly' first).",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -353,7 +353,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "list_window_assessments",
+    "scf_list_window_assessments",
     "List the most recent windowed AI assessments for a specific evidence ID (newest first). Each entry includes the window boundaries, frequency used, file IDs in the window, source/artifact coverage, status (pending/processing/sufficient/partial/insufficient/insufficient_sample/error), relevance score, findings, and cost. Requires viewer role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -389,7 +389,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_window_assessment",
+    "scf_get_window_assessment",
     "Get a single windowed AI assessment by its assessment ID. Returns full detail: window boundaries, frequency, file IDs, source coverage, artifact type coverage, expected artifact types, status, relevance score, findings, summary, model/prompt/window hashes, token counts, cost, and timing. Requires viewer role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -407,7 +407,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "bulk_assess_windows",
+    "scf_bulk_assess_windows",
     "Queue windowed AI assessments for multiple evidence IDs in one call. Capped at 25 evidence IDs per request. Evidence items without a tracking row or without a frequency set are skipped and reported in the response under `skipped_detail`. Returns the counts and lists of queued/skipped evidence IDs. Requires editor role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -429,7 +429,7 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
-    "get_window_assessment_summary",
+    "scf_get_window_assessment_summary",
     "Get aggregate windowed-assessment metrics for the organisation dashboard. Returns total windows assessed, counts by status (sufficient/partial/insufficient/insufficient_sample/pending/error), average relevance score, and total cost in cents. `insufficient_sample` is a new bucket indicating the content was fine but the window had too few files to prove the controls' required artifact types. Requires viewer role or higher.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),

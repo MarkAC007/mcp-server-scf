@@ -6,7 +6,7 @@ Source: [`src/tools/catalog.ts`](../../src/tools/catalog.ts).
 
 ---
 
-## `list_controls`
+## `scf_list_controls`
 
 List SCF security controls from the reference catalog. Returns paginated controls with SCF ID, title, description, and mapped frameworks. Use domain or search filters to narrow results.
 
@@ -20,7 +20,7 @@ List SCF security controls from the reference catalog. Returns paginated control
 
 ---
 
-## `get_control`
+## `scf_get_control`
 
 Get detailed information about a specific SCF control by its ID. Returns the control description, mapped frameworks, assessment objectives, and linked evidence items from the reference catalog.
 
@@ -30,7 +30,7 @@ Get detailed information about a specific SCF control by its ID. Returns the con
 
 ---
 
-## `list_frameworks`
+## `scf_list_frameworks`
 
 List all compliance frameworks mapped in the SCF catalog. Returns framework identifiers and names. Includes NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR, and 350+ other frameworks.
 
@@ -38,7 +38,7 @@ _No parameters._
 
 ---
 
-## `list_domains`
+## `scf_list_domains`
 
 List all compliance domains in the SCF taxonomy. Domains group related security controls (e.g., `GOV` = Governance, `AST` = Asset Management, `IAC` = Identity & Access Control).
 
@@ -46,7 +46,7 @@ _No parameters._
 
 ---
 
-## `list_evidence_catalog`
+## `scf_list_evidence_catalog`
 
 List evidence items from the SCF reference catalog — the 272 standard evidence types that can be collected to demonstrate control implementation.
 
@@ -58,7 +58,7 @@ List evidence items from the SCF reference catalog — the 272 standard evidence
 
 ---
 
-## `list_assessment_objectives`
+## `scf_list_assessment_objectives`
 
 List assessment objectives from the SCF reference catalog — the 5,736 specific test criteria used to evaluate control implementation. Filter by SCF control ID to get objectives for a specific control.
 

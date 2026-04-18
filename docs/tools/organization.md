@@ -6,7 +6,7 @@ Source: [`src/tools/organization.ts`](../../src/tools/organization.ts).
 
 ---
 
-## `get_current_user`
+## `scf_get_current_user`
 
 Get the current authenticated user's profile, including name, email, organizations, and role.
 
@@ -14,7 +14,7 @@ _No parameters._
 
 ---
 
-## `list_organizations`
+## `scf_list_organizations`
 
 List organizations the current user has access to. Returns org ID, name, tier, and member count.
 
@@ -22,17 +22,17 @@ _No parameters._
 
 ---
 
-## `get_organization`
+## `scf_get_organization`
 
 Get detailed organization information including subscription tier, member count, usage limits, and settings.
 
-| Parameter | Type   | Required | Description                                            |
-| --------- | ------ | -------- | ------------------------------------------------------ |
-| `org_id`  | string | Yes      | Organization ID (UUID) — get from `list_organizations` |
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
 
 ---
 
-## `list_members`
+## `scf_list_members`
 
 List members of an organization with their roles (`admin`, `editor`, `viewer`).
 
@@ -42,7 +42,7 @@ List members of an organization with their roles (`admin`, `editor`, `viewer`).
 
 ---
 
-## `get_work_queue`
+## `scf_get_work_queue`
 
 Get the authenticated user's work queue — a prioritized list of pending tasks, assignments, and action items across all their organizations.
 
@@ -50,7 +50,7 @@ _No parameters._
 
 ---
 
-## `get_audit_log`
+## `scf_get_audit_log`
 
 Get the audit trail for an organization. Field-level changes to controls, evidence, and other entities with actor, timestamp, and before/after values.
 
@@ -62,7 +62,7 @@ Get the audit trail for an organization. Field-level changes to controls, eviden
 
 ---
 
-## `get_notifications`
+## `scf_get_notifications`
 
 Get notifications for the current user — new assignments, comments, status changes, and system alerts.
 

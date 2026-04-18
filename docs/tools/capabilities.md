@@ -6,19 +6,19 @@ Source: [`src/tools/capabilities.ts`](../../src/tools/capabilities.ts).
 
 ---
 
-## `list_capability_themes`
+## `scf_list_capability_themes`
 
 List the 11 KSI-aligned capability themes for an organization. Capability themes group NIST 800-53 controls into security capability areas, providing a high-level view of security posture.
 
-| Parameter | Type   | Required | Description                                            |
-| --------- | ------ | -------- | ------------------------------------------------------ |
-| `org_id`  | string | Yes      | Organization ID (UUID) — get from `list_organizations` |
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
 
 ---
 
-## `get_capability_theme_scorecard`
+## `scf_get_capability_theme_scorecard`
 
-Multi-axis KSI scorecard for all capability themes in one call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with `Strong`/`Moderate`/`Developing` bands. Replaces the dual-call pattern of `list_capability_themes` + `get_capability_theme_evidence_posture`.
+Multi-axis KSI scorecard for all capability themes in one call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with `Strong`/`Moderate`/`Developing` bands. Replaces the dual-call pattern of `scf_list_capability_themes` + `scf_get_capability_theme_evidence_posture`.
 
 | Parameter | Type   | Required | Description            |
 | --------- | ------ | -------- | ---------------------- |
@@ -26,18 +26,18 @@ Multi-axis KSI scorecard for all capability themes in one call. Returns per-them
 
 ---
 
-## `get_capability_theme`
+## `scf_get_capability_theme`
 
 Get a single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`.
 
-| Parameter    | Type   | Required | Description                                                                        |
-| ------------ | ------ | -------- | ---------------------------------------------------------------------------------- |
-| `org_id`     | string | Yes      | Organization ID (UUID)                                                             |
-| `theme_code` | string | Yes      | Capability theme code (e.g., `ACCESS_CONTROL`) — get from `list_capability_themes` |
+| Parameter    | Type   | Required | Description                                                                            |
+| ------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
+| `org_id`     | string | Yes      | Organization ID (UUID)                                                                 |
+| `theme_code` | string | Yes      | Capability theme code (e.g., `ACCESS_CONTROL`) — get from `scf_list_capability_themes` |
 
 ---
 
-## `list_capability_theme_controls`
+## `scf_list_capability_theme_controls`
 
 List SCF controls mapped to a capability theme (KSI) with scoping status, implementation status, and maturity level. Useful for drilling from a KSI into its underlying controls.
 
@@ -51,7 +51,7 @@ List SCF controls mapped to a capability theme (KSI) with scoping status, implem
 
 ---
 
-## `get_capability_theme_evidence_posture`
+## `scf_get_capability_theme_evidence_posture`
 
 Per-theme evidence assessment metrics — controls with evidence, file counts by assessment status (`sufficient`/`partial`/`insufficient`/`pending`/`unassessed`), average relevance score, and derived evidence confidence level (`strong`/`moderate`/`weak`/`none`). Useful for KSI-centric evidence quality dashboards.
 
@@ -61,7 +61,7 @@ Per-theme evidence assessment metrics — controls with evidence, file counts by
 
 ---
 
-## `list_capabilities`
+## `scf_list_capabilities`
 
 List capabilities for an organization. Capabilities map to systems and evidence, showing what security functions your infrastructure supports.
 
@@ -71,7 +71,7 @@ List capabilities for an organization. Capabilities map to systems and evidence,
 
 ---
 
-## `list_systems`
+## `scf_list_systems`
 
 List infrastructure systems in the organization's inventory. Systems are the tools and platforms that implement security capabilities.
 
@@ -81,7 +81,7 @@ List infrastructure systems in the organization's inventory. Systems are the too
 
 ---
 
-## `create_system`
+## `scf_create_system`
 
 Add a system to the organization's infrastructure inventory. Systems can be linked to capabilities and evidence.
 
@@ -92,25 +92,25 @@ Add a system to the organization's infrastructure inventory. Systems can be link
 | `system_type` | string | Yes      | `cloud_provider`, `identity_provider`, `ticketing`, `logging`, `security_tool`, `code_repository`, `document_management`, `custom` |
 | `description` | string | No       | System description                                                                                                                 |
 | `status`      | string | No       | `active` (default), `inactive`, `deprecated`                                                                                       |
-| `vendor`      | string | No       | Vendor ID — get from `list_vendors`                                                                                                |
+| `vendor`      | string | No       | Vendor ID — get from `scf_list_vendors`                                                                                            |
 | `category`    | string | No       | System category (e.g., `SIEM`, `Endpoint`, `Identity`)                                                                             |
 
 ---
 
-## `update_system`
+## `scf_update_system`
 
 Update an existing system record. All fields are optional — only provided fields are updated.
 
-| Parameter     | Type   | Required | Description                         |
-| ------------- | ------ | -------- | ----------------------------------- |
-| `org_id`      | string | Yes      | Organization ID (UUID)              |
-| `system_id`   | string | Yes      | System ID — get from `list_systems` |
-| `name`        | string | No       | System name                         |
-| `description` | string | No       | System description                  |
-| `system_type` | string | No       | Same enum as `create_system`        |
-| `status`      | string | No       | `active`, `inactive`, `deprecated`  |
-| `vendor`      | string | No       | Vendor ID                           |
-| `category`    | string | No       | System category                     |
+| Parameter     | Type   | Required | Description                             |
+| ------------- | ------ | -------- | --------------------------------------- |
+| `org_id`      | string | Yes      | Organization ID (UUID)                  |
+| `system_id`   | string | Yes      | System ID — get from `scf_list_systems` |
+| `name`        | string | No       | System name                             |
+| `description` | string | No       | System description                      |
+| `system_type` | string | No       | Same enum as `scf_create_system`        |
+| `status`      | string | No       | `active`, `inactive`, `deprecated`      |
+| `vendor`      | string | No       | Vendor ID                               |
+| `category`    | string | No       | System category                         |
 
 ---
 

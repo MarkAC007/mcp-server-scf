@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BREAKING
+- **All 72 tools renamed with an `scf_` prefix.** `list_controls` → `scf_list_controls`, `create_vendor` → `scf_create_vendor`, and so on for every tool in every domain. Tool parameters, return shapes, handlers, and HTTP endpoints are unchanged. No deprecation aliases are shipped — old names are removed outright in this release. See [`docs/migration-scf-prefix.md`](docs/migration-scf-prefix.md) for the full before/after mapping and an explanation of the cutover strategy. Closes #62.
+
 ### Added
 - `get_capability_theme_scorecard` tool — multi-axis KSI scorecard for all capability themes in a single call. Returns per-theme Implementation Coverage, Maturity, Evidence Coverage, Evidence Quality, and composite KSI Posture Score (KPS) with Strong/Moderate/Developing bands. Wraps `GET /organizations/{org_id}/capability-themes/scorecard` (scf-controls-platform #549 Phase 1).
 - `get_capability_theme` tool — single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`. Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}`.

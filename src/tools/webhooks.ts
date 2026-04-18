@@ -5,7 +5,7 @@ import { errorResult } from "../lib/errors.js";
 
 export function registerWebhookTools(server: McpServer) {
   server.tool(
-    "create_webhook",
+    "scf_create_webhook",
     "Create a new webhook endpoint for evidence inbox ingestion. External systems use this endpoint to push evidence via HMAC-authenticated POST requests. Returns the plaintext signing secret once — it cannot be retrieved later.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -34,7 +34,7 @@ export function registerWebhookTools(server: McpServer) {
   );
 
   server.tool(
-    "list_webhooks",
+    "scf_list_webhooks",
     "List all webhook endpoints for an organization, ordered by creation date (newest first). Shows endpoint name, status, delivery count, and secret prefix.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -51,7 +51,7 @@ export function registerWebhookTools(server: McpServer) {
   );
 
   server.tool(
-    "get_webhook",
+    "scf_get_webhook",
     "Get detailed information about a single webhook endpoint including delivery stats, allowed evidence IDs, and rate limit configuration.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -69,7 +69,7 @@ export function registerWebhookTools(server: McpServer) {
   );
 
   server.tool(
-    "delete_webhook",
+    "scf_delete_webhook",
     "Revoke a webhook endpoint (soft-delete). Sets the endpoint to inactive — future deliveries will be rejected with 403. The endpoint record is preserved for audit trail purposes.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -87,7 +87,7 @@ export function registerWebhookTools(server: McpServer) {
   );
 
   server.tool(
-    "rotate_webhook_secret",
+    "scf_rotate_webhook_secret",
     "Generate a new HMAC signing secret for a webhook endpoint. The old secret is immediately invalidated. Returns the new plaintext secret once — store it securely.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -105,7 +105,7 @@ export function registerWebhookTools(server: McpServer) {
   );
 
   server.tool(
-    "list_webhook_deliveries",
+    "scf_list_webhook_deliveries",
     "List delivery logs for a webhook endpoint (newest first). Each entry shows signature validation result, processing status, evidence ID, and timestamps. Useful for debugging integration issues.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),

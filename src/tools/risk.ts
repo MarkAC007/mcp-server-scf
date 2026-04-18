@@ -5,7 +5,7 @@ import { errorResult } from "../lib/errors.js";
 
 export function registerRiskTools(server: McpServer) {
   server.tool(
-    "list_risks",
+    "scf_list_risks",
     "List risk assessments in the organization's risk register. Returns risks with likelihood, impact, treatment status, and linked controls.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -25,7 +25,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "get_risk",
+    "scf_get_risk",
     "Get detailed risk assessment including likelihood, impact scores (inherent and residual), treatment plan, owner, and review date.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -43,7 +43,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "create_risk",
+    "scf_create_risk",
     "Create a new risk assessment in the risk register. Requires likelihood and impact scores for the 5x5 risk matrix.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -70,7 +70,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "get_risk_matrix",
+    "scf_get_risk_matrix",
     "Get the 5x5 risk matrix visualization data for the organization. Shows risk distribution across likelihood and impact dimensions.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -87,7 +87,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "get_risk_summary",
+    "scf_get_risk_summary",
     "Get aggregated risk summary for the organization — total risks by severity, treatment status breakdown, and trend data.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -108,7 +108,7 @@ export function registerRiskTools(server: McpServer) {
   // ===========================================================================
 
   server.tool(
-    "list_custom_risks",
+    "scf_list_custom_risks",
     "List custom (organization-defined) risk definitions. These are risks created by the org alongside the static SCF risk catalog, with auto-generated R-ORG-N codes.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -125,7 +125,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "create_custom_risk",
+    "scf_create_custom_risk",
     "Create a custom organization-defined risk. Auto-generates an R-ORG-N code and creates the corresponding risk assessment record.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -146,7 +146,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "update_custom_risk",
+    "scf_update_custom_risk",
     "Update a custom risk definition's metadata (title, description, category).",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -168,7 +168,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "delete_custom_risk",
+    "scf_delete_custom_risk",
     "Delete a custom risk definition and its assessment record. Also removes any control mappings.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -190,7 +190,7 @@ export function registerRiskTools(server: McpServer) {
   // ===========================================================================
 
   server.tool(
-    "list_custom_risk_controls",
+    "scf_list_custom_risk_controls",
     "List controls manually linked to a custom risk. Returns the same shape as controls-for-risk (catalog_control_ids + scoped_controls with implementation status).",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -208,7 +208,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "add_custom_risk_control",
+    "scf_add_custom_risk_control",
     "Link a scoped control to a custom risk. The control must be scoped (selected) for this organization.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
@@ -227,7 +227,7 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "remove_custom_risk_control",
+    "scf_remove_custom_risk_control",
     "Remove a control link from a custom risk.",
     {
       org_id: z.string().describe("Organization ID (UUID) — get from list_organizations"),
