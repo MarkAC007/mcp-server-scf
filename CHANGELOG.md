@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_capability_theme` tool — single capability theme (KSI) with full posture, multi-axis scores, bands, and legacy `posture_percentage`. Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}`.
 - `list_capability_theme_controls` tool — SCF controls mapped to a capability theme with scoping status, implementation status, and maturity level. Supports pagination (`limit`, `offset`) and scope filtering (`scope_status`). Wraps `GET /organizations/{org_id}/capability-themes/{theme_code}/controls`.
 - `get_capability_theme_evidence_posture` tool — per-theme evidence assessment rollup (file counts by status, average relevance score, derived evidence confidence). Wraps `GET /organizations/{org_id}/capability-themes/evidence-posture`.
+- `trigger_window_assessment` tool — queue a windowed AI assessment that scores all evidence files inside a frequency-derived time window as a portfolio against the union of required artifact types across mapped SCF controls. Editor role. Wraps `POST /organizations/{org_id}/evidence/{evidence_id}/assess-window` (scf-controls-platform #568, M1a).
+- `list_window_assessments` tool — list recent windowed assessments for an evidence ID with `limit`/`offset` pagination. Viewer role. Wraps `GET /organizations/{org_id}/evidence/{evidence_id}/window-assessments`.
+- `get_window_assessment` tool — fetch a single windowed assessment by ID with full detail (window bounds, file IDs, coverage, findings, tokens, cost). Viewer role. Wraps `GET /organizations/{org_id}/evidence/window-assessments/{assessment_id}`.
+- `bulk_assess_windows` tool — queue windowed assessments for up to 25 evidence IDs in one call. Editor role. Wraps `POST /organizations/{org_id}/evidence/assess-windows-bulk`.
+- `get_window_assessment_summary` tool — aggregate windowed-assessment metrics (counts by status including the new `insufficient_sample` bucket, average relevance, total cost). Viewer role. Wraps `GET /organizations/{org_id}/evidence/window-assessments/summary`.
 
 Closes #50.
 
