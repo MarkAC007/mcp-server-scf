@@ -23,6 +23,7 @@ jobs:
       contents: write        # push tag + GitHub Release + bump branch
       id-token: write        # npm OIDC trusted publishing (provenance)
       pull-requests: write   # open the version-bump PR that syncs main
+      actions: write         # dispatch ci.yml against the bump branch (workflow_dispatch)
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -193,6 +194,44 @@ jobs:
       - name: Publish to npm with provenance
         if: steps.check_published.outputs.skip != 'true'
         run: npm publish --provenance --access public
+
+      - name: Publish to MCP Registry (DNS-auth)
+        # Publishes server.json to registry.modelcontextprotocol.io so the
+        # `app.scfcontrolsplatform/mcp-server-scf` entry stays in lockstep
+        # with npm. Auth is DNS domain verification on scfcontrolsplatform.app
+        # because GitHub OIDC only works for `io.github.*` namespaces.
+        #
+        # Non-fatal by design: if the secret isn't set (initial bootstrap),
+        # or the publish call fails for any reason, we surface a warning but
+        # don't fail the release — npm + tag + GH release have already
+        # succeeded by this point.
+        #
+        # Prerequisites (one-time, Jeff-side — see PR body for full setup):
+        #   1. `openssl genpkey -algorithm Ed25519 -out key.pem` locally
+        #   2. Add DNS TXT record on scfcontrolsplatform.app apex:
+        #        "v=MCPv1; k=ed25519; p=<base64_public_key>"
+        #   3. `gh secret set MCP_REGISTRY_KEY --body "<hex_private_key>"`
+        if: steps.check_published.outputs.skip != 'true'
+        env:
+          MCP_REGISTRY_KEY: ${{ secrets.MCP_REGISTRY_KEY }}
+          MCP_DOMAIN: scfcontrolsplatform.app
+        run: |
+          if [ -z "$MCP_REGISTRY_KEY" ]; then
+            echo "::notice::MCP_REGISTRY_KEY secret not set — skipping MCP Registry publish. See PR #109 for one-time setup."
+            exit 0
+          fi
+
+          # Download the latest mcp-publisher release binary.
+          curl -sSfL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" \
+            | tar xz mcp-publisher
+
+          ./mcp-publisher login dns --domain "$MCP_DOMAIN" --private-key "$MCP_REGISTRY_KEY" \
+            || { echo "::warning::mcp-publisher DNS login failed — check DNS TXT record propagation on $MCP_DOMAIN."; exit 0; }
+
+          ./mcp-publisher publish \
+            || { echo "::warning::mcp-publisher publish failed — MCP Registry may lag npm until manually resynced."; exit 0; }
+
+          echo "Published server.json to MCP Registry."
 
       - name: Build .mcpb Desktop Extension bundle
         id: build_mcpb
