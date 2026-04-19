@@ -12,13 +12,17 @@ permissions:
 jobs:
   release:
     name: Release & Publish
-    if: github.event.pull_request.merged == true
+    # Skip on our own version-bump PRs — otherwise each release triggers a
+    # new release when its bump PR merges, looping forever.
+    if: |
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.title, 'chore(release):')
     runs-on: ubuntu-latest
     environment: npm  # Link to GitHub Environment for OIDC
     permissions:
-      contents: write       # push version bump commit + git tag + GitHub Release
-      id-token: write       # npm OIDC trusted publishing (provenance)
-      pull-requests: read   # read merged PR metadata for release notes
+      contents: write        # push tag + GitHub Release + bump branch
+      id-token: write        # npm OIDC trusted publishing (provenance)
+      pull-requests: write   # open the version-bump PR that syncs main
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -149,11 +153,7 @@ jobs:
           else
             git add package.json package-lock.json server.json
             git commit -m "chore(release): bump package.json + server.json to v${NEW_VERSION}"
-            if git push origin main; then
-              echo "Updated package.json + server.json to v${NEW_VERSION}"
-            else
-              echo "::warning::Could not push version update to main (branch protection). Update package.json + server.json manually or via next PR."
-            fi
+            echo "Staged version bump commit locally — will open a PR after the release is recorded (direct push to main is blocked by branch protection)."
           fi
 
       - name: Create and push tag
@@ -292,6 +292,41 @@ jobs:
           files: ${{ steps.build_mcpb.outputs.path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Open version-bump PR to sync main with the release
+        # Runs after the release is durably recorded (tag + GH release + npm publish),
+        # so a failure here never blocks or corrupts the release itself.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.final_version.outputs.version }}
+        run: |
+          # The bump commit has been sitting on local HEAD since the "Update
+          # package.json and server.json versions" step — git tag already
+          # annotated it, and it will travel to origin via this PR instead of
+          # the blocked direct-to-main push.
+          if ! git diff --quiet "origin/main" HEAD -- package.json package-lock.json server.json; then
+            BUMP_BRANCH="chore/release-bump-v${NEW_VERSION}"
+
+            if ! git push origin "HEAD:refs/heads/${BUMP_BRANCH}" 2>&1; then
+              echo "::warning::Could not push ${BUMP_BRANCH} — main will stay stale until manually synced."
+              exit 0
+            fi
+
+            gh pr create \
+              --base main \
+              --head "${BUMP_BRANCH}" \
+              --title "chore(release): bump to v${NEW_VERSION}" \
+              --body "Auto-opened by \`auto-release.yml\` after v${NEW_VERSION} was published to npm. Brings \`package.json\`, \`package-lock.json\`, and \`server.json\` on \`main\` in line with the release so \`release-health-check.yml\` stays green."
+
+            # Try to enable auto-merge. If the repo doesn't allow auto-merge
+            # (settings) or required checks are already green and merging via
+            # --auto isn't needed, the fallback just leaves the PR for manual
+            # merge — not a failure mode worth failing the release over.
+            gh pr merge "${BUMP_BRANCH}" --auto --squash --delete-branch 2>&1 \
+              || echo "::notice::Version-bump PR opened — merge manually if auto-merge isn't enabled in repo settings."
+          else
+            echo "No version bump needed — package.json + server.json already match main."
+          fi
 
       - name: Summary
         run: |
