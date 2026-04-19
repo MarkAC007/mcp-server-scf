@@ -17,6 +17,7 @@
 
 [![npm version](https://img.shields.io/npm/v/mcp-server-scf.svg)](https://www.npmjs.com/package/mcp-server-scf)
 [![npm downloads](https://img.shields.io/npm/dm/mcp-server-scf)](https://www.npmjs.com/package/mcp-server-scf)
+[![install size](https://img.shields.io/packagephobia/install/mcp-server-scf)](https://packagephobia.com/result?p=mcp-server-scf)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-compatible-green.svg)](https://modelcontextprotocol.io)
 
@@ -27,7 +28,7 @@
 
 <!-- Tech Stack -->
 
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript&logoColor=white)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen?logo=node.js&logoColor=white)
 
 **Security compliance controls, frameworks, and risk management for AI agents.**
@@ -56,6 +57,20 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 | [Organization](docs/tools/organization.md)       | 7     | Users, orgs, audit trail, work queue, notifications                                   |
 | [Capabilities](docs/tools/capabilities.md)       | 9     | KSI capability themes, scorecards, evidence posture, systems inventory                |
 | [Webhooks](docs/tools/webhooks.md)               | 6     | Webhook endpoints, delivery logs, secret rotation                                     |
+
+---
+
+## Try it with MCP Inspector
+
+Kick the tires without adding the server to a client — [MCP Inspector](https://github.com/modelcontextprotocol/inspector) launches a local UI that introspects every tool, its schema, and its description:
+
+```bash
+npx @modelcontextprotocol/inspector npx -y mcp-server-scf
+```
+
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 72 tools, grouped by domain, with their Zod schemas rendered as a live form.
+
+Live tool calls need an API key — export `SCF_API_KEY` in the same shell before launching Inspector, or set it under the "Environment Variables" tab inside the Inspector UI. Without a key, you can still browse schemas and descriptions; tool calls return 401.
 
 ---
 
