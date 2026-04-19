@@ -318,10 +318,19 @@ jobs:
               --title "chore(release): bump to v${NEW_VERSION}" \
               --body "Auto-opened by \`auto-release.yml\` after v${NEW_VERSION} was published to npm. Brings \`package.json\`, \`package-lock.json\`, and \`server.json\` on \`main\` in line with the release so \`release-health-check.yml\` stays green."
 
-            # Try to enable auto-merge. If the repo doesn't allow auto-merge
-            # (settings) or required checks are already green and merging via
-            # --auto isn't needed, the fallback just leaves the PR for manual
-            # merge — not a failure mode worth failing the release over.
+            # PRs created via GITHUB_TOKEN don't trigger workflows (GitHub
+            # anti-loop rule), so the required status checks on `main`'s
+            # branch protection (`build (20)`, `build (22)`, etc.) would
+            # never fire for this PR on their own — leaving it stuck in
+            # mergeable_state="blocked" forever. Explicitly dispatch ci.yml
+            # against the bump branch to produce those check runs.
+            gh workflow run ci.yml --ref "${BUMP_BRANCH}" 2>&1 \
+              || echo "::warning::Could not dispatch ci.yml against ${BUMP_BRANCH} — the bump PR will need required checks satisfied another way."
+
+            # Try to enable auto-merge. Requires the repo's "Allow auto-merge"
+            # setting (Settings -> General) to be on; if it isn't, the fallback
+            # leaves the PR waiting for a manual merge — not a failure mode
+            # worth failing the release over.
             gh pr merge "${BUMP_BRANCH}" --auto --squash --delete-branch 2>&1 \
               || echo "::notice::Version-bump PR opened — merge manually if auto-merge isn't enabled in repo settings."
           else
