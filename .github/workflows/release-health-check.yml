@@ -1,0 +1,102 @@
+name: Release Health Check
+
+# Catches silent drift across the four places the release version lives:
+#   - npm registry  (`npm view mcp-server-scf@latest version`)
+#   - git tags      (highest `v*` tag)
+#   - server.json   (top-level .version AND .packages[0].version)
+#   - MCP Registry  (app.scfcontrolsplatform/mcp-server-scf current .version)
+#
+# Runs weekly on Monday morning and on-demand. Fails loudly if any surface
+# has drifted from the rest so a silent publish miss or a forgotten server.json
+# bump is caught within a week, not when a user reports it.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Mondays, 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Verify release surfaces are in sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0 # need full tag history
+
+      - name: Read release versions from each surface
+        id: versions
+        run: |
+          NPM_VERSION=$(npm view mcp-server-scf@latest version 2>/dev/null || echo "")
+          GIT_TAG_VERSION=$(git tag --list 'v*' --sort=-v:refname | head -n 1 | sed 's/^v//')
+          SERVER_JSON_TOP=$(jq -r '.version' server.json)
+          SERVER_JSON_PKG=$(jq -r '.packages[] | select(.registryType == "npm") | .version' server.json)
+
+          MCP_NAMESPACE="app.scfcontrolsplatform/mcp-server-scf"
+          REGISTRY_JSON=$(curl -fsSL \
+            --max-time 30 \
+            "https://registry.modelcontextprotocol.io/v0/servers?search=${MCP_NAMESPACE}")
+          REGISTRY_VERSION=$(echo "$REGISTRY_JSON" | jq -r \
+            --arg name "$MCP_NAMESPACE" \
+            '.servers[] | select(.server.name == $name) | .server.version' \
+            | head -n 1)
+
+          {
+            echo "npm=$NPM_VERSION"
+            echo "git=$GIT_TAG_VERSION"
+            echo "server_json_top=$SERVER_JSON_TOP"
+            echo "server_json_pkg=$SERVER_JSON_PKG"
+            echo "registry=$REGISTRY_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Compare and report
+        env:
+          NPM: ${{ steps.versions.outputs.npm }}
+          GIT: ${{ steps.versions.outputs.git }}
+          SERVER_TOP: ${{ steps.versions.outputs.server_json_top }}
+          SERVER_PKG: ${{ steps.versions.outputs.server_json_pkg }}
+          REGISTRY: ${{ steps.versions.outputs.registry }}
+        run: |
+          # Always print the table so it's visible in the job summary regardless of pass/fail.
+          {
+            echo "## Release surface versions"
+            echo ""
+            echo "| Surface                        | Version       |"
+            echo "|--------------------------------|---------------|"
+            echo "| npm (\`latest\` dist-tag)        | \`${NPM:-<empty>}\` |"
+            echo "| Highest \`v*\` git tag           | \`${GIT:-<empty>}\` |"
+            echo "| \`server.json\` top-level        | \`${SERVER_TOP:-<empty>}\` |"
+            echo "| \`server.json\` packages[0]      | \`${SERVER_PKG:-<empty>}\` |"
+            echo "| MCP Registry                   | \`${REGISTRY:-<empty>}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Any empty value is a fetch failure, not a drift — treat as fail either way.
+          fail=0
+          for v in "$NPM" "$GIT" "$SERVER_TOP" "$SERVER_PKG" "$REGISTRY"; do
+            if [ -z "$v" ]; then fail=1; fi
+          done
+
+          # Drift check: npm, git, and server.json must all match.
+          # MCP Registry is allowed to lag npm because publishing there is currently
+          # manual (see project memory: domain-auth namespace blocks OIDC). Warn on
+          # registry drift instead of failing until the publish step is automated.
+          if [ -n "$NPM" ] && [ -n "$GIT" ] && [ -n "$SERVER_TOP" ] && [ -n "$SERVER_PKG" ]; then
+            if [ "$NPM" != "$GIT" ] || [ "$NPM" != "$SERVER_TOP" ] || [ "$NPM" != "$SERVER_PKG" ]; then
+              fail=1
+              echo "::error::npm / git tag / server.json drift detected — see summary table"
+            fi
+          fi
+
+          if [ -n "$NPM" ] && [ -n "$REGISTRY" ] && [ "$NPM" != "$REGISTRY" ]; then
+            echo "::warning::MCP Registry (${REGISTRY}) lags npm (${NPM}). Publish manually: \`mcp-publisher publish\` after \`mcp-publisher login dns --domain scfcontrolsplatform.app\`."
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "All in-repo surfaces (npm / git / server.json) agree on v${NPM}."

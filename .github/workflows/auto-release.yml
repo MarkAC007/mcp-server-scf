@@ -131,20 +131,28 @@ jobs:
           echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
           echo "Final version: v$FINAL_VERSION"
 
-      - name: Update package.json version
+      - name: Update package.json and server.json versions
         run: |
           NEW_VERSION="${{ steps.final_version.outputs.version }}"
           npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
 
-          if git diff --quiet package.json package-lock.json; then
+          # Keep server.json in lockstep with package.json so the MCP Registry
+          # metadata tracks the npm release. Two fields need the bump: the
+          # top-level .version and the npm package entry .packages[0].version.
+          jq --arg v "$NEW_VERSION" \
+            '.version = $v | (.packages[] | select(.registryType == "npm") | .version) |= $v' \
+            server.json > server.json.tmp
+          mv server.json.tmp server.json
+
+          if git diff --quiet package.json package-lock.json server.json; then
             echo "No version changes needed"
           else
-            git add package.json package-lock.json
-            git commit -m "chore(release): bump package.json to v${NEW_VERSION}"
+            git add package.json package-lock.json server.json
+            git commit -m "chore(release): bump package.json + server.json to v${NEW_VERSION}"
             if git push origin main; then
-              echo "Updated package.json to v${NEW_VERSION}"
+              echo "Updated package.json + server.json to v${NEW_VERSION}"
             else
-              echo "::warning::Could not push version update to main (branch protection). Update package.json manually or via next PR."
+              echo "::warning::Could not push version update to main (branch protection). Update package.json + server.json manually or via next PR."
             fi
           fi
 
