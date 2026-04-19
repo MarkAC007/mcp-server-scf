@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Explicit dispatch endpoint so auto-release.yml can kick this workflow
+  # against bot-created bump branches (see #104/#105). PRs opened by
+  # GITHUB_TOKEN don't trigger workflows on their own (GitHub anti-loop
+  # rule), so the required status checks would never fire for those PRs
+  # without an explicit dispatch.
+  workflow_dispatch:
 
 permissions:
   contents: read
