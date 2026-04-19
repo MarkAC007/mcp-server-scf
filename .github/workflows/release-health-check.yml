@@ -40,9 +40,17 @@ jobs:
           REGISTRY_JSON=$(curl -fsSL \
             --max-time 30 \
             "https://registry.modelcontextprotocol.io/v0/servers?search=${MCP_NAMESPACE}")
+          # The registry returns ALL versions of a server; pick the one flagged
+          # as `isLatest: true`. Naïvely taking the first match grabs whatever
+          # came back first from the search (often the oldest), which is what
+          # made the check report `0.5.12` while the registry actually had
+          # `1.0.10` indexed as latest.
           REGISTRY_VERSION=$(echo "$REGISTRY_JSON" | jq -r \
             --arg name "$MCP_NAMESPACE" \
-            '.servers[] | select(.server.name == $name) | .server.version' \
+            '.servers[]
+               | select(.server.name == $name)
+               | select(._meta["io.modelcontextprotocol.registry/official"].isLatest == true)
+               | .server.version' \
             | head -n 1)
 
           {
