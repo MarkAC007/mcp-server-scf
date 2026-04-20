@@ -24,6 +24,7 @@ jobs:
       id-token: write        # npm OIDC trusted publishing (provenance)
       pull-requests: write   # open the version-bump PR that syncs main
       actions: write         # dispatch ci.yml against the bump branch (workflow_dispatch)
+      attestations: write    # SLSA build provenance for the .mcpb release asset
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -242,6 +243,15 @@ jobs:
           mv dist/mcp-server-scf.mcpb "dist/mcp-server-scf-${NEW_VERSION}.mcpb"
           echo "path=dist/mcp-server-scf-${NEW_VERSION}.mcpb" >> $GITHUB_OUTPUT
           ls -lh "dist/mcp-server-scf-${NEW_VERSION}.mcpb"
+
+      - name: Attest .mcpb build provenance
+        # Generates a SLSA v1 build provenance attestation for the .mcpb
+        # release asset and uploads it to Sigstore. Satisfies OpenSSF
+        # Scorecard Signed-Releases (GitHub Release artifact channel; npm
+        # tarball already gets provenance via `npm publish --provenance`).
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: ${{ steps.build_mcpb.outputs.path }}
 
       - name: Generate release notes
         id: release_notes
