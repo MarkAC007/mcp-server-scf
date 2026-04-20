@@ -1,9 +1,9 @@
 # Default owner for everything in the repo.
 # See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/managing-repository-settings/about-code-owners
-*                    @MarkAC007
+*                    @MarkAC007 @mac864776-pixel
 
 # Security-sensitive surfaces — keep explicit even though the default already routes here,
 # so future reviewers see the intent when ownership expands.
-/.github/            @MarkAC007
-/SECURITY.md         @MarkAC007
-/src/lib/api-client.ts  @MarkAC007
+/.github/            @MarkAC007 @mac864776-pixel
+/SECURITY.md         @MarkAC007 @mac864776-pixel
+/src/lib/api-client.ts  @MarkAC007 @mac864776-pixel

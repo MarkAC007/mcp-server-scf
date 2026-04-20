@@ -56,9 +56,13 @@ node -e "
   require('fs').writeFileSync('$STAGING_DIR/server/package.json', JSON.stringify(out, null, 2) + '\n');
 "
 
-# 5) Production install inside staging
+# 5) Production install inside staging — generate a lockfile for the stripped
+#    package.json, then `npm ci` so installs are reproducible and dependency
+#    integrity is verified by hash (OpenSSF Scorecard Pinned-Dependencies).
 echo "  · Installing production deps into server/node_modules…"
-(cd "$STAGING_DIR/server" && npm install --omit=dev --no-audit --no-fund --ignore-scripts --silent)
+(cd "$STAGING_DIR/server" \
+  && npm install --package-lock-only --omit=dev --no-audit --no-fund --ignore-scripts --silent \
+  && npm ci --omit=dev --no-audit --no-fund --ignore-scripts --silent)
 
 # 6) Manifest: copy then sync version from package.json so the two can't drift.
 echo "  · Writing manifest.json with version ${PKG_VERSION}…"
