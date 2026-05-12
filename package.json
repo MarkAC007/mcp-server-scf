@@ -86,7 +86,7 @@
     "tsx": "^4.19.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "tmp": "^0.2.4"
