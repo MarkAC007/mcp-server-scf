@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `scf_get_control_assessment_composite` tool — rolled-up assessment composite for a single SCF control (composite score, status band, included/missing evidence, mandatory gaps, per-window detail). Wraps `GET /organizations/{org_id}/controls/{scf_id}/assessment-composite`. Closes #569.
+- `scf_list_control_assessment_composites` tool — cursor-paginated organisation-wide list of rolled-up assessment composites ordered worst-band first, with `status`, `domain`, and `computation_version` filters. Wraps `GET /organizations/{org_id}/controls/assessment-composites`. Closes #569.
+
 ### Security
 - **Added `publishConfig.provenance: true`** to `package.json` so provenance is enforced regardless of how publish is invoked (belt-and-braces alongside `auto-release.yml`'s `--provenance` flag).
 - **Guarded `prepare: husky` script** (`husky || true`) so it no longer hard-fails consumer installs or `npm pack` when husky is absent. Removes the Socket.dev "install script risk" signal.
