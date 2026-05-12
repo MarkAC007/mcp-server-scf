@@ -45,18 +45,18 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**72 tools** across 8 domains — click through for full parameter tables and example prompts:
+**74 tools** across 8 domains — click through for full parameter tables and example prompts:
 
-| Domain                                           | Tools | Description                                                                           |
-| ------------------------------------------------ | ----- | ------------------------------------------------------------------------------------- |
-| [Catalog](docs/tools/catalog.md)                 | 6     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives                   |
-| [Control Scoping](docs/tools/scoped-controls.md) | 6     | Track implementation status across an 8-state workflow                                |
-| [Evidence](docs/tools/evidence.md)               | 19    | Manage evidence collection, validation, maturity scoring, and windowed AI assessments |
-| [Risk Management](docs/tools/risk.md)            | 12    | 5x5 risk matrix, risk register, custom risks and control mapping                      |
-| [Vendor Risk (TPRM)](docs/tools/vendors.md)      | 7     | Vendor registry, AI-powered security research, DPSIA                                  |
-| [Organization](docs/tools/organization.md)       | 7     | Users, orgs, audit trail, work queue, notifications                                   |
-| [Capabilities](docs/tools/capabilities.md)       | 9     | KSI capability themes, scorecards, evidence posture, systems inventory                |
-| [Webhooks](docs/tools/webhooks.md)               | 6     | Webhook endpoints, delivery logs, secret rotation                                     |
+| Domain                                           | Tools | Description                                                                                                      |
+| ------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------- |
+| [Catalog](docs/tools/catalog.md)                 | 6     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives                                              |
+| [Control Scoping](docs/tools/scoped-controls.md) | 6     | Track implementation status across an 8-state workflow                                                           |
+| [Evidence](docs/tools/evidence.md)               | 21    | Manage evidence collection, validation, maturity scoring, windowed AI assessments, and control-composite rollups |
+| [Risk Management](docs/tools/risk.md)            | 12    | 5x5 risk matrix, risk register, custom risks and control mapping                                                 |
+| [Vendor Risk (TPRM)](docs/tools/vendors.md)      | 7     | Vendor registry, AI-powered security research, DPSIA                                                             |
+| [Organization](docs/tools/organization.md)       | 7     | Users, orgs, audit trail, work queue, notifications                                                              |
+| [Capabilities](docs/tools/capabilities.md)       | 9     | KSI capability themes, scorecards, evidence posture, systems inventory                                           |
+| [Webhooks](docs/tools/webhooks.md)               | 6     | Webhook endpoints, delivery logs, secret rotation                                                                |
 
 ---
 
@@ -68,7 +68,7 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 72 tools, grouped by domain, with their Zod schemas rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 74 tools, grouped by domain, with their Zod schemas rendered as a live form.
 
 Live tool calls need an API key — export `SCF_API_KEY` in the same shell before launching Inspector, or set it under the "Environment Variables" tab inside the Inspector UI. Without a key, you can still browse schemas and descriptions; tool calls return 401.
 
@@ -107,7 +107,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
 2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
-4. Claude Desktop restarts the server and all 72 tools are available.
+4. Claude Desktop restarts the server and all 74 tools are available.
 
 To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 
