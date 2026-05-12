@@ -451,7 +451,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_control_assessment_composite",
-    "Get the rolled-up assessment composite for one SCF control: composite score, status band, included/missing evidence IDs, mandatory gaps, and per-window detail. Returns 404 if no composite row exists yet (composites are produced asynchronously by the rollup service after window assessments fire).",
+    "Get the rolled-up assessment composite for one SCF control: composite score, status band, included/missing evidence IDs, mandatory gaps, per-window detail. 404 if no composite row exists yet (async).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02')"),
@@ -469,7 +469,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_list_control_assessment_composites",
-    "List rolled-up assessment composites for the organisation. Cursor-paginated, ordered worst-band first (insufficient → sufficient) so weakest controls surface at the top. Use status/domain/computation_version filters to scope. Pass next_cursor from the previous response to page forward. Useful for finding controls with the weakest assessment-quality posture.",
+    "List rolled-up assessment composites for the org. Cursor-paginated, worst-band first (insufficient → sufficient). Filter by status/domain/computation_version. Pass next_cursor to page forward.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       status: z
