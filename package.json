@@ -77,7 +77,7 @@
     "@anthropic-ai/mcpb": "^2.1.2",
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.3.3",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
@@ -86,7 +86,7 @@
     "tsx": "^4.19.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "tmp": "^0.2.4"
