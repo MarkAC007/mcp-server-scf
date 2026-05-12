@@ -444,4 +444,64 @@ export function registerEvidenceTools(server: McpServer) {
       }
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // Control Assessment Composite (M3 — issue #569)
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_get_control_assessment_composite",
+    "Get the rolled-up assessment composite for one SCF control: composite score, status band, included/missing evidence IDs, mandatory gaps, per-window detail. 404 if no composite row exists yet (async).",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02')"),
+    },
+    async ({ org_id, scf_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/controls/${scf_id}/assessment-composite`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_list_control_assessment_composites",
+    "List rolled-up assessment composites for the org. Cursor-paginated, worst-band first (insufficient → sufficient). Filter by status/domain/computation_version. Pass next_cursor to page forward.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      status: z
+        .string()
+        .optional()
+        .describe(
+          "Comma-separated composite_status values to include (e.g., 'insufficient,partial'). Valid values: insufficient, insufficient_sample, partial, pending, no_evidence, sufficient",
+        ),
+      domain: z.string().optional().describe("Filter by SCF domain code (e.g., 'BCD', 'GOV', 'AST')"),
+      computation_version: z
+        .number()
+        .int()
+        .min(1)
+        .optional()
+        .describe("Restrict to composites computed at this algorithm version"),
+      limit: z.number().int().min(1).max(500).optional().default(100).describe("Page size (1–500, default 100)"),
+      cursor: z.string().optional().describe("Opaque pagination cursor — pass next_cursor from a prior response"),
+    },
+    async ({ org_id, status, domain, computation_version, limit, cursor }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/controls/assessment-composites`, {
+          status,
+          domain,
+          computation_version,
+          limit,
+          cursor,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }
