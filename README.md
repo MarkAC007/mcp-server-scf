@@ -37,6 +37,8 @@ Give your AI assistant access to 1,451 SCF security controls, 354+ framework map
 
 Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Maintained by [ComplianceGenie.io](https://compliancegenie.io).
 
+> 🆕 **The platform core is now open source.** The SCF Controls Platform — SCF-native GRC tooling for the free Secure Controls Framework content — is published under AGPL-3.0 at **[scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss)**. Self-host it, or use the hosted service at [scfcontrolsplatform.com](https://scfcontrolsplatform.com/).
+
 > Having trouble? → [**docs/troubleshooting.md**](docs/troubleshooting.md) · API key setup → [**docs/authentication.md**](docs/authentication.md) · How it works → [**docs/architecture.md**](docs/architecture.md)
 
 ---
@@ -245,7 +247,8 @@ MIT — see [LICENSE](LICENSE).
 
 ## Links
 
-- [SCF Controls Platform](https://scfcontrolsplatform.com/) — the compliance platform
+- [SCF Controls Platform](https://scfcontrolsplatform.com/) — the compliance platform (hosted)
+- [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss) — open-source platform core (AGPL-3.0)
 - [ComplianceGenie.io](https://compliancegenie.io) — maintainer
 - [Model Context Protocol](https://modelcontextprotocol.io) — MCP specification
 - [SCF Framework](https://securecontrolsframework.com) — Secure Controls Framework
