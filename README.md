@@ -37,7 +37,7 @@ Give your AI assistant access to 1,451 SCF security controls, 354+ framework map
 
 Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Maintained by [ComplianceGenie.io](https://compliancegenie.io).
 
-> 🆕 **The platform core is now open source.** The SCF Controls Platform — SCF-native GRC tooling for the free Secure Controls Framework content — is published under AGPL-3.0 at **[scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss)**. Self-host it, or use the hosted service at [scfcontrolsplatform.com](https://scfcontrolsplatform.com/).
+> 🆕 **The platform is now open-source, self-hosted software.** The SCF Controls Platform — SCF-native GRC tooling for the free Secure Controls Framework content — is published under AGPL-3.0 at **[scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss)**. Companies download and host it themselves via Docker Compose.
 
 > Having trouble? → [**docs/troubleshooting.md**](docs/troubleshooting.md) · API key setup → [**docs/authentication.md**](docs/authentication.md) · How it works → [**docs/architecture.md**](docs/architecture.md)
 
@@ -78,13 +78,14 @@ Live tool calls need an API key — export `SCF_API_KEY` in the same shell befor
 
 ## Quick Start
 
-### 1. Get an API key
+### 1. Self-host the platform & get an API key
 
-1. Sign up at [scfcontrolsplatform.com](https://scfcontrolsplatform.com/) (or [uk.scfcontrolsplatform.app](https://uk.scfcontrolsplatform.app) for UK data residency).
-2. **Settings → API Keys → Generate New Key.**
-3. Copy the key — shown once. Starts with `scf_`.
+The SCF Controls Platform is **open-source software you host yourself** — there is no sign-up. Deploy it from [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss) (a Docker Compose stack with bundled PostgreSQL, Redis, and MinIO), then:
 
-Full walkthrough (rotation, region selection, scopes): [**docs/authentication.md**](docs/authentication.md).
+1. Set an `API_KEY` in the platform's `.env` (generate one with `openssl rand -hex 32`), or create a key in **Settings → API Keys** once the app is running.
+2. Note your instance's API URL — `http://localhost:8000` by default, or your deployed host.
+
+Use that key as `SCF_API_KEY` and the instance URL as `SCF_API_URL` (see [Configuration](#configuration)).
 
 ### 2. Install — one-click
 
@@ -124,8 +125,8 @@ To uninstall or update the API key later: **Settings → Extensions → SCF Cont
       "command": "npx",
       "args": ["-y", "mcp-server-scf"],
       "env": {
-        "SCF_API_KEY": "scf_your_api_key_here",
-        "SCF_API_URL": "https://uk.scfcontrolsplatform.app"
+        "SCF_API_KEY": "your_api_key_here",
+        "SCF_API_URL": "http://localhost:8000"
       }
     }
   }
@@ -136,8 +137,8 @@ To uninstall or update the API key later: **Settings → Extensions → SCF Cont
 
 ```bash
 claude mcp add scf -- npx -y mcp-server-scf
-export SCF_API_KEY="scf_your_api_key_here"
-export SCF_API_URL="https://uk.scfcontrolsplatform.app"
+export SCF_API_KEY="your_api_key_here"
+export SCF_API_URL="http://localhost:8000"
 ```
 
 **Cursor / Windsurf** — same JSON shape as Claude Desktop in `.cursor/mcp.json` (or the equivalent Windsurf path).
@@ -160,10 +161,10 @@ export SCF_API_URL="https://uk.scfcontrolsplatform.app"
 
 ## Configuration
 
-| Variable      | Required | Default                              | Description                                    |
-| ------------- | -------- | ------------------------------------ | ---------------------------------------------- |
-| `SCF_API_KEY` | Yes      | —                                    | Your SCF platform API key (starts with `scf_`) |
-| `SCF_API_URL` | No       | `https://uk.scfcontrolsplatform.app` | Platform API endpoint                          |
+| Variable      | Required | Default | Description                                                                                                        |
+| ------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `SCF_API_KEY` | Yes      | —       | API key from your self-hosted platform instance                                                                    |
+| `SCF_API_URL` | Yes      | —       | Base URL of your self-hosted platform (e.g. `http://localhost:8000`). The former hosted default is decommissioned. |
 
 ---
 
@@ -247,8 +248,7 @@ MIT — see [LICENSE](LICENSE).
 
 ## Links
 
-- [SCF Controls Platform](https://scfcontrolsplatform.com/) — the compliance platform (hosted)
-- [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss) — open-source platform core (AGPL-3.0)
+- [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss) — the open-source, self-hosted platform (AGPL-3.0)
 - [ComplianceGenie.io](https://compliancegenie.io) — maintainer
 - [Model Context Protocol](https://modelcontextprotocol.io) — MCP specification
 - [SCF Framework](https://securecontrolsframework.com) — Secure Controls Framework
