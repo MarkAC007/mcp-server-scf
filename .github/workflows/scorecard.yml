@@ -6,6 +6,7 @@ on:
     - cron: '0 6 * * 1'  # Weekly Monday 06:00 UTC
   push:
     branches: [main]
+  workflow_dispatch:  # allow on-demand re-scan (e.g. after a visibility change)
 
 permissions: read-all
 
