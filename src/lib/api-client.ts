@@ -104,12 +104,23 @@ let _client: ScfApiClient | null = null;
 export function getClient(): ScfApiClient {
   if (!_client) {
     const apiKey = process.env.SCF_API_KEY;
-    const baseUrl = process.env.SCF_API_URL || "https://uk.scfcontrolsplatform.app";
+    const baseUrl = process.env.SCF_API_URL;
+
+    // The hosted SaaS (uk.scfcontrolsplatform.app) is decommissioned — the
+    // platform is self-hosted only, so there is no meaningful default URL.
+    if (!baseUrl) {
+      throw new Error(
+        "SCF_API_URL environment variable is required. " +
+          "The SCF Controls Platform is self-hosted: set SCF_API_URL to your own " +
+          "instance's base URL (e.g. http://localhost:8000). " +
+          "See https://github.com/MarkAC007/scf-controls-platform-oss to deploy one.",
+      );
+    }
 
     if (!apiKey) {
       throw new Error(
         "SCF_API_KEY environment variable is required. " +
-          "Generate one at https://uk.scfcontrolsplatform.app/settings/api-keys",
+          `Generate one in your self-hosted instance at ${baseUrl.replace(/\/+$/, "")}/settings/api-keys`,
       );
     }
 

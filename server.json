@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "app.scfcontrolsplatform/mcp-server-scf",
-  "description": "MCP server for the SCF Controls Platform — 72 tools for controls, evidence, risk, and TPRM.",
-  "version": "1.6.3",
+  "description": "MCP server for the SCF Controls Platform — 83 tools for controls, evidence, risk, and TPRM.",
+  "version": "1.7.0",
   "repository": {
     "url": "https://github.com/MarkAC007/mcp-server-scf",
     "source": "github"
@@ -12,24 +12,23 @@
     {
       "registryType": "npm",
       "identifier": "mcp-server-scf",
-      "version": "1.6.3",
+      "version": "1.7.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "SCF_API_KEY",
-          "description": "Your SCF Controls Platform API key. Generate at Settings > API Keys. Starts with the scf_ prefix.",
+          "description": "Your SCF Controls Platform API key. Generate in your self-hosted instance at Settings > API Keys. Starts with the scf_ prefix.",
           "isRequired": true,
           "isSecret": true,
           "format": "string"
         },
         {
           "name": "SCF_API_URL",
-          "description": "Platform API endpoint. Defaults to https://uk.scfcontrolsplatform.app (UK data residency).",
-          "isRequired": false,
-          "format": "string",
-          "default": "https://uk.scfcontrolsplatform.app"
+          "description": "Base URL of your self-hosted SCF Controls Platform instance (e.g. http://localhost:8000). Required — the platform is self-hosted; there is no hosted default.",
+          "isRequired": true,
+          "format": "string"
         }
       ]
     }

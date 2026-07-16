@@ -45,6 +45,11 @@ export function registerEvidenceTools(server: McpServer) {
         .string()
         .optional()
         .describe("Collection cadence: 'daily', 'weekly', 'monthly', 'quarterly', or 'annually'"),
+      maturity_level: z
+        .string()
+        .regex(/^L[0-5]$/)
+        .optional()
+        .describe("Evidence maturity level L0–L5 (e.g., 'L3'); omit to leave unset"),
       comments: z.string().optional().describe("Free-text notes or context"),
     },
     async ({ org_id, ...body }) => {
@@ -135,6 +140,11 @@ export function registerEvidenceTools(server: McpServer) {
         .string()
         .optional()
         .describe("Collection cadence: 'daily', 'weekly', 'monthly', 'quarterly', or 'annually'"),
+      maturity_level: z
+        .string()
+        .regex(/^L[0-5]$/)
+        .optional()
+        .describe("Evidence maturity level L0–L5 (e.g., 'L3'); omitting never clears the stored value"),
       comments: z.string().optional().describe("Free-text notes or context"),
     },
     async ({ org_id, evidence_id, ...fields }) => {

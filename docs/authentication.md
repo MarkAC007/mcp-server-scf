@@ -6,7 +6,9 @@
 
 ## Getting an API key
 
-1. Sign up or sign in at [uk.scfcontrolsplatform.app](https://uk.scfcontrolsplatform.app) (UK data residency).
+The SCF Controls Platform is **self-hosted** — there is no hosted/SaaS instance. Keys are generated in your own deployment ([deploy one from the OSS repo](https://github.com/MarkAC007/scf-controls-platform-oss)):
+
+1. Sign in to **your own instance** (e.g. `http://localhost:8000`).
 2. Open **Settings → API Keys**.
 3. Click **Generate New Key**.
 4. Copy the key immediately — it's shown once. Keys are stored server-side as SHA-256 hashes and cannot be recovered after the dialog closes.
@@ -37,7 +39,7 @@ The server reads the environment only when the first tool is called ([`src/lib/a
       "args": ["-y", "mcp-server-scf"],
       "env": {
         "SCF_API_KEY": "scf_your_api_key_here",
-        "SCF_API_URL": "https://uk.scfcontrolsplatform.app"
+        "SCF_API_URL": "https://scf.your-domain.example"
       }
     }
   }
@@ -54,7 +56,7 @@ Config paths:
 ```bash
 claude mcp add scf -- npx -y mcp-server-scf
 export SCF_API_KEY="scf_your_api_key_here"
-export SCF_API_URL="https://uk.scfcontrolsplatform.app"
+export SCF_API_URL="https://scf.your-domain.example"
 ```
 
 Claude Code inherits your shell environment, so `export` in your shell profile works here. Claude Desktop does not.
@@ -69,7 +71,7 @@ Claude Code inherits your shell environment, so `export` in your shell profile w
       "args": ["-y", "mcp-server-scf"],
       "env": {
         "SCF_API_KEY": "scf_your_api_key_here",
-        "SCF_API_URL": "https://uk.scfcontrolsplatform.app"
+        "SCF_API_URL": "https://scf.your-domain.example"
       }
     }
   }
@@ -85,9 +87,10 @@ Both clients use an `mcp.json` (or equivalent) in the workspace or user config d
   "mcpServers": {
     "scf": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "-e", "SCF_API_KEY", "markac007/mcp-server-scf"],
+      "args": ["run", "-i", "--rm", "-e", "SCF_API_KEY", "-e", "SCF_API_URL", "markac007/mcp-server-scf"],
       "env": {
-        "SCF_API_KEY": "scf_your_api_key_here"
+        "SCF_API_KEY": "scf_your_api_key_here",
+        "SCF_API_URL": "https://scf.your-domain.example"
       }
     }
   }
@@ -100,7 +103,7 @@ The `-e SCF_API_KEY` flag (without a value) passes the variable through from the
 
 ## Platform URL
 
-The platform runs in the UK (`https://uk.scfcontrolsplatform.app`) — this is the default and currently the only region. `SCF_API_URL` exists so future regions can be selected without a code change; for now, leave it unset or set it to the UK URL explicitly.
+There is no default URL. The former hosted instance (`uk.scfcontrolsplatform.app`) has been **decommissioned** — the platform is self-hosted only, so `SCF_API_URL` is **required** and must point at the base URL of your own deployment (e.g. `http://localhost:8000` for a local Docker Compose stack, or wherever you expose it). The server refuses to start a request without it and tells you exactly this.
 
 ---
 
@@ -126,6 +129,6 @@ Today there is one key type with full access to any organization the user belong
 
 - **Never logged.** `SCF_API_KEY` is never printed to stderr, never included in error messages, never appears in `--debug` output.
 - **Server-side hashing.** Keys are stored as SHA-256 hashes; the platform operator cannot retrieve your plaintext key.
-- **HTTPS only.** The platform rejects plain HTTP. The client does not support custom CAs.
+- **Use HTTPS across networks.** Plain HTTP is acceptable only for localhost/loopback deployments; anything reachable over a network should sit behind TLS (reverse proxy). The client does not support custom CAs.
 - **Short-lived mutations.** Pre-signed download URLs returned by `scf_get_evidence_file` expire after 15 minutes.
 - **npm provenance.** Every published version is cryptographically linked to its source commit via [npm provenance attestations](https://docs.npmjs.com/generating-provenance-statements) issued through GitHub Actions OIDC — no long-lived npm tokens anywhere in the release pipeline.

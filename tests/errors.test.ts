@@ -22,9 +22,9 @@ describe("formatError", () => {
     expect(msg).toMatch(/Rate limited/);
   });
 
-  it("translates 402 into a subscription-upgrade hint", () => {
+  it("translates 402 into an instance usage-limit hint", () => {
     const msg = formatError(new ScfApiError("over limit", 402));
-    expect(msg).toMatch(/Subscription limit reached/);
+    expect(msg).toMatch(/Usage limit reached/);
   });
 
   it("falls through to the generic shape for other status codes", () => {

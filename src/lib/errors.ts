@@ -15,7 +15,7 @@ export function formatError(error: unknown): string {
     if (error.statusCode === 403) return "Access denied. Your API key may lack permissions for this operation.";
     if (error.statusCode === 404) return `Not found: ${error.message}`;
     if (error.statusCode === 429) return "Rate limited. Please wait before retrying.";
-    if (error.statusCode === 402) return "Subscription limit reached. Upgrade your plan to continue.";
+    if (error.statusCode === 402) return "Usage limit reached on your instance. Check its plan/limits configuration.";
     return `API error (${error.statusCode}): ${error.message}`;
   }
   if (error instanceof Error) return error.message;

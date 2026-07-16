@@ -13,7 +13,7 @@ Every tool call returns `Authentication failed. Check your SCF_API_KEY.` or the 
 One of:
 
 - The key is missing, truncated, or has a stray newline.
-- The key belongs to a different region than `SCF_API_URL` points at.
+- The key belongs to a different instance than `SCF_API_URL` points at (keys are per-deployment).
 - The key was revoked or rotated server-side.
 - The key doesn't start with `scf_` — likely a UUID copy-paste mistake.
 
@@ -24,7 +24,7 @@ One of:
    echo -n "$SCF_API_KEY" | head -c 4   # should print: scf_
    echo -n "$SCF_API_KEY" | wc -c       # should match the length shown at generation time
    ```
-2. Verify the region matches — see [Region selection](#region-selection) below.
+2. Verify `SCF_API_URL` points at the same instance that issued the key — see [Wrong `SCF_API_URL`](#wrong-scf_api_url) below.
 3. Generate a new key in **Settings → API Keys** and update every MCP client config, then restart the client.
 4. If the key works in `curl` but not in the MCP client, the client isn't passing the `env` block through — see [Claude Desktop config](#claude-desktop-config-path-per-os).
 
@@ -36,14 +36,17 @@ One of:
 Key looks correct (starts with `scf_`, length matches) but every request returns `401` or `ENOTFOUND`.
 
 **Cause**
-`SCF_API_URL` is pointing at the wrong host. The platform currently runs only at `https://uk.scfcontrolsplatform.app` — any other value will fail.
+`SCF_API_URL` is missing or pointing at the wrong host. The platform is **self-hosted** — there is no default and no hosted fallback (the former `uk.scfcontrolsplatform.app` SaaS is decommissioned; `ENOTFOUND` against it means exactly that).
 
 **Fix**
-Leave `SCF_API_URL` unset (the default already targets the UK host) or set it explicitly to:
+Set `SCF_API_URL` to the base URL of **your own instance** — the same origin you open in the browser to sign in:
 
 ```
-SCF_API_URL=https://uk.scfcontrolsplatform.app
+SCF_API_URL=http://localhost:8000          # local Docker Compose stack
+SCF_API_URL=https://scf.your-domain.example # reverse-proxied deployment
 ```
+
+If you don't have an instance yet, deploy one from [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss).
 
 ---
 

@@ -15,7 +15,7 @@ MCP client (Claude Desktop / Code / Cursor)
 mcp-server-scf  (Node.js ≥18, ESM, single long-lived process)
       │  (HTTPS, Bearer token)
       ▼
-SCF Controls Platform API  (uk.scfcontrolsplatform.app by default)
+SCF Controls Platform API  (your self-hosted instance — SCF_API_URL)
 ```
 
 Because stdio is the transport, **anything written to `stdout` corrupts the protocol frame**. All logging in this server goes to `stderr` via `console.error` — including the startup banner ([`src/index.ts:44`](../src/index.ts:44)). When adding new tools, never introduce `console.log` or raw `process.stdout.write` calls.
@@ -32,12 +32,12 @@ src/
 ├── tools/
 │   ├── catalog.ts        6 tools — read-only SCF reference data
 │   ├── scoped-controls.ts 6 tools — per-org implementation tracking
-│   ├── evidence.ts       19 tools — CRUD, files, validation, AI
+│   ├── evidence.ts       21 tools — CRUD, files, validation, AI
 │   │                     assessments (per-file + windowed)
 │   ├── risk.ts           12 tools — risk register + custom risks
-│   ├── vendors.ts        7 tools — TPRM + AI research + DPSIA
+│   ├── vendors.ts        11 tools — TPRM + AI research + AI assessments
 │   ├── organization.ts   7 tools — user, orgs, audit, notifications
-│   ├── capabilities.ts   9 tools — KSI themes, systems, scorecards
+│   ├── capabilities.ts   14 tools — KSI themes, systems, catalog, recipes
 │   └── webhooks.ts       6 tools — webhook endpoints + deliveries
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
@@ -45,7 +45,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **72 tools across 8 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
+Total: **83 tools across 8 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
 
 ---
 
@@ -67,14 +67,14 @@ The client has no retry logic — it's the caller's responsibility to retry on `
 
 All error responses use `isError: true` with a single text block. `ScfApiError` status codes are translated to user-facing messages ([`src/lib/errors.ts:12`](../src/lib/errors.ts:12)):
 
-| Status | Translated message                                                     |
-| ------ | ---------------------------------------------------------------------- |
-| 401    | "Authentication failed. Check your `SCF_API_KEY`."                     |
-| 402    | "Subscription limit reached. Upgrade your plan to continue."           |
-| 403    | "Access denied. Your API key may lack permissions for this operation." |
-| 404    | `Not found: ${error.message}`                                          |
-| 429    | "Rate limited. Please wait before retrying."                           |
-| Other  | `API error (${statusCode}): ${error.message}`                          |
+| Status | Translated message                                                           |
+| ------ | ---------------------------------------------------------------------------- |
+| 401    | "Authentication failed. Check your `SCF_API_KEY`."                           |
+| 402    | "Usage limit reached on your instance. Check its plan/limits configuration." |
+| 403    | "Access denied. Your API key may lack permissions for this operation."       |
+| 404    | `Not found: ${error.message}`                                                |
+| 429    | "Rate limited. Please wait before retrying."                                 |
+| Other  | `API error (${statusCode}): ${error.message}`                                |
 
 Non-`ScfApiError` errors (network failures, JSON parse errors) fall through to `error.message`. API keys are never logged and never included in the error payload.
 
@@ -88,12 +88,12 @@ The platform enforces **100 read requests/min and 20 write requests/min** per AP
 
 ## Configuration
 
-Configuration is environment-only — there is no config file. See [`docs/authentication.md`](authentication.md) for API key setup and region selection.
+Configuration is environment-only — there is no config file. See [`docs/authentication.md`](authentication.md) for API key setup.
 
-| Variable      | Required | Default                              | Purpose                                                  |
-| ------------- | -------- | ------------------------------------ | -------------------------------------------------------- |
-| `SCF_API_KEY` | Yes      | —                                    | Bearer token for every request (format: `scf_…`)         |
-| `SCF_API_URL` | No       | `https://uk.scfcontrolsplatform.app` | Platform endpoint; switch to the US endpoint if required |
+| Variable      | Required | Default | Purpose                                                                                 |
+| ------------- | -------- | ------- | --------------------------------------------------------------------------------------- |
+| `SCF_API_KEY` | Yes      | —       | Bearer token for every request (format: `scf_…`)                                        |
+| `SCF_API_URL` | Yes      | —       | Base URL of your self-hosted instance (e.g. `http://localhost:8000`); no hosted default |
 
 ---
 
