@@ -82,7 +82,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_item_maturity",
-    "Get one evidence item's collection maturity: current level (1=Ad Hoc to 5=Optimized), level description, contributing factors, upgrade potential, and tracking state. Use this to answer 'where does this evidence item sit today?'",
+    "Get one evidence item's collection maturity: current level (1=Ad Hoc to 5=Optimized), contributing factors, upgrade potential, and tracking state.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
@@ -100,7 +100,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_upgrade_recommendations",
-    "Get concrete recommendations for maturing one evidence item's collection: target level, effort, impact, and step-by-step actions (the same upgrade-path guidance shown in the platform UI). Use this to answer 'what is our next step in maturing evidence collection for X?'",
+    "Get upgrade-path recommendations for maturing one evidence item's collection: target level, effort, impact, and step-by-step actions — the same guidance shown in the platform UI.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),

@@ -47,13 +47,13 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**83 tools** across 8 domains — click through for full parameter tables and example prompts:
+**88 tools** across 8 domains — click through for full parameter tables and example prompts:
 
 | Domain                                           | Tools | Description                                                                                                      |
 | ------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------- |
 | [Catalog](docs/tools/catalog.md)                 | 6     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives                                              |
 | [Control Scoping](docs/tools/scoped-controls.md) | 6     | Track implementation status across an 8-state workflow                                                           |
-| [Evidence](docs/tools/evidence.md)               | 21    | Manage evidence collection, validation, maturity scoring, windowed AI assessments, and control-composite rollups |
+| [Evidence](docs/tools/evidence.md)               | 26    | Manage evidence collection, validation, maturity scoring, windowed AI assessments, and control-composite rollups |
 | [Risk Management](docs/tools/risk.md)            | 12    | 5x5 risk matrix, risk register, custom risks and control mapping                                                 |
 | [Vendor Risk (TPRM)](docs/tools/vendors.md)      | 11    | Vendor registry, AI security research, async AI assessments (replaces DPSIA)                                     |
 | [Organization](docs/tools/organization.md)       | 7     | Users, orgs, audit trail, work queue, notifications                                                              |
@@ -70,7 +70,7 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 83 tools, grouped by domain, with their Zod schemas rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 88 tools, grouped by domain, with their Zod schemas rendered as a live form.
 
 Live tool calls need your instance's URL and an API key — export `SCF_API_URL` and `SCF_API_KEY` in the same shell before launching Inspector, or set them under the "Environment Variables" tab inside the Inspector UI. Without them, you can still browse schemas and descriptions; tool calls return a configuration error.
 
@@ -112,7 +112,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
 2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
-4. Claude Desktop restarts the server and all 83 tools are available.
+4. Claude Desktop restarts the server and all 88 tools are available.
 
 To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 
