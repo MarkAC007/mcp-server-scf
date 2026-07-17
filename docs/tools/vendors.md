@@ -1,6 +1,6 @@
 # Vendor Risk (TPRM) tools
 
-Third-party risk management with AI-powered security research (HIBP/NVD lookups, breach history, vulnerability scanning) and Data Protection Security Impact Assessments (DPSIA).
+Third-party risk management with AI-powered security research (HIBP/NVD lookups, breach history, vulnerability scanning) and async AI vendor security assessments (the platform's replacement for DPSIA).
 
 Source: [`src/tools/vendors.ts`](../../src/tools/vendors.ts).
 
@@ -89,25 +89,71 @@ Get the latest vendor research result: breach history, known vulnerabilities, an
 
 ---
 
-## `scf_trigger_dpsia`
+## `scf_trigger_vendor_assessment`
 
-Queue a Data Protection Security Impact Assessment (DPSIA) for a vendor (write — editor+ role, async). Scores posture against CIA triad and certification requirements.
+Queue an AI vendor security assessment (write — editor+ role, async, HTTP 202). Replaces the removed `scf_trigger_dpsia` tool — the platform deprecated the `/dpsia` endpoints in favour of `/assessments`. Returns `assessment_id` + `job_id`; poll `scf_get_vendor_assessment_status`.
 
-| Parameter            | Type   | Required | Description                                                           |
-| -------------------- | ------ | -------- | --------------------------------------------------------------------- |
-| `org_id`             | string | Yes      | Organization ID (UUID)                                                |
-| `vendor_id`          | string | Yes      | Vendor ID                                                             |
-| `services_used`      | string | No       | Description of services the vendor provides (auto-derived if omitted) |
-| `assessment_type`    | string | No       | `new` (default), `annual-review`, `adhoc`                             |
-| `data_role`          | string | No       | `Processor` (default), `Controller`, `Joint Controller`               |
-| `client_name`        | string | No       | Client/organisation name for the assessment                           |
-| `additional_context` | string | No       | Additional context (e.g., specific concerns, scope notes)             |
+| Parameter            | Type   | Required | Description                                                                          |
+| -------------------- | ------ | -------- | ------------------------------------------------------------------------------------ |
+| `org_id`             | string | Yes      | Organization ID (UUID)                                                               |
+| `vendor_id`          | string | Yes      | Vendor ID                                                                            |
+| `services_used`      | string | No       | Services the vendor provides, 1–2000 chars (auto-derived from the record if omitted) |
+| `assessment_type`    | string | No       | `initial` (default), `annual`, `adhoc`                                               |
+| `data_role`          | string | No       | `Processor` (default), `Controller`, `Joint Controller`                              |
+| `additional_context` | string | No       | Additional context, max 5000 chars (e.g., specific concerns, scope notes)            |
+
+---
+
+## `scf_list_vendor_assessments`
+
+List a vendor's AI security assessments, newest first. Each record includes status, RAG rating, recommendation, and report fields.
+
+| Parameter   | Type   | Required | Description            |
+| ----------- | ------ | -------- | ---------------------- |
+| `org_id`    | string | Yes      | Organization ID (UUID) |
+| `vendor_id` | string | Yes      | Vendor ID              |
+
+---
+
+## `scf_get_latest_vendor_assessment`
+
+Get a vendor's latest **completed** AI security assessment: RAG status, recommendation, executive summary, `report_markdown`/`report_json`. Returns 404 if none completed yet.
+
+| Parameter   | Type   | Required | Description            |
+| ----------- | ------ | -------- | ---------------------- |
+| `org_id`    | string | Yes      | Organization ID (UUID) |
+| `vendor_id` | string | Yes      | Vendor ID              |
+
+---
+
+## `scf_get_vendor_assessment`
+
+Get one vendor AI assessment by ID with full detail: `services_used`, `data_role`, RAG status, recommendation, full report fields, and research sources.
+
+| Parameter       | Type   | Required | Description                                         |
+| --------------- | ------ | -------- | --------------------------------------------------- |
+| `org_id`        | string | Yes      | Organization ID (UUID)                              |
+| `vendor_id`     | string | Yes      | Vendor ID                                           |
+| `assessment_id` | string | Yes      | Assessment UUID — from list or the trigger response |
+
+---
+
+## `scf_get_vendor_assessment_status`
+
+Get the job status of a queued vendor AI assessment: `status`, `started_at`, `completed_at`, `error_message`. Poll after `scf_trigger_vendor_assessment`.
+
+| Parameter       | Type   | Required | Description                                            |
+| --------------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`        | string | Yes      | Organization ID (UUID)                                 |
+| `vendor_id`     | string | Yes      | Vendor ID                                              |
+| `assessment_id` | string | Yes      | Assessment UUID — from `scf_trigger_vendor_assessment` |
 
 ---
 
 ## Example prompts
 
 - "List all critical vendors and their risk scores."
-- "Run a DPSIA on our cloud provider vendor."
+- "Run an AI security assessment on our cloud provider vendor."
 - "What breaches has our payment processor had?"
 - "Add Stripe as a critical vendor for payment processing."
+- "Show me the latest assessment report for AWS."

@@ -4,13 +4,67 @@ Track evidence artifacts that demonstrate control implementation, run AI-powered
 
 Source: [`src/tools/evidence.ts`](../../src/tools/evidence.ts).
 
-The 19 tools in this domain split into five concerns:
+The 26 tools in this domain split into six concerns:
 
 1. **CRUD** — `scf_list_evidence`, `scf_create_evidence`, `scf_update_evidence`, `scf_get_evidence_maturity`, `scf_list_evidence_tasks`
 2. **Files** — `scf_list_evidence_files`, `scf_get_evidence_file`
 3. **Validation** — `scf_get_evidence_validation`, `scf_revalidate_evidence_file`, `scf_get_evidence_validation_summary`
 4. **Per-file AI assessment** — `scf_trigger_evidence_assessment`, `scf_get_evidence_assessment`, `scf_bulk_assess_evidence`, `scf_get_evidence_assessment_summary`
 5. **Windowed AI assessment** — `scf_trigger_window_assessment`, `scf_list_window_assessments`, `scf_get_window_assessment`, `scf_bulk_assess_windows`, `scf_get_window_assessment_summary`
+6. **Maturity guidance** — `scf_get_evidence_item_maturity`, `scf_get_evidence_upgrade_recommendations`, `scf_get_evidence_suggestions`, `scf_list_evidence_gaps`, `scf_get_evidence_health`
+
+---
+
+## `scf_get_evidence_item_maturity`
+
+Get one evidence item's collection maturity: current level (1=Ad Hoc to 5=Optimized), contributing factors, upgrade potential, and tracking state.
+
+| Parameter     | Type   | Required | Description                                                   |
+| ------------- | ------ | -------- | ------------------------------------------------------------- |
+| `org_id`      | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`    |
+| `evidence_id` | string | Yes      | Evidence ID (e.g., `E-RSK-02`) — get from `scf_list_evidence` |
+
+---
+
+## `scf_get_evidence_upgrade_recommendations`
+
+Get upgrade-path recommendations for maturing one evidence item's collection: target level, effort, impact, and step-by-step actions — the same guidance shown in the platform UI.
+
+| Parameter     | Type   | Required | Description                                                   |
+| ------------- | ------ | -------- | ------------------------------------------------------------- |
+| `org_id`      | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`    |
+| `evidence_id` | string | Yes      | Evidence ID (e.g., `E-RSK-02`) — get from `scf_list_evidence` |
+
+---
+
+## `scf_get_evidence_suggestions`
+
+Get system-aware collection suggestions for one evidence item: which tracked system currently collects it, which in-scope systems are capable of collecting it, and tailored collection guidance.
+
+| Parameter     | Type   | Required | Description                                                   |
+| ------------- | ------ | -------- | ------------------------------------------------------------- |
+| `org_id`      | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`    |
+| `evidence_id` | string | Yes      | Evidence ID (e.g., `E-RSK-02`) — get from `scf_list_evidence` |
+
+---
+
+## `scf_list_evidence_gaps`
+
+List the organization's evidence coverage gaps: evidence required by in-scope controls that is not yet tracked, with overall coverage percentage.
+
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+
+---
+
+## `scf_get_evidence_health`
+
+Get evidence collection health for the organization: per-item freshness status (green/amber/red) against collection frequency, with a roll-up summary.
+
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
 
 ---
 
@@ -39,6 +93,7 @@ Create an evidence tracking record from a catalog evidence ID (write — editor+
 | `collecting_system`    | string  | No       | System or tool used to collect the evidence                                   |
 | `owner`                | string  | No       | Person responsible for this evidence item                                     |
 | `frequency`            | string  | No       | `daily`, `weekly`, `monthly`, `quarterly`, `annually`                         |
+| `maturity_level`       | string  | No       | Evidence maturity level `L0`–`L5` (e.g., `L3`)                                |
 | `comments`             | string  | No       | Additional notes or context                                                   |
 
 ---
@@ -47,17 +102,18 @@ Create an evidence tracking record from a catalog evidence ID (write — editor+
 
 Upsert an evidence item's tracking fields (write — editor+ role). Creates the tracking row if missing. All body fields are optional; only provided fields are applied.
 
-| Parameter              | Type    | Required | Description                                           |
-| ---------------------- | ------- | -------- | ----------------------------------------------------- |
-| `org_id`               | string  | Yes      | Organization ID (UUID)                                |
-| `evidence_id`          | string  | Yes      | Catalog evidence ID (e.g., `E-IAM-01`)                |
-| `is_tracked`           | boolean | No       | Whether this evidence item is actively tracked        |
-| `system_id`            | string  | No       | System ID (UUID) to link this evidence to             |
-| `method_of_collection` | string  | No       | `automated`, `manual`, `hybrid`                       |
-| `collecting_system`    | string  | No       | System or tool used to collect the evidence           |
-| `owner`                | string  | No       | Person responsible for this evidence item             |
-| `frequency`            | string  | No       | `daily`, `weekly`, `monthly`, `quarterly`, `annually` |
-| `comments`             | string  | No       | Additional notes or context                           |
+| Parameter              | Type    | Required | Description                                                               |
+| ---------------------- | ------- | -------- | ------------------------------------------------------------------------- |
+| `org_id`               | string  | Yes      | Organization ID (UUID)                                                    |
+| `evidence_id`          | string  | Yes      | Catalog evidence ID (e.g., `E-IAM-01`)                                    |
+| `is_tracked`           | boolean | No       | Whether this evidence item is actively tracked                            |
+| `system_id`            | string  | No       | System ID (UUID) to link this evidence to                                 |
+| `method_of_collection` | string  | No       | `automated`, `manual`, `hybrid`                                           |
+| `collecting_system`    | string  | No       | System or tool used to collect the evidence                               |
+| `owner`                | string  | No       | Person responsible for this evidence item                                 |
+| `frequency`            | string  | No       | `daily`, `weekly`, `monthly`, `quarterly`, `annually`                     |
+| `maturity_level`       | string  | No       | Evidence maturity level `L0`–`L5`; omitting never clears the stored value |
+| `comments`             | string  | No       | Additional notes or context                                               |
 
 ---
 

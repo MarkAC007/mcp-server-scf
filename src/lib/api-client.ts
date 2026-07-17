@@ -13,13 +13,35 @@ export interface PaginatedResponse<T> {
   pages: number;
 }
 
+const ORG_PATH_PATTERN = /^(\/organizations\/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/|$)/i;
+
 export class ScfApiClient {
   private baseUrl: string;
   private apiKey: string;
+  private soleOrgId: string | null = null;
 
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.apiKey = config.apiKey;
+  }
+
+  /**
+   * Resolve the single organization this API key can access, if exactly one.
+   * Used to self-heal org-scoped calls that arrive with a wrong/stale org_id
+   * (e.g. a UUID remembered from before an instance re-provision).
+   */
+  private async resolveSoleOrgId(): Promise<string | null> {
+    if (this.soleOrgId) return this.soleOrgId;
+    try {
+      const orgs = await this.request<Array<{ id: string }>>("GET", "/organizations", undefined, true);
+      if (Array.isArray(orgs) && orgs.length === 1 && typeof orgs[0]?.id === "string") {
+        this.soleOrgId = orgs[0].id;
+        return this.soleOrgId;
+      }
+    } catch {
+      // Resolution is best-effort; the original 403 will surface instead.
+    }
+    return null;
   }
 
   private async request<T>(
@@ -29,6 +51,7 @@ export class ScfApiClient {
       params?: Record<string, string | number | boolean | undefined>;
       body?: unknown;
     },
+    noOrgRetry = false,
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}/api${path}`);
 
@@ -72,6 +95,24 @@ export class ScfApiClient {
       } catch {
         // Use status text as fallback
       }
+
+      // Self-heal a stale/wrong org_id: when an org-scoped call is denied but
+      // the key can access exactly one organization, retry once against it.
+      // This never broadens access — the retry target is proven accessible.
+      if (response.status === 403 && !noOrgRetry) {
+        const match = path.match(ORG_PATH_PATTERN);
+        if (match) {
+          const soleOrg = await this.resolveSoleOrgId();
+          if (soleOrg && soleOrg.toLowerCase() !== match[2].toLowerCase()) {
+            console.error(
+              `[mcp-server-scf] org_id ${match[2]} was denied; retrying with the key's sole accessible org ${soleOrg}`,
+            );
+            const healedPath = path.replace(ORG_PATH_PATTERN, `$1${soleOrg}$3`);
+            return this.request<T>(method, healedPath, options, true);
+          }
+        }
+      }
+
       throw new ScfApiError(detail, response.status);
     }
 
@@ -104,12 +145,23 @@ let _client: ScfApiClient | null = null;
 export function getClient(): ScfApiClient {
   if (!_client) {
     const apiKey = process.env.SCF_API_KEY;
-    const baseUrl = process.env.SCF_API_URL || "https://uk.scfcontrolsplatform.app";
+    const baseUrl = process.env.SCF_API_URL;
+
+    // The hosted SaaS (uk.scfcontrolsplatform.app) is decommissioned — the
+    // platform is self-hosted only, so there is no meaningful default URL.
+    if (!baseUrl) {
+      throw new Error(
+        "SCF_API_URL environment variable is required. " +
+          "The SCF Controls Platform is self-hosted: set SCF_API_URL to your own " +
+          "instance's base URL (e.g. http://localhost:8000). " +
+          "See https://github.com/MarkAC007/scf-controls-platform-oss to deploy one.",
+      );
+    }
 
     if (!apiKey) {
       throw new Error(
         "SCF_API_KEY environment variable is required. " +
-          "Generate one at https://uk.scfcontrolsplatform.app/settings/api-keys",
+          `Generate one in your self-hosted instance at ${baseUrl.replace(/\/+$/, "")}/settings/api-keys`,
       );
     }
 

@@ -51,14 +51,19 @@ export function registerCapabilityTools(server: McpServer) {
 
   server.tool(
     "scf_list_systems",
-    "List the organization's infrastructure systems — the tools and platforms that implement security capabilities.",
+    "List the organization's infrastructure systems — the tools and platforms that implement security capabilities. Optionally filter by linked vendor.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter to systems structurally linked to this vendor UUID — obtain from scf_list_vendors"),
     },
-    async ({ org_id }) => {
+    async ({ org_id, vendor_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/systems`);
+        const data = await client.get(`/organizations/${org_id}/systems`, { vendor_id });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -80,7 +85,17 @@ export function registerCapabilityTools(server: McpServer) {
         .enum(["active", "inactive", "deprecated"])
         .default("active")
         .describe("Lifecycle status (default: active)"),
-      vendor: z.string().optional().describe("Vendor UUID to link this system to — obtain from scf_list_vendors"),
+      vendor: z.string().optional().describe("Legacy free-text vendor name (prefer vendor_id for a structural link)"),
+      vendor_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Vendor UUID to structurally link this system to — obtain from scf_list_vendors (same org)"),
+      catalog_template_id: z
+        .number()
+        .int()
+        .optional()
+        .describe("System-catalog template ID to link — obtain from scf_list_system_catalog"),
       category: z.string().optional().describe("Free-text category (e.g., 'SIEM', 'Endpoint', 'Identity')"),
     },
     async ({ org_id, ...body }) => {
@@ -104,7 +119,17 @@ export function registerCapabilityTools(server: McpServer) {
       description: z.string().optional().describe("New system description"),
       system_type: SystemType.optional().describe("New system classification"),
       status: z.enum(["active", "inactive", "deprecated"]).optional().describe("New lifecycle status"),
-      vendor: z.string().optional().describe("New vendor UUID link"),
+      vendor: z.string().optional().describe("New legacy free-text vendor name (prefer vendor_id)"),
+      vendor_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("New structural vendor link (UUID, same org) — obtain from scf_list_vendors"),
+      catalog_template_id: z
+        .number()
+        .int()
+        .optional()
+        .describe("New system-catalog template ID link — obtain from scf_list_system_catalog"),
       category: z.string().optional().describe("New free-text category"),
     },
     async ({ org_id, system_id, ...fields }) => {
@@ -199,6 +224,98 @@ export function registerCapabilityTools(server: McpServer) {
           limit,
           offset,
         });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // System knowledge catalog + evidence recipes — scf-controls-platform #689
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_list_system_catalog",
+    "List system-catalog templates — the platform's knowledge base of known vendors/tools (slug, vendor, type, recipe maturity levels). Optionally search by name.",
+    {
+      search: z.string().optional().describe("Free-text search across template names, vendors, and aliases"),
+    },
+    async ({ search }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/system-catalog`, { search });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_system_catalog_template",
+    "Get one system-catalog template by slug with full detail: aliases and curated evidence-collection recipes (maturity level, steps, frequency, estimated time).",
+    {
+      slug: z.string().describe("Template slug — obtain from scf_list_system_catalog"),
+    },
+    async ({ slug }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/system-catalog/${slug}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_system_recipes",
+    "Get evidence-collection recipes for a system, matched via its catalog template, alias, or fallback. Returns matched_via, the template summary, and per-maturity-level recipe steps.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      system_id: z.string().uuid().describe("System UUID — obtain from scf_list_systems"),
+    },
+    async ({ org_id, system_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/systems/${system_id}/recipes`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_generate_system_recipes",
+    "Queue AI generation of evidence-collection recipes for a system (write — editor+ role, async, HTTP 202). Poll scf_get_recipe_generation_status for progress.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      system_id: z.string().uuid().describe("System UUID — obtain from scf_list_systems"),
+    },
+    async ({ org_id, system_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/systems/${system_id}/generate-recipes`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_recipe_generation_status",
+    "Get the status of a queued AI recipe-generation job for a system. Poll this after scf_generate_system_recipes.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      system_id: z.string().uuid().describe("System UUID — obtain from scf_list_systems"),
+    },
+    async ({ org_id, system_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/systems/${system_id}/generate-recipes/status`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

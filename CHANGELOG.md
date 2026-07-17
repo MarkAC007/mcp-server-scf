@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BREAKING
+- **`SCF_API_URL` is now required — the hosted SaaS default is gone.** The platform's hosted instance (`uk.scfcontrolsplatform.app`) was decommissioned; the SCF Controls Platform is self-hosted only. The client no longer falls back to the dead host: `getClient()` throws a setup-pointing error when `SCF_API_URL` is unset. `server.json`, `smithery.yaml`, and `mcpb/manifest.json` now mark the variable required with no default; README/docs rewritten around "your own instance" (deploy from [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss)). Anyone who relied on the default was already pointing at a dead host — set `SCF_API_URL` to your instance's base URL (e.g. `http://localhost:8000`).
+- **`scf_trigger_dpsia` removed, replaced by `scf_trigger_vendor_assessment`.** Platform PR scf-controls-platform#686 consolidated the vendor lifecycle: `POST …/vendors/{id}/assessments` is now an async AI-assessment trigger (HTTP 202) and the `/dpsia/*` paths are deprecated aliases whose old enum values (`new`, `annual-review`) no longer validate. The new tool keeps the auto-derive behaviour for `services_used` and uses the new `assessment_type` enum (`initial`/`annual`/`adhoc`). `client_name` is no longer accepted by the platform request schema and was dropped.
+
 ### Added
+- `scf_list_vendor_assessments`, `scf_get_latest_vendor_assessment`, `scf_get_vendor_assessment`, `scf_get_vendor_assessment_status` tools — full read surface for the new vendor AI assessments (scf-controls-platform#686), including RAG status, recommendation, `report_markdown`/`report_json`, research sources, and job polling.
+- `scf_list_system_catalog` + `scf_get_system_catalog_template` tools — browse the platform's DB-backed system knowledge catalog (templates, aliases, curated recipes). Wraps `GET /system-catalog[/{slug}]` (scf-controls-platform#689).
+- `scf_get_system_recipes`, `scf_generate_system_recipes`, `scf_get_recipe_generation_status` tools — per-system evidence-collection recipes with template/alias/fallback matching and async AI generation (scf-controls-platform#689).
+- `vendor_id` (structural vendor link, same-org validated) and `catalog_template_id` params on `scf_create_system` / `scf_update_system`, and a `vendor_id` filter on `scf_list_systems`; system responses now carry `vendor_id` + nested `linked_vendor` (scf-controls-platform#692).
+- `maturity_level` (`L0`–`L5`) param on `scf_create_evidence` / `scf_update_evidence` — evidence-tracking maturity now persists platform-side (scf-controls-platform#694).
+
+### Changed
+- Tool count 74 → 83 (vendors 7→11, capabilities 9→14); counts aligned across README, architecture docs, `server.json`, `mcpb/manifest.json`, `smithery.yaml`, and the banner asset.
+- HTTP 402 is now surfaced as "Usage limit reached on your instance…" instead of the SaaS-era "Subscription limit reached. Upgrade your plan." wording.
 - `scf_get_control_assessment_composite` tool — rolled-up assessment composite for a single SCF control (composite score, status band, included/missing evidence, mandatory gaps, per-window detail). Wraps `GET /organizations/{org_id}/controls/{scf_id}/assessment-composite`. Closes #569.
 - `scf_list_control_assessment_composites` tool — cursor-paginated organisation-wide list of rolled-up assessment composites ordered worst-band first, with `status`, `domain`, and `computation_version` filters. Wraps `GET /organizations/{org_id}/controls/assessment-composites`. Closes #569.
 
