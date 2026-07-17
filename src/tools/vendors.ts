@@ -141,32 +141,35 @@ export function registerVendorTools(server: McpServer) {
   );
 
   server.tool(
-    "scf_trigger_dpsia",
-    "Queue a Data Protection Security Impact Assessment (DPSIA) for a vendor (write — editor+ role, async). Scores posture against CIA triad and certification requirements.",
+    "scf_trigger_vendor_assessment",
+    "Queue an AI vendor security assessment (write — editor+ role, async, HTTP 202). Replaces the deprecated DPSIA trigger. Returns assessment_id + job_id; poll scf_get_vendor_assessment_status.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
       services_used: z
         .string()
+        .max(2000)
         .optional()
-        .describe("Description of services the vendor provides (auto-derived from the vendor record if omitted)"),
+        .describe(
+          "Description of services the vendor provides, 1–2000 chars (auto-derived from the vendor record if omitted)",
+        ),
       assessment_type: z
-        .enum(["new", "annual-review", "adhoc"])
+        .enum(["initial", "annual", "adhoc"])
         .optional()
-        .default("new")
-        .describe("Assessment type: 'new', 'annual-review', or 'adhoc' (default 'new')"),
+        .default("initial")
+        .describe("Assessment type: 'initial', 'annual', or 'adhoc' (default 'initial')"),
       data_role: z
         .enum(["Processor", "Controller", "Joint Controller"])
         .optional()
         .default("Processor")
         .describe("GDPR data role (default 'Processor')"),
-      client_name: z.string().optional().describe("Client or organization name appearing on the assessment"),
       additional_context: z
         .string()
+        .max(5000)
         .optional()
-        .describe("Free-text context, scope notes, or specific concerns to feed the assessor"),
+        .describe("Free-text context, scope notes, or specific concerns to feed the assessor (max 5000 chars)"),
     },
-    async ({ org_id, vendor_id, services_used, assessment_type, data_role, client_name, additional_context }) => {
+    async ({ org_id, vendor_id, services_used, assessment_type, data_role, additional_context }) => {
       try {
         const client = getClient();
 
@@ -179,13 +182,91 @@ export function registerVendorTools(server: McpServer) {
 
         const body: Record<string, string> = {
           services_used: effectiveServices,
-          assessment_type: assessment_type || "new",
+          assessment_type: assessment_type || "initial",
           data_role: data_role || "Processor",
         };
-        if (client_name) body.client_name = client_name;
         if (additional_context) body.additional_context = additional_context;
 
-        const data = await client.post(`/organizations/${org_id}/vendors/${vendor_id}/dpsia`, body);
+        const data = await client.post(`/organizations/${org_id}/vendors/${vendor_id}/assessments`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_list_vendor_assessments",
+    "List a vendor's AI security assessments, newest first. Includes status, RAG rating, recommendation, and report fields per record.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+    },
+    async ({ org_id, vendor_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/vendors/${vendor_id}/assessments`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_latest_vendor_assessment",
+    "Get a vendor's latest completed AI security assessment: RAG status, recommendation, executive summary, report_markdown/report_json. 404 if none completed yet.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+    },
+    async ({ org_id, vendor_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/vendors/${vendor_id}/assessments/latest`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_vendor_assessment",
+    "Get one vendor AI assessment by ID with full detail: services_used, data_role, RAG status, recommendation, full report fields, and research sources.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      assessment_id: z
+        .string()
+        .uuid()
+        .describe("Assessment UUID — obtain from scf_list_vendor_assessments or the trigger response"),
+    },
+    async ({ org_id, vendor_id, assessment_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/vendors/${vendor_id}/assessments/${assessment_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_vendor_assessment_status",
+    "Get the job status of a queued vendor AI assessment: status, started_at, completed_at, error_message. Poll this after scf_trigger_vendor_assessment.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      assessment_id: z.string().uuid().describe("Assessment UUID — returned by scf_trigger_vendor_assessment"),
+    },
+    async ({ org_id, vendor_id, assessment_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(
+          `/organizations/${org_id}/vendors/${vendor_id}/assessments/${assessment_id}/status`,
+        );
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

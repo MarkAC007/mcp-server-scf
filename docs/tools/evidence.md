@@ -39,6 +39,7 @@ Create an evidence tracking record from a catalog evidence ID (write — editor+
 | `collecting_system`    | string  | No       | System or tool used to collect the evidence                                   |
 | `owner`                | string  | No       | Person responsible for this evidence item                                     |
 | `frequency`            | string  | No       | `daily`, `weekly`, `monthly`, `quarterly`, `annually`                         |
+| `maturity_level`       | string  | No       | Evidence maturity level `L0`–`L5` (e.g., `L3`)                                |
 | `comments`             | string  | No       | Additional notes or context                                                   |
 
 ---
@@ -47,17 +48,18 @@ Create an evidence tracking record from a catalog evidence ID (write — editor+
 
 Upsert an evidence item's tracking fields (write — editor+ role). Creates the tracking row if missing. All body fields are optional; only provided fields are applied.
 
-| Parameter              | Type    | Required | Description                                           |
-| ---------------------- | ------- | -------- | ----------------------------------------------------- |
-| `org_id`               | string  | Yes      | Organization ID (UUID)                                |
-| `evidence_id`          | string  | Yes      | Catalog evidence ID (e.g., `E-IAM-01`)                |
-| `is_tracked`           | boolean | No       | Whether this evidence item is actively tracked        |
-| `system_id`            | string  | No       | System ID (UUID) to link this evidence to             |
-| `method_of_collection` | string  | No       | `automated`, `manual`, `hybrid`                       |
-| `collecting_system`    | string  | No       | System or tool used to collect the evidence           |
-| `owner`                | string  | No       | Person responsible for this evidence item             |
-| `frequency`            | string  | No       | `daily`, `weekly`, `monthly`, `quarterly`, `annually` |
-| `comments`             | string  | No       | Additional notes or context                           |
+| Parameter              | Type    | Required | Description                                                               |
+| ---------------------- | ------- | -------- | ------------------------------------------------------------------------- |
+| `org_id`               | string  | Yes      | Organization ID (UUID)                                                    |
+| `evidence_id`          | string  | Yes      | Catalog evidence ID (e.g., `E-IAM-01`)                                    |
+| `is_tracked`           | boolean | No       | Whether this evidence item is actively tracked                            |
+| `system_id`            | string  | No       | System ID (UUID) to link this evidence to                                 |
+| `method_of_collection` | string  | No       | `automated`, `manual`, `hybrid`                                           |
+| `collecting_system`    | string  | No       | System or tool used to collect the evidence                               |
+| `owner`                | string  | No       | Person responsible for this evidence item                                 |
+| `frequency`            | string  | No       | `daily`, `weekly`, `monthly`, `quarterly`, `annually`                     |
+| `maturity_level`       | string  | No       | Evidence maturity level `L0`–`L5`; omitting never clears the stored value |
+| `comments`             | string  | No       | Additional notes or context                                               |
 
 ---
 

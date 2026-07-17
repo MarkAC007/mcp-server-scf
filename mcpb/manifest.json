@@ -3,8 +3,8 @@
   "name": "mcp-server-scf",
   "display_name": "SCF Controls Platform",
   "version": "0.5.16",
-  "description": "MCP server for the SCF Controls Platform — 72 tools for controls, evidence, risk, and TPRM.",
-  "long_description": "Gives Claude Desktop access to 1,451 SCF security controls, 354+ framework mappings (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR), evidence tracking, a 5x5 risk register, and third-party vendor risk management through the SCF Controls Platform. 72 tools across 8 domains — catalog, scoping, evidence, risk, TPRM, organization, capabilities, and webhooks — all callable in natural language.",
+  "description": "MCP server for the SCF Controls Platform — 83 tools for controls, evidence, risk, and TPRM.",
+  "long_description": "Gives Claude Desktop access to 1,451 SCF security controls, 354+ framework mappings (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR), evidence tracking, a 5x5 risk register, and third-party vendor risk management through the SCF Controls Platform. 83 tools across 8 domains — catalog, scoping, evidence, risk, TPRM, organization, capabilities, and webhooks — all callable in natural language.",
   "author": {
     "name": "ComplianceGenie.io",
     "url": "https://compliancegenie.io"
@@ -48,16 +48,15 @@
     "api_key": {
       "type": "string",
       "title": "SCF API key",
-      "description": "Your SCF Controls Platform API key — starts with the scf_ prefix. Generate one at Settings → API Keys in the platform console.",
+      "description": "Your SCF Controls Platform API key — starts with the scf_ prefix. Generate one at Settings → API Keys in your self-hosted instance.",
       "sensitive": true,
       "required": true
     },
     "api_url": {
       "type": "string",
       "title": "Platform URL",
-      "description": "SCF Controls Platform endpoint. Defaults to https://uk.scfcontrolsplatform.app (UK data residency).",
-      "required": false,
-      "default": "https://uk.scfcontrolsplatform.app"
+      "description": "Base URL of your self-hosted SCF Controls Platform instance (e.g. http://localhost:8000). Required — the platform is self-hosted; there is no hosted default.",
+      "required": true
     }
   },
   "tools_generated": true,

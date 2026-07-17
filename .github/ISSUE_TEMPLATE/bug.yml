@@ -76,8 +76,8 @@ body:
     id: api-url
     attributes:
       label: SCF_API_URL
-      description: Which platform endpoint are you hitting? (Do NOT paste the API key.)
-      placeholder: "https://uk.scfcontrolsplatform.app"
+      description: Which self-hosted platform endpoint are you hitting? Redact internal hostnames if needed. (Do NOT paste the API key.)
+      placeholder: "http://localhost:8000"
     validations:
       required: true
 
