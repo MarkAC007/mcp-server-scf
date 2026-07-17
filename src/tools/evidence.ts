@@ -81,6 +81,94 @@ export function registerEvidenceTools(server: McpServer) {
   );
 
   server.tool(
+    "scf_get_evidence_item_maturity",
+    "Get one evidence item's collection maturity: current level (1=Ad Hoc to 5=Optimized), level description, contributing factors, upgrade potential, and tracking state. Use this to answer 'where does this evidence item sit today?'",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
+    },
+    async ({ org_id, evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/maturity`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_evidence_upgrade_recommendations",
+    "Get concrete recommendations for maturing one evidence item's collection: target level, effort, impact, and step-by-step actions (the same upgrade-path guidance shown in the platform UI). Use this to answer 'what is our next step in maturing evidence collection for X?'",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
+    },
+    async ({ org_id, evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/upgrade-recommendations`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_evidence_suggestions",
+    "Get system-aware collection suggestions for one evidence item: which tracked system currently collects it, which in-scope systems are capable of collecting it, and tailored collection guidance.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
+    },
+    async ({ org_id, evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/${evidence_id}/suggestions`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_list_evidence_gaps",
+    "List the organization's evidence coverage gaps: evidence required by in-scope controls that is not yet tracked, with overall coverage percentage.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence-gaps`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_evidence_health",
+    "Get evidence collection health for the organization: per-item freshness status (green/amber/red) against collection frequency, with a roll-up summary.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence-health`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
     "scf_list_evidence_files",
     "List all files uploaded or ingested for an evidence item. Returns filename, content type, upload timestamp, validation status, and a pre-signed download URL (15-min expiry).",
     {

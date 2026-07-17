@@ -13,13 +13,35 @@ export interface PaginatedResponse<T> {
   pages: number;
 }
 
+const ORG_PATH_PATTERN = /^(\/organizations\/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/|$)/i;
+
 export class ScfApiClient {
   private baseUrl: string;
   private apiKey: string;
+  private soleOrgId: string | null = null;
 
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.apiKey = config.apiKey;
+  }
+
+  /**
+   * Resolve the single organization this API key can access, if exactly one.
+   * Used to self-heal org-scoped calls that arrive with a wrong/stale org_id
+   * (e.g. a UUID remembered from before an instance re-provision).
+   */
+  private async resolveSoleOrgId(): Promise<string | null> {
+    if (this.soleOrgId) return this.soleOrgId;
+    try {
+      const orgs = await this.request<Array<{ id: string }>>("GET", "/organizations", undefined, true);
+      if (Array.isArray(orgs) && orgs.length === 1 && typeof orgs[0]?.id === "string") {
+        this.soleOrgId = orgs[0].id;
+        return this.soleOrgId;
+      }
+    } catch {
+      // Resolution is best-effort; the original 403 will surface instead.
+    }
+    return null;
   }
 
   private async request<T>(
@@ -29,6 +51,7 @@ export class ScfApiClient {
       params?: Record<string, string | number | boolean | undefined>;
       body?: unknown;
     },
+    noOrgRetry = false,
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}/api${path}`);
 
@@ -72,6 +95,24 @@ export class ScfApiClient {
       } catch {
         // Use status text as fallback
       }
+
+      // Self-heal a stale/wrong org_id: when an org-scoped call is denied but
+      // the key can access exactly one organization, retry once against it.
+      // This never broadens access — the retry target is proven accessible.
+      if (response.status === 403 && !noOrgRetry) {
+        const match = path.match(ORG_PATH_PATTERN);
+        if (match) {
+          const soleOrg = await this.resolveSoleOrgId();
+          if (soleOrg && soleOrg.toLowerCase() !== match[2].toLowerCase()) {
+            console.error(
+              `[mcp-server-scf] org_id ${match[2]} was denied; retrying with the key's sole accessible org ${soleOrg}`,
+            );
+            const healedPath = path.replace(ORG_PATH_PATTERN, `$1${soleOrg}$3`);
+            return this.request<T>(method, healedPath, options, true);
+          }
+        }
+      }
+
       throw new ScfApiError(detail, response.status);
     }
 
