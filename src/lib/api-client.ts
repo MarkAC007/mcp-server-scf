@@ -99,16 +99,26 @@ export class ScfApiClient {
       // Self-heal a stale/wrong org_id: when an org-scoped call is denied but
       // the key can access exactly one organization, retry once against it.
       // This never broadens access — the retry target is proven accessible.
+      // GET only: rerouting a mutation would silently write into an
+      // organization the caller never named, so mutations fail loudly instead
+      // with both org ids so the caller can retry explicitly.
       if (response.status === 403 && !noOrgRetry) {
         const match = path.match(ORG_PATH_PATTERN);
         if (match) {
           const soleOrg = await this.resolveSoleOrgId();
           if (soleOrg && soleOrg.toLowerCase() !== match[2].toLowerCase()) {
-            console.error(
-              `[mcp-server-scf] org_id ${match[2]} was denied; retrying with the key's sole accessible org ${soleOrg}`,
+            if (method === "GET") {
+              console.error(
+                `[mcp-server-scf] org_id ${match[2]} was denied; retrying with the key's sole accessible org ${soleOrg}`,
+              );
+              const healedPath = path.replace(ORG_PATH_PATTERN, `$1${soleOrg}$3`);
+              return this.request<T>(method, healedPath, options, true);
+            }
+            throw new ScfApiError(
+              `org_id ${match[2]} is not accessible to this API key, whose sole accessible organization is ${soleOrg}. ` +
+                `This ${method} was NOT retried against ${soleOrg} — if that organization is the intended target, retry explicitly with its org_id`,
+              403,
             );
-            const healedPath = path.replace(ORG_PATH_PATTERN, `$1${soleOrg}$3`);
-            return this.request<T>(method, healedPath, options, true);
           }
         }
       }
