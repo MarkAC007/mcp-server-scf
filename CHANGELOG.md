@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Document tools (15) — `scf_list_document_generators`, `scf_list_document_domains`, `scf_get_document_settings`, `scf_update_document_settings`, `scf_generate_documents`, `scf_get_document_generation_status`, `scf_list_documents`, `scf_get_document`, `scf_update_document_section`, `scf_get_document_section_generated`, `scf_resolve_document_section`, `scf_transition_document`, `scf_get_document_history`, `scf_export_document`, `scf_preview_document`.** Full surface for the platform's ISMS document generation (scf-controls-platform#762 and follow-ups): the three-layer merge (generated / human-edited / retired), conflict and pending-retirement resolution, lifecycle transitions, history, and markdown-or-HTML export.
+- **Audit engagement tools (16) — `scf_list_engagements`, `scf_get_engagement`, `scf_create_engagement`, `scf_update_engagement`, `scf_delete_engagement`, `scf_get_engagement_scope`, `scf_get_engagement_presentation`, `scf_list_my_engagements`, `scf_list_engagement_auditors`, `scf_add_engagement_auditor`, `scf_remove_engagement_auditor`, `scf_list_engagement_queries`, `scf_get_engagement_query`, `scf_create_engagement_query`, `scf_respond_to_engagement_query`, `scf_update_engagement_query_status`.** Audit Engagement Workspaces: scope frozen against the catalog version it was assessed under, framework-native presentation, engagement-scoped auditor access, and structured auditor queries with response threads.
+- **Catalog reconciliation tools (9) — `scf_get_catalog_reconciliation_status`, `scf_preview_catalog_reconciliation`, `scf_list_reconciliation_runs`, `scf_get_reconciliation_run`, `scf_set_reconciliation_actions`, `scf_apply_catalog_reconciliation`, `scf_rollback_catalog_reconciliation`, `scf_cancel_catalog_reconciliation`, `scf_get_catalog_changelog`.** Per-org SCF catalog version upgrades: preview the diff, record a migrate/retain/retire_only decision per deprecated entity, apply, roll back. Apply is guarded by `expected_to_version` and rollback by a typed confirmation.
+- **CDM tools (7) — `scf_get_cdm_document_map`, `scf_list_cdm_documents`, `scf_list_cdm_proposals`, `scf_accept_cdm_proposal`, `scf_dismiss_cdm_proposal`, `scf_list_cdm_mappings`, `scf_query_cdm_corpus`.** Compliance Document Mapping: per-domain corpus coverage map, the control-level proposal review queue with cascading accept/dismiss, and passage search against a scoped control.
+- `include_deprecated` param on `scf_list_controls`, `scf_list_domains`, `scf_list_evidence_catalog` and `scf_list_assessment_objectives` — the catalog API now defaults to active rows only and badges deprecated rows when they are included.
+- `ScfApiClient.getText()` — fetches endpoints that answer with text rather than JSON. `scf_export_document` needs it; the platform renders markdown and HTML there, not a JSON envelope.
+
+### Fixed
+- **204 No Content responses no longer fail as JSON parse errors.** `ScfApiClient.request()` returned `response.json()` unconditionally, so any endpoint answering 204 surfaced a parse error for a call that had actually succeeded. Engagement and auditor deletes are the first 204 endpoints the server calls; empty bodies now resolve to `null`.
+
+### Changed
+- Tool count 88 → 135 across 12 domains (documents +15, engagements +16, catalog-reconciliation +9, cdm +7); README table, per-domain docs and the registration-count test updated together.
+
+### Not exposed (deliberate)
+- `catalog_upgrade_admin.py` (10 platform-admin routes) — every route gates on platform admin, which an org-scoped API key cannot satisfy.
+- `oidc_auth.py` (4 routes) — browser redirect flow, not reachable over stdio.
+- CDM document upload, reingestion and chunk backfill — multipart or long-running maintenance operations that belong in the web UI.
+- PDF document export — the platform renders it, but a binary payload is the wrong shape for a tool result.
+
 ### BREAKING
 - **`SCF_API_URL` is now required — the hosted SaaS default is gone.** The platform's hosted instance (`uk.scfcontrolsplatform.app`) was decommissioned; the SCF Controls Platform is self-hosted only. The client no longer falls back to the dead host: `getClient()` throws a setup-pointing error when `SCF_API_URL` is unset. `server.json`, `smithery.yaml`, and `mcpb/manifest.json` now mark the variable required with no default; README/docs rewritten around "your own instance" (deploy from [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss)). Anyone who relied on the default was already pointing at a dead host — set `SCF_API_URL` to your instance's base URL (e.g. `http://localhost:8000`).
 - **`scf_trigger_dpsia` removed, replaced by `scf_trigger_vendor_assessment`.** Platform PR scf-controls-platform#686 consolidated the vendor lifecycle: `POST …/vendors/{id}/assessments` is now an async AI-assessment trigger (HTTP 202) and the `/dpsia/*` paths are deprecated aliases whose old enum values (`new`, `annual-review`) no longer validate. The new tool keeps the auto-derive behaviour for `services_used` and uses the new `assessment_type` enum (`initial`/`annual`/`adhoc`). `client_name` is no longer accepted by the platform request schema and was dropped.

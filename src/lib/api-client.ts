@@ -126,11 +126,73 @@ export class ScfApiClient {
       throw new ScfApiError(detail, response.status);
     }
 
+    // 204 No Content (engagement and auditor deletes) has no body at all —
+    // response.json() on it throws a parse error that would surface as a
+    // spurious failure for a call that actually succeeded.
+    if (response.status === 204 || response.headers.get("content-length") === "0") {
+      return null as T;
+    }
+
     return response.json() as Promise<T>;
+  }
+
+  /**
+   * Fetch an endpoint that answers with text rather than JSON — document
+   * export renders markdown or HTML, not a JSON envelope. Returns the body
+   * verbatim so the tool can hand it to the model as-is.
+   */
+  private async requestText(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<{ content_type: string; body: string }> {
+    const url = new URL(`${this.baseUrl}/api${path}`);
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null) {
+          url.searchParams.set(key, String(value));
+        }
+      }
+    }
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: "text/markdown, text/html, text/plain",
+      },
+    });
+
+    if (!response.ok) {
+      let detail = response.statusText;
+      try {
+        const errorBody = (await response.json()) as Record<string, unknown>;
+        const raw = errorBody.detail ?? errorBody.error ?? errorBody.message;
+        if (typeof raw === "string") {
+          detail = raw;
+        } else if (raw !== undefined && raw !== null) {
+          detail = JSON.stringify(raw);
+        }
+      } catch {
+        // Use status text as fallback
+      }
+      throw new ScfApiError(detail, response.status);
+    }
+
+    return {
+      content_type: response.headers.get("content-type") ?? "text/plain",
+      body: await response.text(),
+    };
   }
 
   async get<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
     return this.request<T>("GET", path, { params });
+  }
+
+  async getText(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<{ content_type: string; body: string }> {
+    return this.requestText(path, params);
   }
 
   async post<T>(path: string, body?: unknown): Promise<T> {
