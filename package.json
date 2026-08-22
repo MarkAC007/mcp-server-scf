@@ -76,7 +76,7 @@
   "devDependencies": {
     "@anthropic-ai/mcpb": "^2.1.2",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^25.3.3",
+    "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
