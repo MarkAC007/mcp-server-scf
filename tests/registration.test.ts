@@ -9,6 +9,10 @@ import { registerVendorTools } from "../src/tools/vendors.js";
 import { registerOrganizationTools } from "../src/tools/organization.js";
 import { registerCapabilityTools } from "../src/tools/capabilities.js";
 import { registerWebhookTools } from "../src/tools/webhooks.js";
+import { registerDocumentTools } from "../src/tools/documents.js";
+import { registerEngagementTools } from "../src/tools/engagements.js";
+import { registerCatalogReconciliationTools } from "../src/tools/catalog-reconciliation.js";
+import { registerCdmTools } from "../src/tools/cdm.js";
 
 function makeMockServer() {
   const tool = vi.fn();
@@ -27,6 +31,10 @@ describe("tool registration", () => {
     ["organization", registerOrganizationTools, 7],
     ["capabilities", registerCapabilityTools, 14],
     ["webhooks", registerWebhookTools, 6],
+    ["documents", registerDocumentTools, 15],
+    ["engagements", registerEngagementTools, 16],
+    ["catalog-reconciliation", registerCatalogReconciliationTools, 9],
+    ["cdm", registerCdmTools, 7],
   ];
 
   for (const [name, register, expected] of cases) {
@@ -61,9 +69,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 88", () => {
+  it("total tool count equals 135", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(88);
+    expect(server.tool).toHaveBeenCalledTimes(135);
   });
 });

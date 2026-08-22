@@ -19,11 +19,24 @@ export function registerCatalogTools(server: McpServer) {
         .describe("Framework slug (e.g., 'nist-800-53', 'iso-27001') — obtain from scf_list_frameworks"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
     },
-    async ({ search, domain, framework, limit, offset }) => {
+    async ({ search, domain, framework, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
-        const data = await client.get("/catalog/controls", { search, domain, framework, limit, offset });
+        const data = await client.get("/catalog/controls", {
+          search,
+          domain,
+          framework,
+          limit,
+          offset,
+          include_deprecated,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -77,11 +90,18 @@ export function registerCatalogTools(server: McpServer) {
   server.tool(
     "scf_list_domains",
     "List every compliance domain in the SCF taxonomy. Domains group related controls (e.g., GOV = Governance, AST = Asset Management, IAC = Identity & Access Control).",
-    {},
-    async () => {
+    {
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
+    },
+    async ({ include_deprecated }) => {
       try {
         const client = getClient();
-        const data = await client.get("/catalog/domains");
+        const data = await client.get("/catalog/domains", { include_deprecated });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -96,11 +116,17 @@ export function registerCatalogTools(server: McpServer) {
       search: z.string().optional().describe("Free-text filter applied to evidence title and description"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
     },
-    async ({ search, limit, offset }) => {
+    async ({ search, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
-        const data = await client.get("/catalog/evidence", { search, limit, offset });
+        const data = await client.get("/catalog/evidence", { search, limit, offset, include_deprecated });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -119,14 +145,20 @@ export function registerCatalogTools(server: McpServer) {
       search: z.string().optional().describe("Free-text filter applied to objective text"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
     },
-    async ({ control_id, search, limit, offset }) => {
+    async ({ control_id, search, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
         const path = control_id
           ? `/catalog/controls/${control_id}/assessment-objectives`
           : "/catalog/assessment-objectives";
-        const data = await client.get(path, { search, limit, offset });
+        const data = await client.get(path, { search, limit, offset, include_deprecated });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

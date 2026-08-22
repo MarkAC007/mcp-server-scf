@@ -87,3 +87,72 @@ describe("403 org self-heal", () => {
     expect(calls.filter((c) => c.method === "DELETE")).toHaveLength(1);
   });
 });
+
+describe("empty and non-JSON responses", () => {
+  it("resolves a 204 to null instead of failing to parse an empty body", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 204 })),
+    );
+    const client = new ScfApiClient({ baseUrl: "https://scf.test", apiKey: "k" });
+    await expect(client.delete(`/organizations/${SOLE_ORG}/engagements/${OTHER_ORG}`)).resolves.toBeNull();
+  });
+
+  it("resolves a 200 with an explicit zero content-length to null", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 200, headers: { "Content-Length": "0" } })),
+    );
+    const client = new ScfApiClient({ baseUrl: "https://scf.test", apiKey: "k" });
+    await expect(client.get(`/organizations/${SOLE_ORG}/engagements`)).resolves.toBeNull();
+  });
+
+  it("getText returns markdown verbatim with its content type", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response("# Policy\n\nBody text.", {
+            status: 200,
+            headers: { "Content-Type": "text/markdown; charset=utf-8" },
+          }),
+      ),
+    );
+    const client = new ScfApiClient({ baseUrl: "https://scf.test", apiKey: "k" });
+    const out = await client.getText(`/organizations/${SOLE_ORG}/documents/${OTHER_ORG}/export`, {
+      format: "md",
+    });
+    expect(out.body).toBe("# Policy\n\nBody text.");
+    expect(out.content_type).toContain("text/markdown");
+  });
+
+  it("getText surfaces a platform error detail as ScfApiError", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(404, { detail: "Document not found" })),
+    );
+    const client = new ScfApiClient({ baseUrl: "https://scf.test", apiKey: "k" });
+    await expect(client.getText(`/organizations/${SOLE_ORG}/documents/${OTHER_ORG}/export`)).rejects.toThrow(
+      ScfApiError,
+    );
+  });
+
+  it("getText sends the format query parameter", async () => {
+    const seen: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL) => {
+        seen.push(String(input));
+        return new Response("<h1>Policy</h1>", {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }),
+    );
+    const client = new ScfApiClient({ baseUrl: "https://scf.test", apiKey: "k" });
+    await client.getText(`/organizations/${SOLE_ORG}/documents/${OTHER_ORG}/export`, {
+      format: "html",
+    });
+    expect(seen[0]).toContain("format=html");
+  });
+});

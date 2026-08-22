@@ -32,20 +32,28 @@ src/
 ├── tools/
 │   ├── catalog.ts        6 tools — read-only SCF reference data
 │   ├── scoped-controls.ts 6 tools — per-org implementation tracking
-│   ├── evidence.ts       21 tools — CRUD, files, validation, AI
+│   ├── evidence.ts       26 tools — CRUD, files, validation, AI
 │   │                     assessments (per-file + windowed)
 │   ├── risk.ts           12 tools — risk register + custom risks
 │   ├── vendors.ts        11 tools — TPRM + AI research + AI assessments
 │   ├── organization.ts   7 tools — user, orgs, audit, notifications
 │   ├── capabilities.ts   14 tools — KSI themes, systems, catalog, recipes
-│   └── webhooks.ts       6 tools — webhook endpoints + deliveries
+│   ├── webhooks.ts       6 tools — webhook endpoints + deliveries
+│   ├── documents.ts      15 tools — ISMS doc generation, section merge
+│   │                     resolution, lifecycle, export
+│   ├── engagements.ts    16 tools — audit engagement workspaces, frozen
+│   │                     scope, auditor access, structured queries
+│   ├── catalog-reconciliation.ts
+│   │                     9 tools — per-org SCF catalog version upgrades
+│   └── cdm.ts            7 tools — compliance document mapping
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
-    │                     pagination helpers, typed get/post/patch/delete.
+    │                     pagination helpers, typed get/post/patch/delete,
+    │                     getText() for non-JSON (document export).
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **83 tools across 8 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
+Total: **135 tools across 12 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
 
 ---
 
