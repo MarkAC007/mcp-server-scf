@@ -16,6 +16,7 @@ export function registerRiskTools(server: McpServer) {
       page: z.number().int().min(1).default(1).describe("1-indexed page number (default 1)"),
       per_page: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
     },
+    { title: "List Risks", readOnlyHint: true },
     async ({ org_id, status, page, per_page }) => {
       try {
         const client = getClient();
@@ -34,6 +35,7 @@ export function registerRiskTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       risk_id: z.string().describe("Risk assessment ID — obtain from scf_list_risks"),
     },
+    { title: "Get Risk", readOnlyHint: true },
     async ({ org_id, risk_id }) => {
       try {
         const client = getClient();
@@ -64,6 +66,7 @@ export function registerRiskTools(server: McpServer) {
         .optional()
         .describe("SCF control ID to link (e.g., 'AST-01') — obtain from scf_list_controls"),
     },
+    { title: "Create Risk", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -81,6 +84,7 @@ export function registerRiskTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Risk Matrix", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -98,6 +102,7 @@ export function registerRiskTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Risk Summary", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -119,6 +124,7 @@ export function registerRiskTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "List Custom Risks", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -143,6 +149,7 @@ export function registerRiskTools(server: McpServer) {
         .optional()
         .describe("Hex color for the category badge, e.g., '#6b7280' (default '#6b7280')"),
     },
+    { title: "Create Custom Risk", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -167,6 +174,7 @@ export function registerRiskTools(server: McpServer) {
       category_name: z.string().optional().describe("New category label"),
       category_color: z.string().optional().describe("New hex color for the category badge"),
     },
+    { title: "Update Custom Risk", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, risk_code, ...body }) => {
       try {
         const client = getClient();
@@ -187,6 +195,7 @@ export function registerRiskTools(server: McpServer) {
         .string()
         .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
     },
+    { title: "Delete Custom Risk", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, risk_code }) => {
       try {
         const client = getClient();
@@ -211,6 +220,7 @@ export function registerRiskTools(server: McpServer) {
         .string()
         .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
     },
+    { title: "List Custom Risk Controls", readOnlyHint: true },
     async ({ org_id, risk_code }) => {
       try {
         const client = getClient();
@@ -232,6 +242,7 @@ export function registerRiskTools(server: McpServer) {
         .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
       scf_id: z.string().describe("SCF control ID to link (e.g., 'AST-01') — obtain from scf_list_scoped_controls"),
     },
+    { title: "Add Custom Risk Control", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, risk_code, scf_id }) => {
       try {
         const client = getClient();
@@ -255,6 +266,7 @@ export function registerRiskTools(server: McpServer) {
         .string()
         .describe("SCF control ID to unlink (e.g., 'AST-01') — obtain from scf_list_custom_risk_controls"),
     },
+    { title: "Remove Custom Risk Control", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, risk_code, scf_id }) => {
       try {
         const client = getClient();

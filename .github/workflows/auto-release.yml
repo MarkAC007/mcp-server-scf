@@ -140,7 +140,7 @@ jobs:
           echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
           echo "Final version: v$FINAL_VERSION"
 
-      - name: Update package.json and server.json versions
+      - name: Update package.json, server.json, and mcpb manifest versions
         run: |
           NEW_VERSION="${{ steps.final_version.outputs.version }}"
           npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
@@ -153,11 +153,17 @@ jobs:
             server.json > server.json.tmp
           mv server.json.tmp server.json
 
-          if git diff --quiet package.json package-lock.json server.json; then
+          # Keep the MCPB manifest in lockstep too so the Claude Desktop
+          # extension bundle reports the same version as the npm release.
+          jq --arg v "$NEW_VERSION" '.version = $v' \
+            mcpb/manifest.json > mcpb/manifest.json.tmp
+          mv mcpb/manifest.json.tmp mcpb/manifest.json
+
+          if git diff --quiet package.json package-lock.json server.json mcpb/manifest.json; then
             echo "No version changes needed"
           else
-            git add package.json package-lock.json server.json
-            git commit -m "chore(release): bump package.json + server.json to v${NEW_VERSION}"
+            git add package.json package-lock.json server.json mcpb/manifest.json
+            git commit -m "chore(release): bump package.json + server.json + mcpb manifest to v${NEW_VERSION}"
             echo "Staged version bump commit locally — will open a PR after the release is recorded (direct push to main is blocked by branch protection)."
           fi
 

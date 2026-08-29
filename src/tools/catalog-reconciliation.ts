@@ -25,6 +25,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
     {
       org_id: ORG_ID,
     },
+    { title: "Get Catalog Reconciliation Status", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -46,6 +47,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
         .optional()
         .describe("Catalog version to reconcile towards; omit to use the platform's current version"),
     },
+    { title: "Preview Catalog Reconciliation", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, target_version }) => {
       try {
         const client = getClient();
@@ -67,6 +69,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
       limit: z.number().int().min(1).max(100).optional().describe("Page size, 1–100 (default 20)"),
       offset: z.number().int().min(0).optional().describe("Rows to skip for pagination (default 0)"),
     },
+    { title: "List Reconciliation Runs", readOnlyHint: true },
     async ({ org_id, ...params }) => {
       try {
         const client = getClient();
@@ -85,6 +88,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
       org_id: ORG_ID,
       run_id: RUN_ID,
     },
+    { title: "Get Reconciliation Run", readOnlyHint: true },
     async ({ org_id, run_id }) => {
       try {
         const client = getClient();
@@ -137,6 +141,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
         .optional()
         .describe("On a first reconciliation, the confirmed framework list this organization is scoping to"),
     },
+    { title: "Set Reconciliation Actions", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, run_id, ...body }) => {
       try {
         const client = getClient();
@@ -158,6 +163,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
         .string()
         .describe("The target catalog version from the run detail — guards against applying a stale preview"),
     },
+    { title: "Apply Catalog Reconciliation", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, run_id, expected_to_version }) => {
       try {
         const client = getClient();
@@ -179,6 +185,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
       run_id: RUN_ID,
       confirm_text: z.string().describe("The exact confirmation phrase the platform requires for this rollback"),
     },
+    { title: "Roll Back Catalog Reconciliation", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, run_id, confirm_text }) => {
       try {
         const client = getClient();
@@ -199,6 +206,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
       org_id: ORG_ID,
       run_id: RUN_ID,
     },
+    { title: "Cancel Catalog Reconciliation", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, run_id }) => {
       try {
         const client = getClient();
@@ -218,6 +226,7 @@ export function registerCatalogReconciliationTools(server: McpServer) {
       limit: z.number().int().min(1).max(500).optional().describe("Page size, 1–500 (default 50)"),
       offset: z.number().int().min(0).optional().describe("Rows to skip for pagination (default 0)"),
     },
+    { title: "Get Catalog Changelog", readOnlyHint: true },
     async ({ org_id, ...params }) => {
       try {
         const client = getClient();

@@ -8,6 +8,7 @@ export function registerOrganizationTools(server: McpServer) {
     "scf_get_current_user",
     "Get the authenticated caller's profile: name, email, organization memberships, and per-org role.",
     {},
+    { title: "Get Current User", readOnlyHint: true },
     async () => {
       try {
         const client = getClient();
@@ -23,6 +24,7 @@ export function registerOrganizationTools(server: McpServer) {
     "scf_list_organizations",
     "List every organization the caller has access to. Returns org UUID, name, subscription tier, and member count. Use this first to obtain the org_id other tools need.",
     {},
+    { title: "List Organizations", readOnlyHint: true },
     async () => {
       try {
         const client = getClient();
@@ -40,6 +42,7 @@ export function registerOrganizationTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Organization", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -57,6 +60,7 @@ export function registerOrganizationTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "List Members", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -72,6 +76,7 @@ export function registerOrganizationTools(server: McpServer) {
     "scf_get_work_queue",
     "Get the caller's work queue: prioritized pending tasks, assignments, and action items across every organization they belong to.",
     {},
+    { title: "Get Work Queue", readOnlyHint: true },
     async () => {
       try {
         const client = getClient();
@@ -91,6 +96,7 @@ export function registerOrganizationTools(server: McpServer) {
       limit: z.number().int().min(1).max(100).default(50).describe("Page size (1–100, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
+    { title: "Get Audit Log", readOnlyHint: true },
     async ({ org_id, limit, offset }) => {
       try {
         const client = getClient();
@@ -109,6 +115,7 @@ export function registerOrganizationTools(server: McpServer) {
       unread_only: z.boolean().default(false).describe("Return only unread notifications (default false)"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
     },
+    { title: "Get Notifications", readOnlyHint: true },
     async ({ unread_only, limit }) => {
       try {
         const client = getClient();

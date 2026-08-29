@@ -14,6 +14,7 @@ export function registerVendorTools(server: McpServer) {
       page: z.number().int().min(1).default(1).describe("1-indexed page number (default 1)"),
       per_page: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
     },
+    { title: "List Vendors", readOnlyHint: true },
     async ({ org_id, status, criticality, page, per_page }) => {
       try {
         const client = getClient();
@@ -32,6 +33,7 @@ export function registerVendorTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
     },
+    { title: "Get Vendor", readOnlyHint: true },
     async ({ org_id, vendor_id }) => {
       try {
         const client = getClient();
@@ -62,6 +64,7 @@ export function registerVendorTools(server: McpServer) {
       website: z.string().optional().describe("Vendor website URL"),
       contact_email: z.string().optional().describe("Primary contact email address"),
     },
+    { title: "Create Vendor", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -87,6 +90,7 @@ export function registerVendorTools(server: McpServer) {
       website: z.string().optional().describe("New website URL"),
       contact_email: z.string().optional().describe("New primary contact email"),
     },
+    { title: "Update Vendor", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, vendor_id, ...fields }) => {
       try {
         const client = getClient();
@@ -109,6 +113,7 @@ export function registerVendorTools(server: McpServer) {
         .optional()
         .describe("Override the vendor's website domain used for research lookup (e.g., 'example.com')"),
     },
+    { title: "Trigger Vendor Research", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, vendor_id, domain_override }) => {
       try {
         const client = getClient();
@@ -129,6 +134,7 @@ export function registerVendorTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
     },
+    { title: "Get Vendor Research", readOnlyHint: true },
     async ({ org_id, vendor_id }) => {
       try {
         const client = getClient();
@@ -169,6 +175,7 @@ export function registerVendorTools(server: McpServer) {
         .optional()
         .describe("Free-text context, scope notes, or specific concerns to feed the assessor (max 5000 chars)"),
     },
+    { title: "Trigger Vendor Assessment", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, vendor_id, services_used, assessment_type, data_role, additional_context }) => {
       try {
         const client = getClient();
@@ -202,6 +209,7 @@ export function registerVendorTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
     },
+    { title: "List Vendor Assessments", readOnlyHint: true },
     async ({ org_id, vendor_id }) => {
       try {
         const client = getClient();
@@ -220,6 +228,7 @@ export function registerVendorTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
     },
+    { title: "Get Latest Vendor Assessment", readOnlyHint: true },
     async ({ org_id, vendor_id }) => {
       try {
         const client = getClient();
@@ -242,6 +251,7 @@ export function registerVendorTools(server: McpServer) {
         .uuid()
         .describe("Assessment UUID — obtain from scf_list_vendor_assessments or the trigger response"),
     },
+    { title: "Get Vendor Assessment", readOnlyHint: true },
     async ({ org_id, vendor_id, assessment_id }) => {
       try {
         const client = getClient();
@@ -261,6 +271,7 @@ export function registerVendorTools(server: McpServer) {
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
       assessment_id: z.string().uuid().describe("Assessment UUID — returned by scf_trigger_vendor_assessment"),
     },
+    { title: "Get Vendor Assessment Status", readOnlyHint: true },
     async ({ org_id, vendor_id, assessment_id }) => {
       try {
         const client = getClient();

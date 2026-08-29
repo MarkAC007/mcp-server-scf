@@ -27,6 +27,7 @@ export function registerDocumentTools(server: McpServer) {
     {
       org_id: ORG_ID,
     },
+    { title: "List Document Generators", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -44,6 +45,7 @@ export function registerDocumentTools(server: McpServer) {
     {
       org_id: ORG_ID,
     },
+    { title: "List Document Domains", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -61,6 +63,7 @@ export function registerDocumentTools(server: McpServer) {
     {
       org_id: ORG_ID,
     },
+    { title: "Get Document Settings", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -87,6 +90,7 @@ export function registerDocumentTools(server: McpServer) {
         .optional()
         .describe("Record acknowledgement of the SCF content licence — required once before generation is permitted"),
     },
+    { title: "Update Document Settings", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -121,6 +125,7 @@ export function registerDocumentTools(server: McpServer) {
         .optional()
         .describe("Regenerate even when a document already exists for that generator and domain (default false)"),
     },
+    { title: "Generate Documents", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -138,6 +143,7 @@ export function registerDocumentTools(server: McpServer) {
     {
       org_id: ORG_ID,
     },
+    { title: "Get Document Generation Status", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -157,6 +163,7 @@ export function registerDocumentTools(server: McpServer) {
       status: z.string().optional().describe("Filter by lifecycle status (e.g. 'draft', 'approved', 'published')"),
       document_type: z.string().optional().describe("Filter by document type (e.g. 'policy', 'procedure')"),
     },
+    { title: "List Documents", readOnlyHint: true },
     async ({ org_id, ...params }) => {
       try {
         const client = getClient();
@@ -175,6 +182,7 @@ export function registerDocumentTools(server: McpServer) {
       org_id: ORG_ID,
       document_id: DOCUMENT_ID,
     },
+    { title: "Get Document", readOnlyHint: true },
     async ({ org_id, document_id }) => {
       try {
         const client = getClient();
@@ -195,6 +203,7 @@ export function registerDocumentTools(server: McpServer) {
       section_id: SECTION_ID,
       content: z.string().describe("Full replacement markdown body for this section"),
     },
+    { title: "Update Document Section", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, document_id, section_id, content }) => {
       try {
         const client = getClient();
@@ -217,6 +226,7 @@ export function registerDocumentTools(server: McpServer) {
       section_id: SECTION_ID,
       version: z.number().int().optional().describe("Generation version number to read; omit for the latest"),
     },
+    { title: "Get Generated Document Section", readOnlyHint: true },
     async ({ org_id, document_id, section_id, version }) => {
       try {
         const client = getClient();
@@ -242,6 +252,7 @@ export function registerDocumentTools(server: McpServer) {
         .enum(["keep_mine", "take_generated", "retire", "keep"])
         .describe("keep_mine / take_generated answer a conflict; retire / keep answer a pending retirement"),
     },
+    { title: "Resolve Document Section", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, document_id, section_id, choice }) => {
       try {
         const client = getClient();
@@ -265,6 +276,7 @@ export function registerDocumentTools(server: McpServer) {
       to_status: z.string().describe("Target lifecycle status (e.g. 'in_review', 'approved', 'published')"),
       reason: z.string().optional().describe("Free-text justification recorded on the transition"),
     },
+    { title: "Transition Document", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, document_id, ...body }) => {
       try {
         const client = getClient();
@@ -283,6 +295,7 @@ export function registerDocumentTools(server: McpServer) {
       org_id: ORG_ID,
       document_id: DOCUMENT_ID,
     },
+    { title: "Get Document History", readOnlyHint: true },
     async ({ org_id, document_id }) => {
       try {
         const client = getClient();
@@ -305,6 +318,7 @@ export function registerDocumentTools(server: McpServer) {
         .default("md")
         .describe("Export format: 'md' for markdown, 'html' for rendered HTML"),
     },
+    { title: "Export Document", readOnlyHint: true },
     async ({ org_id, document_id, format }) => {
       try {
         const client = getClient();
@@ -325,6 +339,7 @@ export function registerDocumentTools(server: McpServer) {
       org_id: ORG_ID,
       document_id: DOCUMENT_ID,
     },
+    { title: "Preview Document", readOnlyHint: true },
     async ({ org_id, document_id }) => {
       try {
         const client = getClient();
