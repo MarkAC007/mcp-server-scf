@@ -21,6 +21,7 @@ export function registerCdmTools(server: McpServer) {
     {
       org_id: ORG_ID,
     },
+    { title: "Get CDM Document Map", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -40,6 +41,7 @@ export function registerCdmTools(server: McpServer) {
       limit: z.number().int().min(1).max(200).optional().describe("Page size, 1–200 (default 50)"),
       offset: z.number().int().min(0).optional().describe("Rows to skip for pagination (default 0)"),
     },
+    { title: "List CDM Documents", readOnlyHint: true },
     async ({ org_id, ...params }) => {
       try {
         const client = getClient();
@@ -62,6 +64,7 @@ export function registerCdmTools(server: McpServer) {
       limit: z.number().int().min(1).max(200).optional().describe("Page size, 1–200 (default 50)"),
       offset: z.number().int().min(0).optional().describe("Rows to skip for pagination (default 0)"),
     },
+    { title: "List CDM Proposals", readOnlyHint: true },
     async ({ org_id, ...params }) => {
       try {
         const client = getClient();
@@ -80,6 +83,7 @@ export function registerCdmTools(server: McpServer) {
       org_id: ORG_ID,
       proposal_id: z.string().uuid().describe("Proposal UUID — obtain from scf_list_cdm_proposals"),
     },
+    { title: "Accept CDM Proposal", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, proposal_id }) => {
       try {
         const client = getClient();
@@ -102,6 +106,7 @@ export function registerCdmTools(server: McpServer) {
         .optional()
         .describe("Why this proposal was rejected — recorded on the proposal and its citations"),
     },
+    { title: "Dismiss CDM Proposal", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, proposal_id, reason }) => {
       try {
         const client = getClient();
@@ -126,6 +131,7 @@ export function registerCdmTools(server: McpServer) {
       limit: z.number().int().min(1).max(200).optional().describe("Page size, 1–200 (default 50)"),
       offset: z.number().int().min(0).optional().describe("Rows to skip for pagination (default 0)"),
     },
+    { title: "List CDM Mappings", readOnlyHint: true },
     async ({ org_id, ...params }) => {
       try {
         const client = getClient();
@@ -152,6 +158,7 @@ export function registerCdmTools(server: McpServer) {
         .describe("Extra search text to bias the results; omit to use the control's own wording"),
       limit: z.number().int().min(1).max(200).optional().describe("Maximum hits to return, 1–200 (default 10)"),
     },
+    { title: "Query CDM Corpus", readOnlyHint: true },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();

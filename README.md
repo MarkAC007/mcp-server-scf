@@ -215,6 +215,12 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ---
 
+## Privacy Policy
+
+`mcp-server-scf` is a stateless connector — it stores no user data itself. All data flows directly between your MCP client and your own SCF Controls Platform instance, authenticated with your API key; nothing is sent to, or retained by, any third party. See the full [privacy policy](https://scfcontrolsplatform.com/privacy) for details.
+
+---
+
 ## Development
 
 ```bash

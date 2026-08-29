@@ -21,6 +21,7 @@ export function registerCapabilityTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "List Capability Themes", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -38,6 +39,7 @@ export function registerCapabilityTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "List Capabilities", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -60,6 +62,7 @@ export function registerCapabilityTools(server: McpServer) {
         .optional()
         .describe("Filter to systems structurally linked to this vendor UUID — obtain from scf_list_vendors"),
     },
+    { title: "List Systems", readOnlyHint: true },
     async ({ org_id, vendor_id }) => {
       try {
         const client = getClient();
@@ -98,6 +101,7 @@ export function registerCapabilityTools(server: McpServer) {
         .describe("System-catalog template ID to link — obtain from scf_list_system_catalog"),
       category: z.string().optional().describe("Free-text category (e.g., 'SIEM', 'Endpoint', 'Identity')"),
     },
+    { title: "Create System", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -132,6 +136,7 @@ export function registerCapabilityTools(server: McpServer) {
         .describe("New system-catalog template ID link — obtain from scf_list_system_catalog"),
       category: z.string().optional().describe("New free-text category"),
     },
+    { title: "Update System", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, system_id, ...fields }) => {
       try {
         const client = getClient();
@@ -154,6 +159,7 @@ export function registerCapabilityTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Capability Theme Scorecard", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -176,6 +182,7 @@ export function registerCapabilityTools(server: McpServer) {
           "Capability theme code (e.g., 'ACCESS_CONTROL', 'INCIDENT_RESPONSE') — obtain from scf_list_capability_themes",
         ),
     },
+    { title: "Get Capability Theme", readOnlyHint: true },
     async ({ org_id, theme_code }) => {
       try {
         const client = getClient();
@@ -216,6 +223,7 @@ export function registerCapabilityTools(server: McpServer) {
         .default(0)
         .describe("Pagination offset — number of results to skip (default 0)"),
     },
+    { title: "List Capability Theme Controls", readOnlyHint: true },
     async ({ org_id, theme_code, scope_status, limit, offset }) => {
       try {
         const client = getClient();
@@ -241,6 +249,7 @@ export function registerCapabilityTools(server: McpServer) {
     {
       search: z.string().optional().describe("Free-text search across template names, vendors, and aliases"),
     },
+    { title: "List System Catalog", readOnlyHint: true },
     async ({ search }) => {
       try {
         const client = getClient();
@@ -258,6 +267,7 @@ export function registerCapabilityTools(server: McpServer) {
     {
       slug: z.string().describe("Template slug — obtain from scf_list_system_catalog"),
     },
+    { title: "Get System Catalog Template", readOnlyHint: true },
     async ({ slug }) => {
       try {
         const client = getClient();
@@ -276,6 +286,7 @@ export function registerCapabilityTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().describe("System UUID — obtain from scf_list_systems"),
     },
+    { title: "Get System Recipes", readOnlyHint: true },
     async ({ org_id, system_id }) => {
       try {
         const client = getClient();
@@ -294,6 +305,7 @@ export function registerCapabilityTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().describe("System UUID — obtain from scf_list_systems"),
     },
+    { title: "Generate System Recipes", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, system_id }) => {
       try {
         const client = getClient();
@@ -312,6 +324,7 @@ export function registerCapabilityTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().describe("System UUID — obtain from scf_list_systems"),
     },
+    { title: "Get Recipe Generation Status", readOnlyHint: true },
     async ({ org_id, system_id }) => {
       try {
         const client = getClient();
@@ -329,6 +342,7 @@ export function registerCapabilityTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Capability Theme Evidence Posture", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();

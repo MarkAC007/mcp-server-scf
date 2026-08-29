@@ -38,6 +38,7 @@ export function registerScopedControlTools(server: McpServer) {
       limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
+    { title: "List Scoped Controls", readOnlyHint: true },
     async ({ org_id, scope_status, domain, framework, csf_function, control_weighting, search, limit, offset }) => {
       try {
         const client = getClient();
@@ -67,6 +68,7 @@ export function registerScopedControlTools(server: McpServer) {
         .string()
         .describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
     },
+    { title: "Get Scoped Control", readOnlyHint: true },
     async ({ org_id, scf_id }) => {
       try {
         const client = getClient();
@@ -103,6 +105,7 @@ export function registerScopedControlTools(server: McpServer) {
         .optional()
         .describe("Justification for scoping decision — required for not_applicable or deferred"),
     },
+    { title: "Update Scoped Control", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, scf_id, ...fields }) => {
       try {
         const client = getClient();
@@ -120,6 +123,7 @@ export function registerScopedControlTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Scoping Stats", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -140,6 +144,7 @@ export function registerScopedControlTools(server: McpServer) {
         .string()
         .describe("Framework slug to scope (e.g., 'nist-800-53-r5') — obtain from scf_list_frameworks"),
     },
+    { title: "Scope Framework", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, framework_id }) => {
       try {
         const client = getClient();
@@ -185,6 +190,7 @@ export function registerScopedControlTools(server: McpServer) {
         .max(500)
         .describe("Update operations to apply (1–500 per call)"),
     },
+    { title: "Batch Update Controls", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, operations }) => {
       try {
         const client = getClient();

@@ -26,6 +26,7 @@ export function registerCatalogTools(server: McpServer) {
           "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
         ),
     },
+    { title: "List SCF Controls", readOnlyHint: true },
     async ({ search, domain, framework, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
@@ -50,6 +51,7 @@ export function registerCatalogTools(server: McpServer) {
     {
       scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'IAC-15', 'GOV-02')"),
     },
+    { title: "Get SCF Control", readOnlyHint: true },
     async ({ scf_id }) => {
       try {
         const client = getClient();
@@ -76,6 +78,7 @@ export function registerCatalogTools(server: McpServer) {
     "scf_list_frameworks",
     "List every compliance framework mapped in the SCF catalog (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR, and 350+ more). Returns framework identifiers and display names.",
     {},
+    { title: "List Frameworks", readOnlyHint: true },
     async () => {
       try {
         const client = getClient();
@@ -98,6 +101,7 @@ export function registerCatalogTools(server: McpServer) {
           "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
         ),
     },
+    { title: "List Domains", readOnlyHint: true },
     async ({ include_deprecated }) => {
       try {
         const client = getClient();
@@ -123,6 +127,7 @@ export function registerCatalogTools(server: McpServer) {
           "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
         ),
     },
+    { title: "List Evidence Catalog", readOnlyHint: true },
     async ({ search, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
@@ -152,6 +157,7 @@ export function registerCatalogTools(server: McpServer) {
           "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
         ),
     },
+    { title: "List Assessment Objectives", readOnlyHint: true },
     async ({ control_id, search, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();

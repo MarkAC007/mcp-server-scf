@@ -22,6 +22,7 @@ export function registerEngagementTools(server: McpServer) {
       org_id: ORG_ID,
       status: z.string().optional().describe("Filter by engagement status (e.g. 'planning', 'fieldwork', 'closed')"),
     },
+    { title: "List Engagements", readOnlyHint: true },
     async ({ org_id, status }) => {
       try {
         const client = getClient();
@@ -40,6 +41,7 @@ export function registerEngagementTools(server: McpServer) {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
     },
+    { title: "Get Engagement", readOnlyHint: true },
     async ({ org_id, engagement_id }) => {
       try {
         const client = getClient();
@@ -64,6 +66,7 @@ export function registerEngagementTools(server: McpServer) {
       start_date: z.string().optional().describe("Fieldwork start date, ISO 8601 (YYYY-MM-DD)"),
       end_date: z.string().optional().describe("Fieldwork end date, ISO 8601 (YYYY-MM-DD)"),
     },
+    { title: "Create Engagement", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -87,6 +90,7 @@ export function registerEngagementTools(server: McpServer) {
       start_date: z.string().optional().describe("Fieldwork start date, ISO 8601 (YYYY-MM-DD)"),
       end_date: z.string().optional().describe("Fieldwork end date, ISO 8601 (YYYY-MM-DD)"),
     },
+    { title: "Update Engagement", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, engagement_id, ...body }) => {
       try {
         const client = getClient();
@@ -105,6 +109,7 @@ export function registerEngagementTools(server: McpServer) {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
     },
+    { title: "Delete Engagement", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, engagement_id }) => {
       try {
         const client = getClient();
@@ -130,6 +135,7 @@ export function registerEngagementTools(server: McpServer) {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
     },
+    { title: "Get Engagement Scope", readOnlyHint: true },
     async ({ org_id, engagement_id }) => {
       try {
         const client = getClient();
@@ -149,6 +155,7 @@ export function registerEngagementTools(server: McpServer) {
       engagement_id: ENGAGEMENT_ID,
       framework: z.string().describe("Framework to present from — must be one of the engagement's own frameworks"),
     },
+    { title: "Get Engagement Presentation", readOnlyHint: true },
     async ({ org_id, engagement_id, framework }) => {
       try {
         const client = getClient();
@@ -166,6 +173,7 @@ export function registerEngagementTools(server: McpServer) {
     "scf_list_my_engagements",
     "List the engagements the calling identity can read as an assigned auditor, across organizations (read). This is the auditor's own view — use scf_list_engagements for the organization-side list.",
     {},
+    { title: "List My Engagements", readOnlyHint: true },
     async () => {
       try {
         const client = getClient();
@@ -184,6 +192,7 @@ export function registerEngagementTools(server: McpServer) {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
     },
+    { title: "List Engagement Auditors", readOnlyHint: true },
     async ({ org_id, engagement_id }) => {
       try {
         const client = getClient();
@@ -206,6 +215,7 @@ export function registerEngagementTools(server: McpServer) {
         .uuid()
         .describe("UUID of an existing user to grant engagement access to — obtain from scf_list_members"),
     },
+    { title: "Add Engagement Auditor", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, engagement_id, user_id }) => {
       try {
         const client = getClient();
@@ -228,6 +238,7 @@ export function registerEngagementTools(server: McpServer) {
         .uuid()
         .describe("Engagement auditor record UUID — obtain from scf_list_engagement_auditors"),
     },
+    { title: "Remove Engagement Auditor", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, engagement_id, auditor_id }) => {
       try {
         const client = getClient();
@@ -253,6 +264,7 @@ export function registerEngagementTools(server: McpServer) {
         .describe("Filter to a single SCF control in DOMAIN-NN format — obtain from scf_get_engagement_scope"),
       status: z.string().optional().describe("Filter by query status: open, answered or closed"),
     },
+    { title: "List Engagement Queries", readOnlyHint: true },
     async ({ org_id, engagement_id, ...params }) => {
       try {
         const client = getClient();
@@ -272,6 +284,7 @@ export function registerEngagementTools(server: McpServer) {
       engagement_id: ENGAGEMENT_ID,
       query_id: z.string().uuid().describe("Query UUID — obtain from scf_list_engagement_queries"),
     },
+    { title: "Get Engagement Query", readOnlyHint: true },
     async ({ org_id, engagement_id, query_id }) => {
       try {
         const client = getClient();
@@ -297,6 +310,7 @@ export function registerEngagementTools(server: McpServer) {
       title: z.string().describe("Short summary of what is being asked"),
       body: z.string().describe("Full text of the query"),
     },
+    { title: "Create Engagement Query", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, engagement_id, ...body }) => {
       try {
         const client = getClient();
@@ -317,6 +331,7 @@ export function registerEngagementTools(server: McpServer) {
       query_id: z.string().uuid().describe("Query UUID — obtain from scf_list_engagement_queries"),
       content: z.string().describe("Response text"),
     },
+    { title: "Respond to Engagement Query", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, engagement_id, query_id, content }) => {
       try {
         const client = getClient();
@@ -340,6 +355,7 @@ export function registerEngagementTools(server: McpServer) {
       query_id: z.string().uuid().describe("Query UUID — obtain from scf_list_engagement_queries"),
       status: z.enum(["open", "answered", "closed"]).describe("Target query status"),
     },
+    { title: "Update Engagement Query Status", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, engagement_id, query_id, status }) => {
       try {
         const client = getClient();
