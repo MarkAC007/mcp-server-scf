@@ -17,9 +17,7 @@
     "url": "https://github.com/MarkAC007/mcp-server-scf"
   },
   "license": "MIT",
-  "privacy_policies": [
-    "https://scfcontrolsplatform.com/privacy"
-  ],
+  "privacy_policies": ["https://scfcontrolsplatform.com/privacy"],
   "icon": "icon.png",
   "keywords": [
     "compliance",
@@ -40,9 +38,7 @@
     "entry_point": "server/build/index.js",
     "mcp_config": {
       "command": "node",
-      "args": [
-        "${__dirname}/server/build/index.js"
-      ],
+      "args": ["${__dirname}/server/build/index.js"],
       "env": {
         "SCF_API_KEY": "${user_config.api_key}",
         "SCF_API_URL": "${user_config.api_url}"
@@ -67,11 +63,7 @@
   "tools_generated": true,
   "compatibility": {
     "claude_desktop": ">=0.11.0",
-    "platforms": [
-      "darwin",
-      "win32",
-      "linux"
-    ],
+    "platforms": ["darwin", "win32", "linux"],
     "runtimes": {
       "node": ">=20.0.0"
     }
