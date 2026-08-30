@@ -159,6 +159,12 @@ jobs:
             mcpb/manifest.json > mcpb/manifest.json.tmp
           mv mcpb/manifest.json.tmp mcpb/manifest.json
 
+          # jq rewrites JSON in its own style (e.g. exploding short arrays),
+          # which fails CI's prettier format:check on the bump PR. Normalise
+          # the stamped files so the release PR is format-clean. Pinned because
+          # npm ci hasn't run yet at this point in the job.
+          npx --yes prettier@3.8.3 --write package.json server.json mcpb/manifest.json
+
           if git diff --quiet package.json package-lock.json server.json mcpb/manifest.json; then
             echo "No version changes needed"
           else
