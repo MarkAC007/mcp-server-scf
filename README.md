@@ -24,7 +24,7 @@
 <!-- Registries & Marketplaces -->
 
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-green)](https://registry.modelcontextprotocol.io/v0/servers?search=scfcontrolsplatform)
-[![smithery badge](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
+[![LightNow capabilities](https://lightnow.ai/badge/app.scfcontrolsplatform/mcp-server-scf)](https://lightnow.ai/servers/app.scfcontrolsplatform/mcp-server-scf)
 
 <!-- Tech Stack -->
 
