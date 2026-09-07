@@ -360,46 +360,92 @@ jobs:
       - name: Open version-bump PR to sync main with the release
         # Runs after the release is durably recorded (tag + GH release + npm publish),
         # so a failure here never blocks or corrupts the release itself.
+        #
+        # Identity matters here. Branches pushed and PRs opened with the
+        # workflow's own GITHUB_TOKEN never trigger `pull_request` workflows
+        # (GitHub's anti-recursion rule), so main's required checks never ran
+        # on bump PRs and they piled up unmergeable (#185–#195, #197, #204,
+        # #205). When the repo secret RELEASE_PR_TOKEN is set — a fine-grained
+        # PAT (Contents + Pull requests: read/write, this repo only) belonging
+        # to an account that is NOT the reviewer who approves release PRs —
+        # both the push and the PR are attributed to that account, CI fires
+        # normally, and the PR can be approved and auto-merged. Without the
+        # secret we fall back to GITHUB_TOKEN plus the explicit ci.yml
+        # dispatch, which leaves the PR needing a manual nudge as before.
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          HAS_USER_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' }}
           NEW_VERSION: ${{ steps.final_version.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
           # The bump commit has been sitting on local HEAD since the "Update
-          # package.json and server.json versions" step — git tag already
-          # annotated it, and it will travel to origin via this PR instead of
-          # the blocked direct-to-main push.
-          if ! git diff --quiet "origin/main" HEAD -- package.json package-lock.json server.json; then
-            BUMP_BRANCH="chore/release-bump-v${NEW_VERSION}"
-
-            if ! git push origin "HEAD:refs/heads/${BUMP_BRANCH}" 2>&1; then
-              echo "::warning::Could not push ${BUMP_BRANCH} — main will stay stale until manually synced."
-              exit 0
-            fi
-
-            gh pr create \
-              --base main \
-              --head "${BUMP_BRANCH}" \
-              --title "chore(release): bump to v${NEW_VERSION}" \
-              --body "Auto-opened by \`auto-release.yml\` after v${NEW_VERSION} was published to npm. Brings \`package.json\`, \`package-lock.json\`, and \`server.json\` on \`main\` in line with the release so \`release-health-check.yml\` stays green."
-
-            # PRs created via GITHUB_TOKEN don't trigger workflows (GitHub
-            # anti-loop rule), so the required status checks on `main`'s
-            # branch protection (`build (20)`, `build (22)`, etc.) would
-            # never fire for this PR on their own — leaving it stuck in
-            # mergeable_state="blocked" forever. Explicitly dispatch ci.yml
-            # against the bump branch to produce those check runs.
-            gh workflow run ci.yml --ref "${BUMP_BRANCH}" 2>&1 \
-              || echo "::warning::Could not dispatch ci.yml against ${BUMP_BRANCH} — the bump PR will need required checks satisfied another way."
-
-            # Try to enable auto-merge. Requires the repo's "Allow auto-merge"
-            # setting (Settings -> General) to be on; if it isn't, the fallback
-            # leaves the PR waiting for a manual merge — not a failure mode
-            # worth failing the release over.
-            gh pr merge "${BUMP_BRANCH}" --auto --squash --delete-branch 2>&1 \
-              || echo "::notice::Version-bump PR opened — merge manually if auto-merge isn't enabled in repo settings."
-          else
+          # package.json, server.json, and mcpb manifest versions" step — git
+          # tag already annotated it, and it travels to origin via this PR
+          # instead of the blocked direct-to-main push.
+          if git diff --quiet "origin/main" HEAD -- package.json package-lock.json server.json mcpb/manifest.json; then
             echo "No version bump needed — package.json + server.json already match main."
+            exit 0
           fi
+
+          BUMP_BRANCH="chore/release-bump-v${NEW_VERSION}"
+
+          # actions/checkout persisted GITHUB_TOKEN as an Authorization header
+          # for github.com; blank it for this push so the token in the URL is
+          # the one that authenticates (otherwise the header wins and the push
+          # is attributed to github-actions[bot] again). Secrets are masked in
+          # the job log, so the URL is safe to let git print on error.
+          if ! git -c "http.https://github.com/.extraheader=" push \
+               "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" \
+               "HEAD:refs/heads/${BUMP_BRANCH}"; then
+            echo "::warning::Could not push ${BUMP_BRANCH} — main will stay stale until manually synced."
+            exit 0
+          fi
+
+          # On a job re-run the branch (and possibly the PR) already exist;
+          # fall back to the existing PR rather than failing the step.
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "${BUMP_BRANCH}" \
+            --title "chore(release): bump to v${NEW_VERSION}" \
+            --body "Auto-opened by \`auto-release.yml\` after v${NEW_VERSION} was published to npm. Brings \`package.json\`, \`package-lock.json\`, \`server.json\` and \`mcpb/manifest.json\` on \`main\` in line with the release so \`release-health-check.yml\` stays green.") \
+            || PR_URL=$(gh pr view "${BUMP_BRANCH}" --json url --jq .url) \
+            || { echo "::warning::Could not open or find the bump PR for ${BUMP_BRANCH}"; exit 0; }
+          NEW_PR=$(gh pr view "${BUMP_BRANCH}" --json number --jq .number 2>/dev/null || true)
+          if ! [[ "$NEW_PR" =~ ^[0-9]+$ ]]; then
+            echo "::warning::Could not resolve the bump PR number for ${BUMP_BRANCH} (got '${NEW_PR}'); skipping supersede + auto-merge."
+            exit 0
+          fi
+          echo "Opened bump PR #${NEW_PR}: ${PR_URL}"
+
+          # Exactly one bump PR at a time: every release supersedes the ones
+          # before it (npm and the tag are already published, and the newest
+          # PR carries the highest version), so close older open bump PRs.
+          OLD_PRS=$(gh pr list --state open --json number,title \
+            --jq '.[] | select(.title | startswith("chore(release): bump to v")) | .number' \
+            || { echo "::warning::Could not list open bump PRs; skipping supersede."; true; })
+          for OLD_PR in $OLD_PRS; do
+            if [ "$OLD_PR" != "$NEW_PR" ]; then
+              gh pr close "$OLD_PR" --delete-branch \
+                --comment "Superseded by #${NEW_PR} (v${NEW_VERSION}); npm and the git tag are already at the newer version." \
+                </dev/null \
+                || echo "::warning::Could not close superseded bump PR #${OLD_PR}"
+            fi
+          done
+
+          if [ "$HAS_USER_TOKEN" != "true" ]; then
+            # GITHUB_TOKEN fallback: PRs created via GITHUB_TOKEN don't trigger
+            # workflows (GitHub anti-loop rule), so explicitly dispatch ci.yml
+            # against the bump branch to produce the required check runs.
+            gh workflow run ci.yml --ref "${BUMP_BRANCH}" \
+              || echo "::warning::Could not dispatch ci.yml against ${BUMP_BRANCH} — the bump PR will need required checks satisfied another way."
+          fi
+
+          # Try to enable auto-merge. Requires the repo's "Allow auto-merge"
+          # setting (Settings -> General) to be on; if it isn't, the fallback
+          # leaves the PR waiting for a manual merge — not a failure mode
+          # worth failing the release over.
+          gh pr merge "${BUMP_BRANCH}" --auto --squash --delete-branch \
+            || echo "::notice::Version-bump PR opened — merge manually if auto-merge isn't enabled in repo settings."
 
       - name: Summary
         run: |
