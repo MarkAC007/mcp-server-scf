@@ -24,7 +24,6 @@
 <!-- Registries & Marketplaces -->
 
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-green)](https://registry.modelcontextprotocol.io/v0/servers?search=scfcontrolsplatform)
-[![smithery badge](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
 
 <!-- Tech Stack -->
 
@@ -102,10 +101,6 @@ Pick the route for your client.
 [![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwIn19)
 
 After install, edit the pre-filled `SCF_API_URL` to point at **your** instance — there is no hosted default.
-
-**Smithery** — managed hosted deployment:
-
-[![Try on Smithery](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
 
 Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Docker)? See **[3. Manual config](#3-manual-config)** below.
 
