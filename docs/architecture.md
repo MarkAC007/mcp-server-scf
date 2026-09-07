@@ -45,7 +45,6 @@ src/
 │   │                     scope, auditor access, structured queries
 │   ├── catalog-reconciliation.ts
 │   │                     9 tools — per-org SCF catalog version upgrades
-│   └── cdm.ts            7 tools — compliance document mapping
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
     │                     pagination helpers, typed get/post/patch/delete,
@@ -53,7 +52,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **135 tools across 12 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
+Total: **128 tools across 11 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
 
 ---
 

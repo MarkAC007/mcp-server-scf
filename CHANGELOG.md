@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-07
+
+### Removed
+- **BREAKING — the seven CDM tools: `scf_get_cdm_document_map`, `scf_list_cdm_documents`, `scf_list_cdm_proposals`, `scf_accept_cdm_proposal`, `scf_dismiss_cdm_proposal`, `scf_list_cdm_mappings`, `scf_query_cdm_corpus`.** The SCF Controls Platform retired Compliance Document Mapping (scf-controls-platform#902, phases 3–6 shipped in platform release 0.28.0); `/organizations/{org_id}/cdm/*` no longer exists, so every one of these tools returned 404 against a current platform. `src/tools/cdm.ts` and `docs/tools/cdm.md` are gone. Consumers pinned to `^2.2` keep working except that these seven tools 404 — which is why this is a major, not a patch. Existing-document analysis now happens outside the platform (see the onboarding playbook's extraction ledger); a control-scoped `scf_get_policy_coverage` arrives with the platform's Policy Coverage epic, not here.
+
+### Changed
+- Tool count 135 → 128 across 11 domains; README table, `docs/architecture.md`, `mcpb/manifest.json`, `server.json`, `smithery.yaml` and the registration-count test updated together.
+
+## [2.2.3] - 2026-09-07
+
+### Changed
+- README: removed the two dead Smithery badges (Smithery's badge endpoint returns 500 and the listing is gone); the Official MCP Registry badge remains (#202).
+
+## [2.2.2] - 2026-09-07
+
+### Fixed
+- `npm audit --audit-level=high` CI gate: pinned `fast-uri` 3.1.6 and moved the `hono` override to 4.12.34 via `package.json` `overrides` (cooldown-safe); lockfile follow-ons qs 6.16.0, fflate 0.8.3, @hono/node-server 2.1.1. Zero open audit findings (#203).
+
+## [2.2.1] - 2026-08-30
+
+### Fixed
+- Release automation: prettier-format the jq-stamped `package.json`/`server.json`/`mcpb/manifest.json` so version-bump PRs pass `format:check` (#196).
+
+## [2.2.0] - 2026-08-29
+
 ### Added
 - **Document tools (15) — `scf_list_document_generators`, `scf_list_document_domains`, `scf_get_document_settings`, `scf_update_document_settings`, `scf_generate_documents`, `scf_get_document_generation_status`, `scf_list_documents`, `scf_get_document`, `scf_update_document_section`, `scf_get_document_section_generated`, `scf_resolve_document_section`, `scf_transition_document`, `scf_get_document_history`, `scf_export_document`, `scf_preview_document`.** Full surface for the platform's ISMS document generation (scf-controls-platform#762 and follow-ups): the three-layer merge (generated / human-edited / retired), conflict and pending-retirement resolution, lifecycle transitions, history, and markdown-or-HTML export.
 - **Audit engagement tools (16) — `scf_list_engagements`, `scf_get_engagement`, `scf_create_engagement`, `scf_update_engagement`, `scf_delete_engagement`, `scf_get_engagement_scope`, `scf_get_engagement_presentation`, `scf_list_my_engagements`, `scf_list_engagement_auditors`, `scf_add_engagement_auditor`, `scf_remove_engagement_auditor`, `scf_list_engagement_queries`, `scf_get_engagement_query`, `scf_create_engagement_query`, `scf_respond_to_engagement_query`, `scf_update_engagement_query_status`.** Audit Engagement Workspaces: scope frozen against the catalog version it was assessed under, framework-native presentation, engagement-scoped auditor access, and structured auditor queries with response threads.
