@@ -84,11 +84,17 @@ function scanTools() {
   return { calls, registered };
 }
 
+/** Escape a value for a markdown table cell: backslashes first, then pipes. */
+const cell = (v) =>
+  String(v ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|");
+
 function renderTable(rows) {
   const lines = ["| Verdict | Tag | Operation | Tool(s) | Reason | Note |", "| --- | --- | --- | --- | --- | --- |"];
   for (const r of rows) {
     lines.push(
-      `| ${r.verdict} | ${r.tag} | \`${r.key}\` | ${r.tools.map((t) => `\`${t}\``).join(", ") || "—"} | ${r.reason ?? ""} | ${(r.note ?? "").replace(/\|/g, "\\|")} |`,
+      `| ${r.verdict} | ${r.tag} | \`${r.key}\` | ${r.tools.map((t) => `\`${t}\``).join(", ") || "—"} | ${r.reason ?? ""} | ${cell(r.note)} |`,
     );
   }
   return lines.join("\n");
