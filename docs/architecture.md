@@ -30,14 +30,15 @@ src/
 │                         StdioServerTransport, calls each register*
 │                         function to attach tools, starts the loop.
 ├── tools/
-│   ├── catalog.ts        6 tools — read-only SCF reference data
-│   ├── scoped-controls.ts 6 tools — per-org implementation tracking
-│   ├── evidence.ts       26 tools — CRUD, files, validation, AI
+│   ├── catalog.ts        8 tools — read-only SCF reference data
+│   ├── scoped-controls.ts 7 tools — per-org implementation tracking
+│   ├── evidence.ts       39 tools — CRUD, batch, tasks, files, health, AI
 │   │                     assessments (per-file + windowed)
-│   ├── risk.ts           12 tools — risk register + custom risks
-│   ├── vendors.ts        11 tools — TPRM + AI research + AI assessments
-│   ├── organization.ts   8 tools — user, orgs, audit, change cursor, notifications
-│   ├── capabilities.ts   14 tools — KSI themes, systems, catalog, recipes
+│   ├── risk.ts           17 tools — risk register, scoring, custom risks
+│   ├── vendors.ts        23 tools — TPRM, AI research, certifications,
+│   │                     action items, compensating controls
+│   ├── organization.ts  10 tools — user, orgs, audit, change cursor, work queues, notifications
+│   ├── capabilities.ts   19 tools — KSI themes, systems, capabilities, recipes
 │   ├── webhooks.ts       6 tools — webhook endpoints + deliveries
 │   ├── documents.ts      15 tools — ISMS doc generation, section merge
 │   │                     resolution, lifecycle, export
@@ -45,6 +46,8 @@ src/
 │   │                     scope, auditor access, structured queries
 │   ├── catalog-reconciliation.ts
 │   │                     9 tools — per-org SCF catalog version upgrades
+│   ├── teams.ts          11 tools — functions, teams, rosters, team assignments
+│   ├── collaboration.ts  7 tools — user assignments, comments
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
     │                     pagination helpers, typed get/post/patch/delete,
@@ -52,7 +55,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **129 tools across 11 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
+Total: **187 tools across 13 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 

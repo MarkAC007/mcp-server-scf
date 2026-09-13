@@ -50,6 +50,19 @@ _No parameters._
 
 ---
 
+## `scf_get_org_work_queue`
+
+Get one organization's consolidated GRC work queue: overdue evidence tasks, blocking controls, and stale collection schedules. `assigned_to_me` narrows to the caller's items.
+
+| Parameter        | Type    | Required | Description                                                   |
+| ---------------- | ------- | -------- | ------------------------------------------------------------- |
+| `org_id`         | string  | yes      | Organization UUID — obtain from `scf_list_organizations`      |
+| `assigned_to_me` | boolean | no       | Only items owned by or assigned to the caller (default false) |
+
+Overdue evidence and stale collections are disjoint by construction: an overdue item has an open task to complete, a stale one has no task and needs one raised. `total_items` is therefore a real count.
+
+---
+
 ## `scf_get_audit_log`
 
 Query one organization's append-only audit trail (read — viewer role): field-level changes with actor, source and before/after values. Filter by entity, control, action, actor, source, date or text.
@@ -95,6 +108,22 @@ Get the caller's notifications: new assignments, comments, status changes, and s
 | ------------- | ------- | -------- | -------------------------------------------------- |
 | `unread_only` | boolean | No       | Only return unread notifications (default `false`) |
 | `limit`       | number  | No       | Notifications to return (1–100, default 25)        |
+
+---
+
+## `scf_mark_notifications_read`
+
+Mark notifications read for the current user (write — self only): one by `notification_id`, or every notification when `all=true`. Acknowledge after processing `scf_get_notifications`.
+
+| Parameter         | Type    | Required | Description                                                                          |
+| ----------------- | ------- | -------- | ------------------------------------------------------------------------------------ |
+| `notification_id` | string  | no       | Notification UUID to mark read                                                       |
+| `all`             | boolean | no       | Mark every notification read — explicit opt-in, ignored when `notification_id` given |
+
+Calling with neither returns an error rather than defaulting to the broader write.
+
+----------------- | ------ | -------- | ----------------------------------------- |
+| `notification_id` | string | No | Notification UUID — omit to mark all read |
 
 ---
 

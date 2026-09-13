@@ -171,4 +171,41 @@ export function registerCatalogTools(server: McpServer) {
       }
     },
   );
+
+  server.tool(
+    "scf_get_domain",
+    "Get one SCF domain with its controls (read, no org). Deprecated controls are excluded unless include_deprecated is set; a deprecated domain still resolves, badged.",
+    {
+      identifier: z.string().describe("Domain code or slug, e.g. 'IAC' — obtain from scf_list_domains"),
+      include_deprecated: z.boolean().default(false).describe("Include deprecated controls (default false)"),
+    },
+    { title: "Get Domain", readOnlyHint: true },
+    async ({ identifier, include_deprecated }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/catalog/domains/${identifier}`, { include_deprecated });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_catalog_evidence",
+    "Get one catalog evidence entry with the controls it maps to (read, no org). The reference definition, not an organization's tracking record — see scf_get_evidence for that.",
+    {
+      evidence_id: z.string().describe("Catalog evidence ID, e.g. E-IAM-01 — obtain from scf_list_evidence_catalog"),
+    },
+    { title: "Get Catalog Evidence", readOnlyHint: true },
+    async ({ evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/catalog/evidence/${evidence_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }

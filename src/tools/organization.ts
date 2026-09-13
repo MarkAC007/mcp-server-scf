@@ -89,6 +89,28 @@ export function registerOrganizationTools(server: McpServer) {
   );
 
   server.tool(
+    "scf_get_org_work_queue",
+    "Get one organization's consolidated GRC work queue (read — viewer role): overdue evidence tasks, blocking controls, stale collection schedules. assigned_to_me narrows to the caller.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      assigned_to_me: z
+        .boolean()
+        .default(false)
+        .describe("Only items owned by or assigned to the caller (default false)"),
+    },
+    { title: "Get Organization Work Queue", readOnlyHint: true },
+    async ({ org_id, assigned_to_me }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/dashboard/work-queue`, { assigned_to_me });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
     "scf_get_audit_log",
     "Query one organization's append-only audit trail (read — viewer role): field-level changes with actor, source and before/after values. Filter by entity, control, action, actor, source, date or text.",
     {
@@ -178,6 +200,36 @@ export function registerOrganizationTools(server: McpServer) {
       try {
         const client = getClient();
         const data = await client.get("/notifications", { unread_only, limit });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_mark_notifications_read",
+    "Mark notifications read for the current user (write — self only): one by notification_id, or every notification when all=true. Acknowledge after processing scf_get_notifications.",
+    {
+      notification_id: z.string().uuid().optional().describe("Notification UUID to mark read"),
+      all: z
+        .boolean()
+        .default(false)
+        .describe("Mark every notification read — explicit opt-in, ignored when notification_id is given"),
+    },
+    { title: "Mark Notifications Read", readOnlyHint: false, destructiveHint: false },
+    async ({ notification_id, all }) => {
+      try {
+        if (!notification_id && !all) {
+          return errorResult(
+            new Error(
+              "Pass notification_id to mark one notification read, or all=true to mark every notification read",
+            ),
+          );
+        }
+        const client = getClient();
+        const path = notification_id ? `/notifications/${notification_id}/read` : "/notifications/read-all";
+        const data = await client.patch(path);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

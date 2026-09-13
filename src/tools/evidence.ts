@@ -428,14 +428,28 @@ export function registerEvidenceTools(server: McpServer) {
     "List evidence collection tasks — the work queue showing what needs to be collected, by whom, and by when. Optionally filter by assignee or status.",
     {
       org_id: z.string().uuid().optional().describe("Organization UUID — obtain from scf_list_organizations"),
-      assignee: z.string().optional().describe("Filter by assigned user ID"),
-      status: z.string().optional().describe("Filter by task status (e.g., 'open', 'in_progress', 'done')"),
+      assignee: z.string().uuid().optional().describe("Filter by assigned user UUID"),
+      status: z
+        .enum(["not_started", "in_progress", "completed"])
+        .optional()
+        .describe("Filter by task status: not_started, in_progress or completed"),
+      overdue_only: z.boolean().optional().describe("Only tasks past their due date"),
+      assigned_to_me: z.boolean().optional().describe("Only tasks assigned to the caller"),
+      evidence_tracking_id: z.string().uuid().optional().describe("Only tasks for one evidence tracking record"),
     },
     { title: "List Evidence Tasks", readOnlyHint: true },
-    async ({ org_id, assignee, status }) => {
+    async ({ org_id, assignee, status, overdue_only, assigned_to_me, evidence_tracking_id }) => {
       try {
         const client = getClient();
-        const data = await client.get("/evidence-tasks", { org_id, assignee, status });
+        // Platform query names differ from the tool's: organization_id / assigned_user_id / status_filter.
+        const data = await client.get("/evidence-tasks", {
+          organization_id: org_id,
+          assigned_user_id: assignee,
+          status_filter: status,
+          overdue_only,
+          assigned_to_me,
+          evidence_tracking_id,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -621,6 +635,380 @@ export function registerEvidenceTools(server: McpServer) {
           computation_version,
           limit,
           cursor,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Evidence Record Reads & Batch Writes
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_get_evidence",
+    "Get one evidence tracking record (read — viewer role): tracked flag, collection method, owner, assignee, frequency, system, maturity level and its catalog deprecation badge.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Catalog evidence ID, e.g. E-IAM-01 — obtain from scf_list_evidence_catalog"),
+    },
+    { title: "Get Evidence", readOnlyHint: true },
+    async ({ org_id, evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence-tracking/${evidence_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_batch_update_evidence",
+    "Create or update up to 500 evidence tracking records in one transaction (write — editor role). Each upserts by evidence_id; only fields given change. Use instead of 500 scf_update_evidence calls.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      operations: z
+        .array(
+          z.object({
+            evidence_id: z.string().describe("Catalog evidence ID, e.g. E-IAM-01"),
+            is_tracked: z.boolean().optional().describe("Toggle active tracking for this item"),
+            method_of_collection: z
+              .string()
+              .optional()
+              .describe("Collection approach: 'automated', 'manual', or 'hybrid'"),
+            collecting_system: z.string().optional().describe("Name of the tool or system that collects the evidence"),
+            assigned_user_id: z
+              .string()
+              .uuid()
+              .optional()
+              .describe(
+                "User responsible for collecting — becomes assignee on generated tasks; must be in the owning team",
+              ),
+            owner_user_id: z
+              .string()
+              .uuid()
+              .optional()
+              .describe("User accountable for this evidence — task assignee when assigned_user_id is unset"),
+            frequency: z.string().optional().describe("Collection frequency, e.g. 'monthly', 'quarterly', 'annual'"),
+            comments: z.string().optional().describe("Free-text notes on this evidence item"),
+            maturity_level: z
+              .enum(["L0", "L1", "L2", "L3", "L4", "L5"])
+              .optional()
+              .describe("Evidence collection maturity level L0–L5"),
+            system_id: z
+              .string()
+              .uuid()
+              .optional()
+              .describe("System that collects this evidence — obtain from scf_list_systems"),
+          }),
+        )
+        .min(1)
+        .max(500)
+        .describe("Upsert operations, max 500 — each keyed by evidence_id"),
+    },
+    { title: "Batch Update Evidence", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, operations }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/evidence-tracking/batch`, { operations });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Evidence Task Lifecycle
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_create_evidence_task",
+    "Create a manual evidence collection task against a tracking record (write — editor role). Due date and evidence_tracking_id are required; status defaults to not_started, priority to medium.",
+    {
+      evidence_tracking_id: z
+        .string()
+        .uuid()
+        .describe("Evidence tracking record UUID (the id field from scf_list_evidence, not the E-xxx catalog id)"),
+      due_date: z.string().describe("Due date, YYYY-MM-DD"),
+      title: z.string().optional().describe("Task title"),
+      description: z.string().optional().describe("What has to be collected and how"),
+      task_type: z
+        .enum(["feasibility", "setup", "collection", "review", "documentation", "issue"])
+        .optional()
+        .describe("Task type (default collection)"),
+      priority: z.enum(["low", "medium", "high", "critical"]).optional().describe("Priority (default medium)"),
+      status: z
+        .enum(["not_started", "in_progress", "completed"])
+        .optional()
+        .describe("Initial status (default not_started)"),
+      assigned_user_id: z.string().uuid().optional().describe("Assignee user UUID — obtain from scf_list_members"),
+      owning_team_id: z.string().uuid().optional().describe("Team that owns the task — obtain from scf_list_teams"),
+    },
+    { title: "Create Evidence Task", readOnlyHint: false, destructiveHint: false },
+    async (fields) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.post("/evidence-tasks", body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_evidence_task",
+    "Update an evidence collection task (write — editor role). Only passed fields change: due date, status, type, priority, title, description, notes, assignee, owning team.",
+    {
+      task_id: z.string().uuid().describe("Evidence task UUID — obtain from scf_list_evidence_tasks"),
+      due_date: z.string().optional().describe("Due date, YYYY-MM-DD"),
+      title: z.string().optional().describe("Task title"),
+      description: z.string().optional().describe("What has to be collected and how"),
+      task_type: z
+        .enum(["feasibility", "setup", "collection", "review", "documentation", "issue"])
+        .optional()
+        .describe("Task type"),
+      priority: z.enum(["low", "medium", "high", "critical"]).optional().describe("Priority"),
+      status: z.enum(["not_started", "in_progress", "completed"]).optional().describe("Status"),
+      assigned_user_id: z.string().uuid().optional().describe("Assignee user UUID — obtain from scf_list_members"),
+      owning_team_id: z.string().uuid().optional().describe("Team that owns the task — obtain from scf_list_teams"),
+      completion_notes: z.string().optional().describe("Notes recorded on completion"),
+    },
+    { title: "Update Evidence Task", readOnlyHint: false, destructiveHint: false },
+    async ({ task_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.patch(`/evidence-tasks/${task_id}`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_complete_evidence_task",
+    "Mark an evidence collection task completed (write — editor role). Sets status to completed and stamps the completion date; optional completion notes are stored with it.",
+    {
+      task_id: z.string().uuid().describe("Evidence task UUID — obtain from scf_list_evidence_tasks"),
+      completion_notes: z.string().optional().describe("Notes recorded on completion"),
+    },
+    { title: "Complete Evidence Task", readOnlyHint: false, destructiveHint: false },
+    async ({ task_id, completion_notes }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/evidence-tasks/${task_id}/complete`, undefined, { completion_notes });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Evidence File Review & Deletion
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_review_evidence_file",
+    "Approve, reject or request revision on one uploaded file (write — editor role). Returns 410 where per-window review is enabled — use scf_review_window_assessment there.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Catalog evidence ID the file belongs to, e.g. E-IAM-01"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
+      review_status: z.enum(["approved", "rejected", "needs_revision"]).describe("Review decision"),
+      review_notes: z.string().optional().describe("Reviewer notes"),
+    },
+    { title: "Review Evidence File", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, evidence_id, file_id, review_status, review_notes }) => {
+      try {
+        const client = getClient();
+        const data = await client.patch(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/review`, {
+          review_status,
+          review_notes,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_delete_evidence_file",
+    "Soft-delete an evidence file (destructive write — editor role). The record is marked deleted and drops out of listings; the stored object is retained for audit and retention.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Catalog evidence ID the file belongs to, e.g. E-IAM-01"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
+    },
+    { title: "Delete Evidence File", readOnlyHint: false, destructiveHint: true },
+    async ({ org_id, evidence_id, file_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.delete(`/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Evidence Cadence Health
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_get_upcoming_evidence",
+    "List evidence whose next collection falls due within N days (read — viewer role), computed from each item's frequency and last upload. The daily 'what is due' view.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      days: z.number().int().min(1).max(90).default(14).describe("Look-ahead window in days (1–90, default 14)"),
+    },
+    { title: "Get Upcoming Evidence", readOnlyHint: true },
+    async ({ org_id, days }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence-health/upcoming`, { days });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_frequency_health",
+    "Report evidence whose declared frequency disagrees with the observed upload cadence over the last 90 days (read — viewer role). Only misaligned items are returned.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    { title: "Get Frequency Health", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/frequency-health`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // AI Assessment Human Review
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_get_assessment_review_queue",
+    "List AI evidence assessments waiting for a human decision, worst first (read — viewer role): most gaps, then most unassessable objectives, then least relevant, then oldest.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      status: z.enum(["awaiting", "reviewed", "all"]).default("awaiting").describe("Queue filter (default awaiting)"),
+      limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
+      offset: z.number().int().min(0).default(0).describe("Pagination offset (default 0)"),
+    },
+    { title: "Get Assessment Review Queue", readOnlyHint: true },
+    async ({ org_id, status, limit, offset }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/assessment/review-queue`, {
+          status,
+          limit,
+          offset,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_review_evidence_assessment",
+    "Record a human decision on a file's current AI assessment (write — editor role). confirmed keeps the verdict; overridden needs a reason and at least one objective re-designation.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z.string().describe("Catalog evidence ID the file belongs to, e.g. E-IAM-01"),
+      file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
+      decision: z
+        .enum(["confirmed", "overridden"])
+        .describe("confirmed = AI verdict stands; overridden = you are changing it"),
+      reason: z.string().optional().describe("Why the verdict is overridden — required when decision is overridden"),
+      ao_overrides: z
+        .array(
+          z.object({
+            ao_id: z.string().describe("Assessment objective ID"),
+            human_designation: z
+              .enum(["appears_satisfied", "gap_identified", "not_applicable", "cannot_assess"])
+              .describe("Reviewer's designation for this objective"),
+            note: z.string().optional().describe("Why, for this objective specifically"),
+          }),
+        )
+        .optional()
+        .describe(
+          "Objectives to re-designate — required (≥1) when overriding, forbidden when confirming; unlisted objectives keep the AI's designation",
+        ),
+    },
+    { title: "Review Evidence Assessment", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, evidence_id, file_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.post(
+          `/organizations/${org_id}/evidence/${evidence_id}/files/${file_id}/assessment/review`,
+          body,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_refresh_stale_window_assessments",
+    "Queue a fresh windowed AI assessment for every evidence item whose newest file postdates its last assessment (write — editor role). Capped per run; returns how many were queued.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    { title: "Refresh Stale Window Assessments", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/evidence/window-assessments/refresh-stale`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_review_window_assessment",
+    "Set the review state of a windowed evidence assessment (write — editor role): approved, rejected, needs_revision, or not_reviewed to revoke a prior decision.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      ewa_id: z.string().uuid().describe("Window assessment UUID — obtain from scf_list_window_assessments"),
+      review_status: z
+        .enum(["approved", "rejected", "needs_revision", "not_reviewed"])
+        .describe("Review state to set; not_reviewed revokes"),
+      review_notes: z.string().optional().describe("Reviewer notes"),
+    },
+    { title: "Review Window Assessment", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, ewa_id, review_status, review_notes }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/window-assessments/${ewa_id}/review`, {
+          review_status,
+          review_notes,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
