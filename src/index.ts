@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerCatalogTools } from "./tools/catalog.js";
@@ -15,13 +14,12 @@ import { registerDocumentTools } from "./tools/documents.js";
 import { registerEngagementTools } from "./tools/engagements.js";
 import { registerCatalogReconciliationTools } from "./tools/catalog-reconciliation.js";
 
-const require = createRequire(import.meta.url);
-const pkg = require("../package.json") as { name: string; version: string };
+import { PKG_NAME, PKG_VERSION } from "./lib/version.js";
 
 const server = new McpServer(
   {
-    name: pkg.name,
-    version: pkg.version,
+    name: PKG_NAME,
+    version: PKG_VERSION,
   },
   {
     capabilities: {

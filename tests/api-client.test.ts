@@ -88,6 +88,25 @@ describe("403 org self-heal", () => {
   });
 });
 
+describe("audit source headers", () => {
+  it("stamps every request as MCP traffic so the platform logs the change as mcp, not api_key", async () => {
+    let seen: Headers | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: string | URL, init?: RequestInit) => {
+        seen = new Headers(init?.headers);
+        return jsonResponse(200, { ok: true });
+      }),
+    );
+    const client = new ScfApiClient({ baseUrl: "https://scf.test", apiKey: "k" });
+
+    await client.get(`/organizations/${SOLE_ORG}/audit-log`, { limit: 10 });
+
+    expect(seen?.get("x-audit-source")).toBe("mcp");
+    expect(seen?.get("user-agent")).toMatch(/^mcp-server-scf\/\d+\.\d+\.\d+/);
+  });
+});
+
 describe("empty and non-JSON responses", () => {
   it("resolves a 204 to null instead of failing to parse an empty body", async () => {
     vi.stubGlobal(
