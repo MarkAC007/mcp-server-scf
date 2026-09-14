@@ -52,7 +52,7 @@
 
   <!-- Stats -->
   <text x="440" y="475" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
-        font-size="19" fill="#90A4AE">72 tools  ·  1,451 controls  ·  354+ frameworks</text>
+        font-size="19" fill="#90A4AE">83 tools  ·  1,451 controls  ·  354+ frameworks</text>
 
   <!-- Maintained by -->
   <text x="440" y="555" font-family="Helvetica Neue, Helvetica, Arial, sans-serif"

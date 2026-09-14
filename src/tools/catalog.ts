@@ -19,11 +19,25 @@ export function registerCatalogTools(server: McpServer) {
         .describe("Framework slug (e.g., 'nist-800-53', 'iso-27001') — obtain from scf_list_frameworks"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
     },
-    async ({ search, domain, framework, limit, offset }) => {
+    { title: "List SCF Controls", readOnlyHint: true },
+    async ({ search, domain, framework, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
-        const data = await client.get("/catalog/controls", { search, domain, framework, limit, offset });
+        const data = await client.get("/catalog/controls", {
+          search,
+          domain,
+          framework,
+          limit,
+          offset,
+          include_deprecated,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -37,6 +51,7 @@ export function registerCatalogTools(server: McpServer) {
     {
       scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'IAC-15', 'GOV-02')"),
     },
+    { title: "Get SCF Control", readOnlyHint: true },
     async ({ scf_id }) => {
       try {
         const client = getClient();
@@ -63,6 +78,7 @@ export function registerCatalogTools(server: McpServer) {
     "scf_list_frameworks",
     "List every compliance framework mapped in the SCF catalog (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR, and 350+ more). Returns framework identifiers and display names.",
     {},
+    { title: "List Frameworks", readOnlyHint: true },
     async () => {
       try {
         const client = getClient();
@@ -77,11 +93,19 @@ export function registerCatalogTools(server: McpServer) {
   server.tool(
     "scf_list_domains",
     "List every compliance domain in the SCF taxonomy. Domains group related controls (e.g., GOV = Governance, AST = Asset Management, IAC = Identity & Access Control).",
-    {},
-    async () => {
+    {
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
+    },
+    { title: "List Domains", readOnlyHint: true },
+    async ({ include_deprecated }) => {
       try {
         const client = getClient();
-        const data = await client.get("/catalog/domains");
+        const data = await client.get("/catalog/domains", { include_deprecated });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -96,11 +120,18 @@ export function registerCatalogTools(server: McpServer) {
       search: z.string().optional().describe("Free-text filter applied to evidence title and description"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
     },
-    async ({ search, limit, offset }) => {
+    { title: "List Evidence Catalog", readOnlyHint: true },
+    async ({ search, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
-        const data = await client.get("/catalog/evidence", { search, limit, offset });
+        const data = await client.get("/catalog/evidence", { search, limit, offset, include_deprecated });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -119,14 +150,58 @@ export function registerCatalogTools(server: McpServer) {
       search: z.string().optional().describe("Free-text filter applied to objective text"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
+      include_deprecated: z
+        .boolean()
+        .optional()
+        .describe(
+          "Include catalog rows deprecated by a later SCF version. Default false — the catalog answers with active rows only, and deprecated rows carry a lifecycle badge when included.",
+        ),
     },
-    async ({ control_id, search, limit, offset }) => {
+    { title: "List Assessment Objectives", readOnlyHint: true },
+    async ({ control_id, search, limit, offset, include_deprecated }) => {
       try {
         const client = getClient();
         const path = control_id
           ? `/catalog/controls/${control_id}/assessment-objectives`
           : "/catalog/assessment-objectives";
-        const data = await client.get(path, { search, limit, offset });
+        const data = await client.get(path, { search, limit, offset, include_deprecated });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_domain",
+    "Get one SCF domain with its controls (read, no org). Deprecated controls are excluded unless include_deprecated is set; a deprecated domain still resolves, badged.",
+    {
+      identifier: z.string().describe("Domain code or slug, e.g. 'IAC' — obtain from scf_list_domains"),
+      include_deprecated: z.boolean().default(false).describe("Include deprecated controls (default false)"),
+    },
+    { title: "Get Domain", readOnlyHint: true },
+    async ({ identifier, include_deprecated }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/catalog/domains/${identifier}`, { include_deprecated });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_catalog_evidence",
+    "Get one catalog evidence entry with the controls it maps to (read, no org). The reference definition, not an organization's tracking record — see scf_get_evidence for that.",
+    {
+      evidence_id: z.string().describe("Catalog evidence ID, e.g. E-IAM-01 — obtain from scf_list_evidence_catalog"),
+    },
+    { title: "Get Catalog Evidence", readOnlyHint: true },
+    async ({ evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/catalog/evidence/${evidence_id}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

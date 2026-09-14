@@ -103,6 +103,18 @@ Each operation accepts:
 
 ---
 
+## `scf_bulk_unscope_framework`
+
+Remove from scope every control mapped only to the given frameworks (destructive write — editor role). Controls shared with another in-scope framework are kept; notes and status survive.
+
+| Parameter        | Type     | Required | Description                                                                         |
+| ---------------- | -------- | -------- | ----------------------------------------------------------------------------------- |
+| `org_id`         | string   | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                          |
+| `frameworks`     | string[] | Yes      | Framework slugs to remove (e.g., `iso_27017_2015`) — get from `scf_list_frameworks` |
+| `removal_reason` | string   | No       | Why these controls leave scope — recorded in the audit trail                        |
+
+---
+
 ## Example prompts
 
 - "Show me our organization's control implementation progress."

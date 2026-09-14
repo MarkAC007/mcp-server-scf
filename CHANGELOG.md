@@ -8,6 +8,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **58 new tools (129 → 187) and a written scope policy.** Every platform operation now has a recorded verdict — `in`, `deferred` or `out` with a reason — in [`docs/tool-scope.md`](docs/tool-scope.md), generated from [`docs/tool-scope.json`](docs/tool-scope.json) by `scripts/api-coverage.mjs`, which also fails when the map and the code disagree. The admission tests: reachable with an org-scoped user API key; recurring or bulk GRC work; text transport; not identity, credential, billing or infrastructure administration. By domain:
+  - **Evidence (26 → 39):** `scf_get_evidence`, `scf_batch_update_evidence` (≤500 upserts in one transaction), `scf_create_evidence_task`, `scf_update_evidence_task`, `scf_complete_evidence_task`, `scf_review_evidence_file`, `scf_delete_evidence_file`, `scf_get_upcoming_evidence`, `scf_get_frequency_health`, `scf_get_assessment_review_queue`, `scf_review_evidence_assessment`, `scf_refresh_stale_window_assessments`, `scf_review_window_assessment`.
+  - **Risk (12 → 17):** `scf_update_risk_assessment` (closes the long-standing "no update path for scored risks" gap), `scf_delete_risk_assessment`, `scf_get_risks_for_control`, `scf_get_controls_for_risk`, `scf_get_risk_profile`.
+  - **Vendors (11 → 23):** certifications (`scf_list_vendor_certifications`, `scf_create_vendor_certification`, `scf_update_vendor_certification`, `scf_delete_vendor_certification`), action items (`scf_list_vendor_action_items` — one vendor or org-wide, `scf_create_vendor_action_item`, `scf_update_vendor_action_item`, `scf_delete_vendor_action_item`), compensating controls (`scf_list_compensating_controls`, `scf_create_compensating_control`, `scf_update_compensating_control`, `scf_delete_compensating_control`).
+  - **Teams (new, 11):** `scf_list_functions`, `scf_list_teams`, `scf_get_team`, `scf_create_team`, `scf_update_team`, `scf_add_team_member`, `scf_remove_team_member`, `scf_list_team_assignments`, `scf_create_team_assignment`, `scf_batch_create_team_assignments` (≤500 items, one notification), `scf_delete_team_assignment`.
+  - **Collaboration (new, 7):** `scf_list_assignments`, `scf_create_assignment`, `scf_delete_assignment`, `scf_list_comments`, `scf_create_comment`, `scf_update_comment`, `scf_delete_comment` (author-only edit and retraction, so an agent can withdraw its own mistake).
+  - **Capabilities (14 → 19):** `scf_get_system`, `scf_list_system_capabilities`, `scf_create_system_capability`, `scf_update_system_capability`, `scf_get_systems_for_evidence`.
+  - **Catalog (6 → 8):** `scf_get_domain`, `scf_get_catalog_evidence`.
+  - **Control scoping (6 → 7):** `scf_bulk_unscope_framework` (overlap-protected).
+  - **Organization (8 → 10):** `scf_mark_notifications_read` (one by id, or every notification with an explicit `all=true` — omitting both is an error, never the broader write), `scf_get_org_work_queue` (the organisation's consolidated GRC queue: overdue tasks, blocking controls, stale schedules; the existing `scf_get_work_queue` remains the caller's cross-org dashboard).
+- **Handler-level tests** (`tests/handlers.test.ts`) drive the new tools against a recording client stub: evidence-task filter mapping, completion query param, the vendor action-item and notification route switches, array params on team assignments, and errorResult wrapping.
+- **Tool-definition payload measured.** `tools/list` is now 218 KB (≈55k tokens) for 187 tools, up from 142 KB (≈36k) for 129 — linear in tool count, ~1.3 KB per tool. Recorded in [`docs/tool-scope.md`](docs/tool-scope.md) with the cut list to use if a client needs a smaller surface.
+- **API client: `post`/`patch`/`put`/`delete` accept query params** (third argument), so tools never hand-build query strings.
+- **API client accepts `string[]` query values** and sends them as repeated keys (`item_ids=a&item_ids=b`), the FastAPI list convention.
+- **`scf_get_change_cursor`** — the platform's per-organization change cursor (`GET /organizations/{org_id}/changes/cursor`, platform epic #921): newest audit timestamp plus row count, a two-field "has anything changed?" probe to poll before re-pulling the audit log. Organization domain 7 → 8 tools; total 128 → 129.
+- **`scf_get_audit_log` filters.** The tool exposed only `limit`/`offset`; the platform's audit-log endpoint accepts eleven filters and they are now all passed through: `entity_type`, `entity_id`, `scf_id`, `action` (create/update/delete), `changed_by_user_id`, `action_source` (ui/api_key/mcp/system), `request_id`, `date_from`, `date_to`, `actor_id`, `search_text`. `limit` maximum raised 100 → 200 to match the platform.
+- **Audit attribution headers.** Every request now carries `X-Audit-Source: mcp` and `User-Agent: mcp-server-scf/<version>`. The platform only records a change as `action_source = mcp` when one of those is present; without them every MCP write was attributed to `api_key`, indistinguishable from a script.
+
+### Fixed
+- **`docs/tools/evidence.md` documents `scf_get_control_assessment_composite` and `scf_list_control_assessment_composites`** — both tools existed but had no section, so the file claimed 26 tools while listing 24.
+- **Every write tool now declares `readOnlyHint: false` and `destructiveHint`** — the annotation test was already enforcing it; the new tools follow the same convention.
+- **`scf_list_evidence_tasks` filters were silently ignored.** The tool sent `org_id`/`assignee`/`status` but the platform reads `organization_id`/`assigned_user_id`/`status_filter`, so every call returned the unfiltered list. Keys corrected; `overdue_only`, `assigned_to_me` and `evidence_tracking_id` filters added.
+- **`scf_create_risk` `treatment_status`** now validates the platform's workflow values (`identified`, `analysed`, `treating`, `treated`, `accepted`, `monitoring`); the description offered `mitigate`/`accept`/`transfer`/`avoid`, which the platform rejects with 422.
+- **`scf_list_evidence_tasks` status filter** now validates the platform's values (`not_started`, `in_progress`, `completed`); the description cited `open`/`done`, which the platform never returns.
+- **Engagement tool descriptions matched to the platform.** Status values are the real enum (`draft`, `active`, `under_review`, `closed` — the descriptions cited non-existent `planning`/`fieldwork`), and `scf_list_engagements` / `scf_update_engagement` / `scf_list_engagement_queries` now validate `status` with `z.enum`. Create/update engagement require `editor`, not `admin`; delete is draft-only (409 otherwise); re-granting a revoked auditor reactivates the grant; `scf_list_my_engagements` returns active grants only; the query lifecycle states its allowed transitions (open → answered|closed, answered → open|closed, closed → open) and that posting a response moves an open query to answered.
+
+## [3.0.0] - 2026-09-07
+
+### Removed
+- **BREAKING — the seven CDM tools: `scf_get_cdm_document_map`, `scf_list_cdm_documents`, `scf_list_cdm_proposals`, `scf_accept_cdm_proposal`, `scf_dismiss_cdm_proposal`, `scf_list_cdm_mappings`, `scf_query_cdm_corpus`.** The SCF Controls Platform retired Compliance Document Mapping (scf-controls-platform#902, phases 3–6 shipped in platform release 0.28.0); `/organizations/{org_id}/cdm/*` no longer exists, so every one of these tools returned 404 against a current platform. `src/tools/cdm.ts` and `docs/tools/cdm.md` are gone. Consumers pinned to `^2.2` keep working except that these seven tools 404 — which is why this is a major, not a patch. Existing-document analysis now happens outside the platform (see the onboarding playbook's extraction ledger); a control-scoped `scf_get_policy_coverage` arrives with the platform's Policy Coverage epic, not here.
+
+### Changed
+- Tool count 135 → 128 across 11 domains; README table, `docs/architecture.md`, `mcpb/manifest.json`, `server.json`, `smithery.yaml` and the registration-count test updated together.
+
+## [2.2.3] - 2026-09-07
+
+### Changed
+- README: removed the two dead Smithery badges (Smithery's badge endpoint returns 500 and the listing is gone); the Official MCP Registry badge remains (#202).
+
+## [2.2.2] - 2026-09-07
+
+### Fixed
+- `npm audit --audit-level=high` CI gate: pinned `fast-uri` 3.1.6 and moved the `hono` override to 4.12.34 via `package.json` `overrides` (cooldown-safe); lockfile follow-ons qs 6.16.0, fflate 0.8.3, @hono/node-server 2.1.1. Zero open audit findings (#203).
+
+## [2.2.1] - 2026-08-30
+
+### Fixed
+- Release automation: prettier-format the jq-stamped `package.json`/`server.json`/`mcpb/manifest.json` so version-bump PRs pass `format:check` (#196).
+
+## [2.2.0] - 2026-08-29
+
+### Added
+- **Document tools (15) — `scf_list_document_generators`, `scf_list_document_domains`, `scf_get_document_settings`, `scf_update_document_settings`, `scf_generate_documents`, `scf_get_document_generation_status`, `scf_list_documents`, `scf_get_document`, `scf_update_document_section`, `scf_get_document_section_generated`, `scf_resolve_document_section`, `scf_transition_document`, `scf_get_document_history`, `scf_export_document`, `scf_preview_document`.** Full surface for the platform's ISMS document generation (scf-controls-platform#762 and follow-ups): the three-layer merge (generated / human-edited / retired), conflict and pending-retirement resolution, lifecycle transitions, history, and markdown-or-HTML export.
+- **Audit engagement tools (16) — `scf_list_engagements`, `scf_get_engagement`, `scf_create_engagement`, `scf_update_engagement`, `scf_delete_engagement`, `scf_get_engagement_scope`, `scf_get_engagement_presentation`, `scf_list_my_engagements`, `scf_list_engagement_auditors`, `scf_add_engagement_auditor`, `scf_remove_engagement_auditor`, `scf_list_engagement_queries`, `scf_get_engagement_query`, `scf_create_engagement_query`, `scf_respond_to_engagement_query`, `scf_update_engagement_query_status`.** Audit Engagement Workspaces: scope frozen against the catalog version it was assessed under, framework-native presentation, engagement-scoped auditor access, and structured auditor queries with response threads.
+- **Catalog reconciliation tools (9) — `scf_get_catalog_reconciliation_status`, `scf_preview_catalog_reconciliation`, `scf_list_reconciliation_runs`, `scf_get_reconciliation_run`, `scf_set_reconciliation_actions`, `scf_apply_catalog_reconciliation`, `scf_rollback_catalog_reconciliation`, `scf_cancel_catalog_reconciliation`, `scf_get_catalog_changelog`.** Per-org SCF catalog version upgrades: preview the diff, record a migrate/retain/retire_only decision per deprecated entity, apply, roll back. Apply is guarded by `expected_to_version` and rollback by a typed confirmation.
+- **CDM tools (7) — `scf_get_cdm_document_map`, `scf_list_cdm_documents`, `scf_list_cdm_proposals`, `scf_accept_cdm_proposal`, `scf_dismiss_cdm_proposal`, `scf_list_cdm_mappings`, `scf_query_cdm_corpus`.** Compliance Document Mapping: per-domain corpus coverage map, the control-level proposal review queue with cascading accept/dismiss, and passage search against a scoped control.
+- `include_deprecated` param on `scf_list_controls`, `scf_list_domains`, `scf_list_evidence_catalog` and `scf_list_assessment_objectives` — the catalog API now defaults to active rows only and badges deprecated rows when they are included.
+- `ScfApiClient.getText()` — fetches endpoints that answer with text rather than JSON. `scf_export_document` needs it; the platform renders markdown and HTML there, not a JSON envelope.
+
+### Fixed
+- **204 No Content responses no longer fail as JSON parse errors.** `ScfApiClient.request()` returned `response.json()` unconditionally, so any endpoint answering 204 surfaced a parse error for a call that had actually succeeded. Engagement and auditor deletes are the first 204 endpoints the server calls; empty bodies now resolve to `null`.
+
+### Changed
+- Tool count 88 → 135 across 12 domains (documents +15, engagements +16, catalog-reconciliation +9, cdm +7); README table, per-domain docs and the registration-count test updated together.
+
+### Not exposed (deliberate)
+- `catalog_upgrade_admin.py` (10 platform-admin routes) — every route gates on platform admin, which an org-scoped API key cannot satisfy.
+- `oidc_auth.py` (4 routes) — browser redirect flow, not reachable over stdio.
+- CDM document upload, reingestion and chunk backfill — multipart or long-running maintenance operations that belong in the web UI.
+- PDF document export — the platform renders it, but a binary payload is the wrong shape for a tool result.
+
+### BREAKING
+- **`SCF_API_URL` is now required — the hosted SaaS default is gone.** The platform's hosted instance (`uk.scfcontrolsplatform.app`) was decommissioned; the SCF Controls Platform is self-hosted only. The client no longer falls back to the dead host: `getClient()` throws a setup-pointing error when `SCF_API_URL` is unset. `server.json`, `smithery.yaml`, and `mcpb/manifest.json` now mark the variable required with no default; README/docs rewritten around "your own instance" (deploy from [scf-controls-platform-oss](https://github.com/MarkAC007/scf-controls-platform-oss)). Anyone who relied on the default was already pointing at a dead host — set `SCF_API_URL` to your instance's base URL (e.g. `http://localhost:8000`).
+- **`scf_trigger_dpsia` removed, replaced by `scf_trigger_vendor_assessment`.** Platform PR scf-controls-platform#686 consolidated the vendor lifecycle: `POST …/vendors/{id}/assessments` is now an async AI-assessment trigger (HTTP 202) and the `/dpsia/*` paths are deprecated aliases whose old enum values (`new`, `annual-review`) no longer validate. The new tool keeps the auto-derive behaviour for `services_used` and uses the new `assessment_type` enum (`initial`/`annual`/`adhoc`). `client_name` is no longer accepted by the platform request schema and was dropped.
+
+### Added
+- `scf_list_vendor_assessments`, `scf_get_latest_vendor_assessment`, `scf_get_vendor_assessment`, `scf_get_vendor_assessment_status` tools — full read surface for the new vendor AI assessments (scf-controls-platform#686), including RAG status, recommendation, `report_markdown`/`report_json`, research sources, and job polling.
+- `scf_list_system_catalog` + `scf_get_system_catalog_template` tools — browse the platform's DB-backed system knowledge catalog (templates, aliases, curated recipes). Wraps `GET /system-catalog[/{slug}]` (scf-controls-platform#689).
+- `scf_get_system_recipes`, `scf_generate_system_recipes`, `scf_get_recipe_generation_status` tools — per-system evidence-collection recipes with template/alias/fallback matching and async AI generation (scf-controls-platform#689).
+- `vendor_id` (structural vendor link, same-org validated) and `catalog_template_id` params on `scf_create_system` / `scf_update_system`, and a `vendor_id` filter on `scf_list_systems`; system responses now carry `vendor_id` + nested `linked_vendor` (scf-controls-platform#692).
+- `maturity_level` (`L0`–`L5`) param on `scf_create_evidence` / `scf_update_evidence` — evidence-tracking maturity now persists platform-side (scf-controls-platform#694).
+
+### Changed
+- Tool count 74 → 83 (vendors 7→11, capabilities 9→14); counts aligned across README, architecture docs, `server.json`, `mcpb/manifest.json`, `smithery.yaml`, and the banner asset.
+- HTTP 402 is now surfaced as "Usage limit reached on your instance…" instead of the SaaS-era "Subscription limit reached. Upgrade your plan." wording.
 - `scf_get_control_assessment_composite` tool — rolled-up assessment composite for a single SCF control (composite score, status band, included/missing evidence, mandatory gaps, per-window detail). Wraps `GET /organizations/{org_id}/controls/{scf_id}/assessment-composite`. Closes #569.
 - `scf_list_control_assessment_composites` tool — cursor-paginated organisation-wide list of rolled-up assessment composites ordered worst-band first, with `status`, `domain`, and `computation_version` filters. Wraps `GET /organizations/{org_id}/controls/assessment-composites`. Closes #569.
 

@@ -1,7 +1,7 @@
 {
   "name": "mcp-server-scf",
   "mcpName": "app.scfcontrolsplatform/mcp-server-scf",
-  "version": "1.6.3",
+  "version": "3.0.0",
   "description": "MCP server for the SCF Controls Platform — security compliance controls, frameworks, evidence, and risk management for AI agents",
   "type": "module",
   "bin": {
@@ -24,7 +24,8 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "scope:check": "node scripts/api-coverage.mjs --check"
   },
   "publishConfig": {
     "access": "public",
@@ -90,7 +91,8 @@
   },
   "overrides": {
     "tmp": "0.2.7",
-    "hono": "4.12.25",
-    "vite": "8.0.16"
+    "hono": "4.12.34",
+    "vite": "8.0.16",
+    "fast-uri": "3.1.6"
   }
 }
