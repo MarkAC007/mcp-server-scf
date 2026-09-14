@@ -32,3 +32,9 @@ updates:
       - "github-actions"
     commit-message:
       prefix: "ci"
+    groups:
+      # CodeQL steps must move together: mixed init/autobuild/analyze versions
+      # fail with "Loaded a configuration file for version X, but running version Y".
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
