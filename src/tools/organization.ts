@@ -90,17 +90,75 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_audit_log",
-    "Get one organization's audit trail: field-level changes to controls, evidence, and related entities, with actor, timestamp, and before/after values.",
+    "Query one organization's append-only audit trail (read — viewer role): field-level changes with actor, source and before/after values. Filter by entity, control, action, actor, source, date or text.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      limit: z.number().int().min(1).max(100).default(50).describe("Page size (1–100, default 50)"),
+      entity_type: z
+        .string()
+        .optional()
+        .describe(
+          "Filter by exact entity type as written in the log, e.g. scoped_control, evidence_file, audit_engagement, vendor — unsure of the spelling? use search_text",
+        ),
+      entity_id: z.string().uuid().optional().describe("Filter by the changed entity's UUID"),
+      scf_id: z.string().optional().describe("Filter by SCF control ID in DOMAIN-NN format"),
+      action: z.enum(["create", "update", "delete"]).optional().describe("Filter by action: create, update or delete"),
+      changed_by_user_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter by the user who made the change — obtain from scf_list_members"),
+      action_source: z
+        .enum(["ui", "api_key", "mcp", "system"])
+        .optional()
+        .describe("Filter by origin of the change: ui, api_key, mcp or system"),
+      request_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter by request correlation ID — groups every change one API call made"),
+      date_from: z
+        .string()
+        .optional()
+        .describe("Include changes at or after this ISO-8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)"),
+      date_to: z
+        .string()
+        .optional()
+        .describe("Include changes at or before this ISO-8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)"),
+      actor_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter by actor user UUID — platform alias of changed_by_user_id"),
+      search_text: z
+        .string()
+        .optional()
+        .describe("Case-insensitive search across entity_type, field_name, old_value and new_value"),
+      limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
     { title: "Get Audit Log", readOnlyHint: true },
-    async ({ org_id, limit, offset }) => {
+    async ({ org_id, ...params }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/audit-log`, { limit, offset });
+        const data = await client.get(`/organizations/${org_id}/audit-log`, params);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_change_cursor",
+    "Cheap has-anything-changed probe (read — viewer role): newest audit timestamp and row count for one organization. Compare with the pair you last saw; poll this before re-pulling the audit log.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    { title: "Get Change Cursor", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/changes/cursor`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
