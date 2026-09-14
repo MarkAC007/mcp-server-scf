@@ -1,0 +1,1311 @@
+{
+  "$comment": "Verdict map for scripts/api-coverage.mjs. Key = METHOD + OpenAPI path. verdict: in | deferred | out. Reasons for out: auth-unreachable, identity-admin, infra-admin, binary-transport, ui-only, deprecated, covered, public. Every deferred row's note names its promotion trigger. Policy: docs/tool-scope.md.",
+  "reasons": {
+    "auth-unreachable": "An org-scoped user API key cannot reach it (platform-admin session, consultant relationship, OIDC, HMAC, Stripe).",
+    "identity-admin": "Membership, invites, API keys, organisation lifecycle — access decisions a person makes in the UI.",
+    "infra-admin": "Storage, catalog import/upgrade, database, task queues, integrations — operator work.",
+    "binary-transport": "Multipart uploads, byte streams, pre-signed URLs — not a text transport.",
+    "ui-only": "Exists to serve a web page: preferences, page-load exports, form feedback, computed scores the UI assembles.",
+    "deprecated": "The platform marks it a deprecated alias.",
+    "covered": "An existing tool already serves the need through another route or parameter.",
+    "public": "Unauthenticated; not organisation work."
+  },
+  "operations": {
+    "DELETE /api/admin/integrations/{name}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "DELETE /api/admin/organizations/{org_id}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "DELETE /api/admin/users/{user_id}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "DELETE /api/assignments/{assignment_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/comments/{comment_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/consultant/clients/{org_id}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "DELETE /api/consultant/invites/{invite_id}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "DELETE /api/organizations/{org_id}": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Cascade-deletes the whole organisation"
+    },
+    "DELETE /api/organizations/{org_id}/api-keys/{key_id}": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "A key that mints or revokes keys is privilege escalation"
+    },
+    "DELETE /api/organizations/{org_id}/custom-risks/{risk_code}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/custom-risks/{risk_code}/controls/{scf_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/engagements/{engagement_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/engagements/{engagement_id}/auditors/{auditor_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/evidence-storage/{config_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "DELETE /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/invites/{invite_id}": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Invite administration"
+    },
+    "DELETE /api/organizations/{org_id}/logo": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Branding"
+    },
+    "DELETE /api/organizations/{org_id}/members/{user_id}": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Removing access"
+    },
+    "DELETE /api/organizations/{org_id}/risk-assessments/{risk_code}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/scoped-controls/{scf_id}": {
+      "verdict": "deferred",
+      "note": "scf_update_scoped_control(selected=false) unscopes without losing notes. Promote if hard delete is ever required."
+    },
+    "DELETE /api/organizations/{org_id}/systems/{system_id}": {
+      "verdict": "deferred",
+      "note": "Rare; cascades capability rows. Promote when agents manage system inventory end to end."
+    },
+    "DELETE /api/organizations/{org_id}/systems/{system_id}/capabilities/{capability_id}": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_update_system_capability(capability_status) retires a capability; hard delete deferred with delete system"
+    },
+    "DELETE /api/organizations/{org_id}/team-assignments/{assignment_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/teams/{team_id}": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_update_team(is_active=false) archives; the platform never hard-deletes teams"
+    },
+    "DELETE /api/organizations/{org_id}/teams/{team_id}/members/{user_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/vendors/{vendor_id}": {
+      "verdict": "deferred",
+      "note": "Admin-only cascade delete of assessments and certifications. Promote on request."
+    },
+    "DELETE /api/organizations/{org_id}/vendors/{vendor_id}/action-items/{item_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/vendors/{vendor_id}/assessments/{assessment_id}": {
+      "verdict": "deferred",
+      "note": "Same as update: review act, not a bulk task."
+    },
+    "DELETE /api/organizations/{org_id}/vendors/{vendor_id}/certifications/{cert_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/vendors/{vendor_id}/compensating-controls/{cc_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/webhook-endpoints/{endpoint_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/provisioning/user": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Subscription provisioning — static API key only, not a user key"
+    },
+    "DELETE /api/tasks/cache/invalidate": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "DELETE /api/tasks/revoke/{task_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "GET /": {
+      "verdict": "out",
+      "reason": "public",
+      "note": "API information banner"
+    },
+    "GET /api/admin/catalog/import/{task_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Catalog import is a multipart operator task"
+    },
+    "GET /api/admin/catalog/tenants": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "GET /api/admin/catalog/upgrade/runs": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "GET /api/admin/catalog/upgrade/runs/{run_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "GET /api/admin/catalog/upgrade/runs/{run_id}/diff": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "GET /api/admin/integrations": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/integrations/audit": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/integrations/health": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/organizations": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/organizations/{org_id}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/stats": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/users": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/admin/users/{user_id}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "GET /api/assignments": {
+      "verdict": "in"
+    },
+    "GET /api/auth/callback": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Browser OIDC flow"
+    },
+    "GET /api/auth/login": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Browser OIDC flow"
+    },
+    "GET /api/catalog/assessment-objectives": {
+      "verdict": "in",
+      "tools": ["scf_list_assessment_objectives"],
+      "note": "Path is chosen at runtime (global list vs per-control list)"
+    },
+    "GET /api/catalog/assessment-objectives/{ao_id}": {
+      "verdict": "deferred",
+      "note": "scf_list_assessment_objectives(scf_id) returns the same objectives. Promote if the single-row shape diverges."
+    },
+    "GET /api/catalog/bulk/controls": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "1,451-row page-load export; scf_list_controls paginates"
+    },
+    "GET /api/catalog/bulk/evidence": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Full ERL export for page load; scf_list_evidence_catalog paginates"
+    },
+    "GET /api/catalog/controls": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/controls/{scf_id}": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/controls/{scf_id}/assessment-objectives": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/controls/{scf_id}/evidence": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/domains": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/domains/{identifier}": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/evidence": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/evidence/{evidence_id}": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/frameworks": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/status": {
+      "verdict": "deferred",
+      "note": "Catalog version status. scf_get_catalog_changelog covers the version question. Promote if import-state is needed."
+    },
+    "GET /api/comments": {
+      "verdict": "in"
+    },
+    "GET /api/comments/{comment_id}/history": {
+      "verdict": "deferred",
+      "note": "Edit history of one comment. Promote with edit."
+    },
+    "GET /api/consultant/check": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "GET /api/consultant/clients": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "GET /api/consultant/clients/{org_id}/vendors": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Consultant relationship required"
+    },
+    "GET /api/consultant/dashboard": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "GET /api/consultant/invites": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "GET /api/consultant/invites/{token}/preview": {
+      "verdict": "out",
+      "reason": "public",
+      "note": "Unauthenticated invite preview for the sign-in page"
+    },
+    "GET /api/consultant/profile": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "GET /api/database/backup": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Backup, restore and stats for the operator"
+    },
+    "GET /api/database/catalog-stats": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Backup, restore and stats for the operator"
+    },
+    "GET /api/database/stats": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Backup, restore and stats for the operator"
+    },
+    "GET /api/evidence-tasks": {
+      "verdict": "in"
+    },
+    "GET /api/evidence-tasks/{task_id}": {
+      "verdict": "deferred",
+      "note": "scf_list_evidence_tasks returns the same enriched rows. Promote if detail diverges."
+    },
+    "GET /api/features": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Runtime feature flags for the frontend"
+    },
+    "GET /api/functions": {
+      "verdict": "in"
+    },
+    "GET /api/my-engagements": {
+      "verdict": "in"
+    },
+    "GET /api/notifications": {
+      "verdict": "in"
+    },
+    "GET /api/notifications/settings": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Per-user notification preferences"
+    },
+    "GET /api/org-invites/{token}/preview": {
+      "verdict": "out",
+      "reason": "public",
+      "note": "Unauthenticated invite preview"
+    },
+    "GET /api/organizations": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/api-keys": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "A key that mints or revokes keys is privilege escalation"
+    },
+    "GET /api/organizations/{org_id}/audit-log": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-themes": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-themes/evidence-posture": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-themes/scorecard": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-themes/{theme_code}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-themes/{theme_code}/controls": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/catalog-changelog": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/catalog-reconciliation/runs": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/catalog-reconciliation/runs/{run_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/catalog-reconciliation/status": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/changes/cursor": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/controls-for-risk/{risk_code}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/controls/assessment-composites": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/controls/{scf_id}/assessment-composite": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/custom-risks": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/custom-risks/{risk_code}/controls": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/dashboard/work-queue": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/domains": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/generation-status": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/generators": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/settings": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/{document_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/{document_id}/export": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/{document_id}/history": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/{document_id}/preview": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/{document_id}/sections/{section_id}/generated": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/auditors": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/presentation": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/queries": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/queries/{query_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/scope": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-capabilities": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-capabilities/{evidence_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-gaps": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-health": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-health/upcoming": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-maturity-summary": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-storage": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "GET /api/organizations/{org_id}/evidence-storage/copy-runs": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "GET /api/organizations/{org_id}/evidence-storage/copy-runs/{run_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "GET /api/organizations/{org_id}/evidence-storage/copy-sources": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "GET /api/organizations/{org_id}/evidence-storage/effective": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "GET /api/organizations/{org_id}/evidence-storage/{config_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "GET /api/organizations/{org_id}/evidence-tracking": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence-tracking/{evidence_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/assessment/review-queue": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/assessment/summary": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/frequency-health": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/validation/summary": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/window-assessments/summary": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/window-assessments/{assessment_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/assessment": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/assessment/versions": {
+      "verdict": "deferred",
+      "note": "Full verdict history. scf_get_evidence_assessment returns the current one. Promote for audit forensics."
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/download": {
+      "verdict": "out",
+      "reason": "binary-transport",
+      "note": "Byte stream"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/validation": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/maturity": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/suggestions": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/upgrade-recommendations": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/window-assessments": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/invites": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Invite administration"
+    },
+    "GET /api/organizations/{org_id}/logo": {
+      "verdict": "out",
+      "reason": "binary-transport",
+      "note": "Image bytes"
+    },
+    "GET /api/organizations/{org_id}/members": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/risk-assessments": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/risk-assessments/{risk_code}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/risk-matrix": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/risk-profile": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/risk-summary": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/risks-for-control/{scf_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/scope-preferences": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Per-user framework filter for the web UI"
+    },
+    "GET /api/organizations/{org_id}/scoped-controls": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_list_scoped_controls uses the paginated route"
+    },
+    "GET /api/organizations/{org_id}/scoped-controls-paginated": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/scoped-controls/stats": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/scoped-controls/{scf_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/settings": {
+      "verdict": "deferred",
+      "note": "Owner-team settings read. Promote when team accountability defaults are agent-managed."
+    },
+    "GET /api/organizations/{org_id}/systems": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/systems/by-name/{name}": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_list_systems then scf_get_system"
+    },
+    "GET /api/organizations/{org_id}/systems/{system_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/systems/{system_id}/capabilities": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/systems/{system_id}/capabilities/{capability_id}": {
+      "verdict": "deferred",
+      "note": "scf_list_system_capabilities returns the same rows. Promote if the single-row shape diverges."
+    },
+    "GET /api/organizations/{org_id}/systems/{system_id}/generate-recipes/status": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/systems/{system_id}/recipes": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/team-assignments": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/teams": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/teams/{team_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/teams/{team_id}/members": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_get_team returns the full roster, primary first"
+    },
+    "GET /api/organizations/{org_id}/vendor-action-items": {
+      "verdict": "in",
+      "tools": ["scf_list_vendor_action_items"],
+      "note": "route chosen at runtime when vendor_id is omitted"
+    },
+    "GET /api/organizations/{org_id}/vendors": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/action-items": {
+      "verdict": "in",
+      "tools": ["scf_list_vendor_action_items"],
+      "note": "route chosen at runtime by vendor_id"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/assessments": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/assessments/latest": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/assessments/{assessment_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/assessments/{assessment_id}/status": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/certifications": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/compensating-controls": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/dpsia/active": {
+      "verdict": "out",
+      "reason": "deprecated",
+      "note": "DPSIA alias; scf_trigger_vendor_assessment / scf_get_vendor_assessment replace it"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/dpsia/latest": {
+      "verdict": "out",
+      "reason": "deprecated",
+      "note": "DPSIA alias; scf_trigger_vendor_assessment / scf_get_vendor_assessment replace it"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/dpsia/{job_id}": {
+      "verdict": "out",
+      "reason": "deprecated",
+      "note": "DPSIA alias; scf_trigger_vendor_assessment / scf_get_vendor_assessment replace it"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/dpsia/{job_id}/docx": {
+      "verdict": "out",
+      "reason": "deprecated",
+      "note": "DPSIA alias; scf_trigger_vendor_assessment / scf_get_vendor_assessment replace it"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/dpsia/{job_id}/status": {
+      "verdict": "out",
+      "reason": "deprecated",
+      "note": "DPSIA alias; scf_trigger_vendor_assessment / scf_get_vendor_assessment replace it"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/research/latest": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/research/{job_id}": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_get_vendor_research reads the latest job"
+    },
+    "GET /api/organizations/{org_id}/vendors/{vendor_id}/research/{job_id}/status": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_get_vendor_research reads the latest job"
+    },
+    "GET /api/organizations/{org_id}/webhook-endpoints": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/webhook-endpoints/{endpoint_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/webhook-endpoints/{endpoint_id}/deliveries": {
+      "verdict": "in"
+    },
+    "GET /api/provisioning/deletion-preview": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Subscription provisioning — static API key only, not a user key"
+    },
+    "GET /api/provisioning/subscription": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Subscription provisioning — static API key only, not a user key"
+    },
+    "GET /api/provisioning/usage": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Subscription provisioning — static API key only, not a user key"
+    },
+    "GET /api/public/trust/{org_slug}": {
+      "verdict": "out",
+      "reason": "public",
+      "note": "Unauthenticated public page"
+    },
+    "GET /api/system-catalog": {
+      "verdict": "in"
+    },
+    "GET /api/system-catalog/{slug}": {
+      "verdict": "in"
+    },
+    "GET /api/tasks/cache/stats": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "GET /api/tasks/health/celery": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "GET /api/tasks/health/redis": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "GET /api/tasks/status/{task_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "GET /api/users/me": {
+      "verdict": "in"
+    },
+    "GET /api/users/me/assignments": {
+      "verdict": "deferred",
+      "note": "scf_list_assignments(user_id=<me>) after scf_get_current_user. Promote if a one-call \"my work\" view is wanted."
+    },
+    "GET /api/users/me/dashboard": {
+      "verdict": "in"
+    },
+    "GET /api/version": {
+      "verdict": "out",
+      "reason": "public",
+      "note": "Unauthenticated version banner; scf_get_organization and the audit log carry the platform facts an agent needs"
+    },
+    "GET /health": {
+      "verdict": "out",
+      "reason": "public",
+      "note": "Docker and load-balancer liveness probe"
+    },
+    "PATCH /api/admin/catalog/controls/{scf_id}/superseded-by": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "PATCH /api/comments/{comment_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/consultant/profile": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "PATCH /api/evidence-tasks/{task_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/notifications/read-all": {
+      "verdict": "in",
+      "tools": ["scf_mark_notifications_read"],
+      "note": "route chosen at runtime when all=true"
+    },
+    "PATCH /api/notifications/settings": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Per-user notification preferences"
+    },
+    "PATCH /api/notifications/{notification_id}/read": {
+      "verdict": "in",
+      "tools": ["scf_mark_notifications_read"],
+      "note": "route chosen at runtime by notification_id"
+    },
+    "PATCH /api/organizations/{org_id}": {
+      "verdict": "deferred",
+      "note": "Org name/slug edits are one-time admin acts. Promote on request."
+    },
+    "PATCH /api/organizations/{org_id}/custom-risks/{risk_code}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/engagements/{engagement_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/engagements/{engagement_id}/queries/{query_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/evidence-storage/{config_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "PATCH /api/organizations/{org_id}/evidence-tracking/{evidence_id}": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_update_evidence upserts via POST /evidence-tracking"
+    },
+    "PATCH /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/review": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/members/{user_id}": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Role changes are access decisions"
+    },
+    "PATCH /api/organizations/{org_id}/risk-assessments/{risk_code}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/scoped-controls/{scf_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/settings": {
+      "verdict": "deferred",
+      "note": "Owner-team defaults, trust-portal exposure, name and industry in one body. Promote with the settings read when an agent workflow manages accountability defaults, splitting trust-portal fields out."
+    },
+    "PATCH /api/organizations/{org_id}/systems/{system_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/systems/{system_id}/capabilities/{capability_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/teams/{team_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/teams/{team_id}/members/{user_id}": {
+      "verdict": "deferred",
+      "note": "Atomic seat promotion. scf_remove_team_member + scf_add_team_member covers it in two calls. Promote if the two-step demotion ordering matters."
+    },
+    "PATCH /api/organizations/{org_id}/vendors/{vendor_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/vendors/{vendor_id}/action-items/{item_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/vendors/{vendor_id}/assessments/{assessment_id}": {
+      "verdict": "deferred",
+      "note": "Assessments are AI-generated; editing them is a human review act. Promote if a review workflow lands in the platform."
+    },
+    "PATCH /api/organizations/{org_id}/vendors/{vendor_id}/certifications/{cert_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/vendors/{vendor_id}/compensating-controls/{cc_id}": {
+      "verdict": "in"
+    },
+    "POST /api/admin/catalog/import": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Catalog import is a multipart operator task"
+    },
+    "POST /api/admin/catalog/upgrade": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "POST /api/admin/catalog/upgrade/runs/{run_id}/apply": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "POST /api/admin/catalog/upgrade/runs/{run_id}/cancel": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "POST /api/admin/catalog/upgrade/runs/{run_id}/revert": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "POST /api/admin/users/grant-admin": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "POST /api/admin/users/revoke-admin": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "POST /api/admin/users/{user_id}/grant-consultant": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "POST /api/admin/users/{user_id}/revoke-consultant": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "POST /api/assignments": {
+      "verdict": "in"
+    },
+    "POST /api/auth/logout": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Browser OIDC flow"
+    },
+    "POST /api/auth/refresh": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Browser OIDC flow"
+    },
+    "POST /api/comments": {
+      "verdict": "in"
+    },
+    "POST /api/consultant/clients/invite": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "POST /api/consultant/clients/organisations": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "POST /api/consultant/clients/{org_id}/invite-admin": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "POST /api/consultant/invites/{token}/accept": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "POST /api/consultant/register": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Needs a consultant relationship; API keys resolve is_consultant=false"
+    },
+    "POST /api/database/restore": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Backup, restore and stats for the operator"
+    },
+    "POST /api/evidence-tasks": {
+      "verdict": "in"
+    },
+    "POST /api/evidence-tasks/{task_id}/complete": {
+      "verdict": "in"
+    },
+    "POST /api/org-invites/{token}/accept": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Browser acceptance flow"
+    },
+    "POST /api/organizations": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Creating organisations is an onboarding act tied to subscription limits"
+    },
+    "POST /api/organizations/{org_id}/api-keys": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "A key that mints or revokes keys is privilege escalation"
+    },
+    "POST /api/organizations/{org_id}/catalog-reconciliation/preview": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/catalog-reconciliation/runs/{run_id}/apply": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/catalog-reconciliation/runs/{run_id}/cancel": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/catalog-reconciliation/runs/{run_id}/rollback": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/custom-risks": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/custom-risks/{risk_code}/controls": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/documents/generate": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/documents/{document_id}/sections/{section_id}/resolve": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/documents/{document_id}/transition": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/engagements": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/engagements/{engagement_id}/auditors": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/engagements/{engagement_id}/queries": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/engagements/{engagement_id}/queries/{query_id}/responses": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence-storage": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "POST /api/organizations/{org_id}/evidence-storage/test": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "POST /api/organizations/{org_id}/evidence-storage/{config_id}/activate": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "POST /api/organizations/{org_id}/evidence-storage/{config_id}/copy-to/{target_config_id}": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "POST /api/organizations/{org_id}/evidence-storage/{config_id}/retire": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "POST /api/organizations/{org_id}/evidence-storage/{config_id}/rotate": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Evidence store configuration and credentials"
+    },
+    "POST /api/organizations/{org_id}/evidence-tracking": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence-tracking/batch": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/assess-bulk": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/assess-windows-bulk": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/window-assessments/refresh-stale": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/assess-window": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/files/confirm": {
+      "verdict": "out",
+      "reason": "binary-transport",
+      "note": "Second half of the upload flow"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/files/upload-url": {
+      "verdict": "out",
+      "reason": "binary-transport",
+      "note": "Pre-signed S3 POST for a browser or collector"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/assess": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/assessment/review": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/validate": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/inbox": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "HMAC-signed collector webhook, not bearer auth"
+    },
+    "POST /api/organizations/{org_id}/evidence/{evidence_id}/recipe-feedback": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Recipe feedback form"
+    },
+    "POST /api/organizations/{org_id}/framework-readiness": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Frontend sends catalog mappings to compute a score; scf_get_scoping_stats and evidence health cover readiness"
+    },
+    "POST /api/organizations/{org_id}/invite": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Sends outbound email and grants access"
+    },
+    "POST /api/organizations/{org_id}/members": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Membership changes are access decisions"
+    },
+    "POST /api/organizations/{org_id}/risk-assessments": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/risk-profile/reset": {
+      "verdict": "deferred",
+      "note": "Same as update."
+    },
+    "POST /api/organizations/{org_id}/scoped-controls": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "scf_update_scoped_control and scf_batch_update_controls upsert"
+    },
+    "POST /api/organizations/{org_id}/scoped-controls/batch": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/scoped-controls/bulk-scope-framework": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/scoped-controls/bulk-unscope-framework": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/scoped-controls/reset-scope": {
+      "verdict": "deferred",
+      "note": "Whole-org destructive reset. Promote if an onboarding playbook needs a scripted clean slate."
+    },
+    "POST /api/organizations/{org_id}/systems": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/systems/{system_id}/capabilities": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/systems/{system_id}/generate-recipes": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/team-assignments": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/team-assignments/batch": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/teams": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/teams/{team_id}/members": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/vendors": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/vendors/{vendor_id}/action-items": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/vendors/{vendor_id}/assessments": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/vendors/{vendor_id}/certifications": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/vendors/{vendor_id}/compensating-controls": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/vendors/{vendor_id}/dpsia": {
+      "verdict": "out",
+      "reason": "deprecated",
+      "note": "DPSIA alias; scf_trigger_vendor_assessment / scf_get_vendor_assessment replace it"
+    },
+    "POST /api/organizations/{org_id}/vendors/{vendor_id}/research": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/webhook-endpoints": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/webhook-endpoints/{endpoint_id}/rotate-secret": {
+      "verdict": "in"
+    },
+    "POST /api/provisioning/sync": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Subscription provisioning — static API key only, not a user key"
+    },
+    "POST /api/tasks/trigger/bulk": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "POST /api/tasks/trigger/example": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "POST /api/tasks/trigger/notification": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Celery/Redis operations and cache control"
+    },
+    "POST /api/webhooks/stripe": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Stripe signature auth"
+    },
+    "PUT /api/admin/catalog/upgrade/runs/{run_id}/pairings": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Platform-admin session required for catalog upgrades"
+    },
+    "PUT /api/admin/integrations/{name}": {
+      "verdict": "out",
+      "reason": "auth-unreachable",
+      "note": "Platform-admin scope; an org-scoped user API key cannot reach it"
+    },
+    "PUT /api/organizations/{org_id}/catalog-reconciliation/runs/{run_id}/actions": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/documents/settings": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/documents/{document_id}/sections/{section_id}": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/logo": {
+      "verdict": "out",
+      "reason": "binary-transport",
+      "note": "Multipart image upload"
+    },
+    "PUT /api/organizations/{org_id}/risk-profile": {
+      "verdict": "deferred",
+      "note": "Threshold tuning is a governance decision made once. Promote if a risk-appetite workflow is agent-driven."
+    },
+    "PUT /api/organizations/{org_id}/scope-preferences": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Per-user framework filter for the web UI"
+    },
+    "PUT /api/organizations/{org_id}/window-assessments/{ewa_id}/review": {
+      "verdict": "in"
+    }
+  }
+}

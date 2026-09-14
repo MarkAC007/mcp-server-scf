@@ -25,10 +25,10 @@ Source: [`src/tools/engagements.ts`](../../src/tools/engagements.ts).
 
 List the organization's audit engagements (read — viewer role). Each entry carries its frameworks, status, dates and the catalog version its scope was frozen against.
 
-| Parameter | Type   | Required | Description                                                          |
-| --------- | ------ | -------- | -------------------------------------------------------------------- |
-| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations               |
-| `status`  | string | No       | Filter by engagement status (e.g. 'planning', 'fieldwork', 'closed') |
+| Parameter | Type   | Required | Description                                                        |
+| --------- | ------ | -------- | ------------------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations             |
+| `status`  | enum   | No       | Filter by engagement status: draft, active, under_review or closed |
 
 ---
 
@@ -45,7 +45,7 @@ Get one audit engagement's detail (read — viewer role, or an auditor assigned 
 
 ## `scf_create_engagement`
 
-Create an audit engagement (write — admin role). This freezes the in-scope controls for the named frameworks against the current catalog version, so the scope renders even after deprecations.
+Create an audit engagement in draft (write — editor role). Freezes the in-scope controls for the named frameworks against the current catalog version, so the scope renders after deprecations.
 
 | Parameter    | Type   | Required | Description                                                      |
 | ------------ | ------ | -------- | ---------------------------------------------------------------- |
@@ -59,23 +59,23 @@ Create an audit engagement (write — admin role). This freezes the in-scope con
 
 ## `scf_update_engagement`
 
-Update an audit engagement's name, frameworks, status or dates (write — admin role). Only the fields you pass are changed.
+Update an engagement's name, frameworks, status or dates (write — editor role). Only passed fields change; status moves are caller-controlled: draft → active → under_review → closed.
 
-| Parameter       | Type   | Required | Description                                              |
-| --------------- | ------ | -------- | -------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations   |
-| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements |
-| `name`          | string | No       | New engagement name                                      |
-| `frameworks`    | array  | No       | Replacement framework identifier list                    |
-| `status`        | string | No       | New engagement status (e.g. 'fieldwork', 'closed')       |
-| `start_date`    | string | No       | Fieldwork start date, ISO 8601 (YYYY-MM-DD)              |
-| `end_date`      | string | No       | Fieldwork end date, ISO 8601 (YYYY-MM-DD)                |
+| Parameter       | Type   | Required | Description                                                  |
+| --------------- | ------ | -------- | ------------------------------------------------------------ |
+| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations       |
+| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements     |
+| `name`          | string | No       | New engagement name                                          |
+| `frameworks`    | array  | No       | Replacement framework identifier list                        |
+| `status`        | enum   | No       | New engagement status: draft, active, under_review or closed |
+| `start_date`    | string | No       | Fieldwork start date, ISO 8601 (YYYY-MM-DD)                  |
+| `end_date`      | string | No       | Fieldwork end date, ISO 8601 (YYYY-MM-DD)                    |
 
 ---
 
 ## `scf_delete_engagement`
 
-Delete an audit engagement and its frozen scope (destructive write — admin role). Returns no content on success. Auditor access granted through this engagement is revoked with it.
+Delete a draft audit engagement and its frozen scope (destructive write — admin role). Non-draft engagements are refused with 409 — close them instead. Auditor grants are revoked with it.
 
 | Parameter       | Type   | Required | Description                                              |
 | --------------- | ------ | -------- | -------------------------------------------------------- |
@@ -109,7 +109,7 @@ Get the engagement's scope presented natively in one of its frameworks (read —
 
 ## `scf_list_my_engagements`
 
-List the engagements the calling identity can read as an assigned auditor, across organizations (read). This is the auditor's own view — use scf_list_engagements for the organization-side list.
+List engagements the caller holds an active auditor grant on, across organizations (read). The auditor's own view — use scf_list_engagements for the organization-side list.
 
 _No parameters._
 
@@ -117,7 +117,7 @@ _No parameters._
 
 ## `scf_list_engagement_auditors`
 
-List the auditors granted read access to one engagement (read — viewer role).
+List the auditors granted read access to one engagement (read — viewer role). Each grant carries its status: invited, active or revoked.
 
 | Parameter       | Type   | Required | Description                                              |
 | --------------- | ------ | -------- | -------------------------------------------------------- |
@@ -128,7 +128,7 @@ List the auditors granted read access to one engagement (read — viewer role).
 
 ## `scf_add_engagement_auditor`
 
-Grant an existing user read access to one engagement (write — admin role). The grant is engagement-scoped: it exposes that engagement's frozen scope and queries, nothing else in the organization.
+Grant an existing user read access to one engagement (write — admin role). Scoped to that engagement's frozen scope and queries only; re-granting a revoked auditor reactivates the grant.
 
 | Parameter       | Type   | Required | Description                                                                           |
 | --------------- | ------ | -------- | ------------------------------------------------------------------------------------- |
@@ -159,7 +159,7 @@ List an engagement's structured auditor queries (read — viewer role, or an ass
 | `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                    |
 | `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                                  |
 | `scf_id`        | string | No       | Filter to a single SCF control in DOMAIN-NN format — obtain from scf_get_engagement_scope |
-| `status`        | string | No       | Filter by query status: open, answered or closed                                          |
+| `status`        | enum   | No       | Filter by query status: open, answered or closed                                          |
 
 ---
 
@@ -177,7 +177,7 @@ Get one auditor query with its full response thread (read — viewer role, or an
 
 ## `scf_create_engagement_query`
 
-Raise an auditor query against one control in the engagement's scope (write — editor role, or an assigned auditor). The control must be in the engagement's frozen scope.
+Raise an auditor query against one control in the engagement's scope (write — org member or assigned auditor). The control must be in the engagement's frozen scope.
 
 | Parameter       | Type   | Required | Description                                                                                          |
 | --------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------- |
@@ -191,7 +191,7 @@ Raise an auditor query against one control in the engagement's scope (write — 
 
 ## `scf_respond_to_engagement_query`
 
-Add a response to an auditor query (write — editor role, or an assigned auditor). Returns the updated query with its full thread.
+Add a response to an auditor query (write — org member or assigned auditor). Posting a response moves an open query to answered. Returns the updated query with its full thread.
 
 | Parameter       | Type   | Required | Description                                              |
 | --------------- | ------ | -------- | -------------------------------------------------------- |
@@ -204,7 +204,7 @@ Add a response to an auditor query (write — editor role, or an assigned audito
 
 ## `scf_update_engagement_query_status`
 
-Move an auditor query through its lifecycle (write — editor role, or an assigned auditor). The platform validates the transition, so an invalid target is refused rather than recorded.
+Move an auditor query through its lifecycle (write — org member or assigned auditor). Allowed: open → answered|closed, answered → open|closed, closed → open. Others are refused.
 
 | Parameter       | Type   | Required | Description                                              |
 | --------------- | ------ | -------- | -------------------------------------------------------- |

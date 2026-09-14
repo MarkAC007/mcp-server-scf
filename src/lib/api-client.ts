@@ -1,4 +1,33 @@
 import { ScfApiError } from "./errors.js";
+import { PKG_NAME, PKG_VERSION } from "./version.js";
+
+/**
+ * Identify every outgoing call as MCP traffic. The platform's
+ * `detect_action_source` treats `x-audit-source` as the trusted override and
+ * otherwise sniffs the User-Agent, so without these two headers each write
+ * this client makes is recorded in the audit trail as a plain `api_key`
+ * change rather than an `mcp` one.
+ */
+/** Query-string values. Arrays are sent as repeated keys (`item_ids=a&item_ids=b`), the FastAPI list convention. */
+export type QueryParams = Record<string, string | number | boolean | string[] | undefined>;
+
+/** Add query params to a URL. Arrays become repeated keys (`item_ids=a&item_ids=b`), the FastAPI list convention; undefined/null are skipped. */
+function appendParams(url: URL, params?: QueryParams): void {
+  if (!params) return;
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) url.searchParams.append(key, String(item));
+    } else {
+      url.searchParams.set(key, String(value));
+    }
+  }
+}
+
+const AUDIT_HEADERS: Record<string, string> = {
+  "X-Audit-Source": "mcp",
+  "User-Agent": `${PKG_NAME}/${PKG_VERSION}`,
+};
 
 export interface ApiClientConfig {
   baseUrl: string;
@@ -48,24 +77,19 @@ export class ScfApiClient {
     method: string,
     path: string,
     options?: {
-      params?: Record<string, string | number | boolean | undefined>;
+      params?: QueryParams;
       body?: unknown;
     },
     noOrgRetry = false,
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}/api${path}`);
 
-    if (options?.params) {
-      for (const [key, value] of Object.entries(options.params)) {
-        if (value !== undefined && value !== null) {
-          url.searchParams.set(key, String(value));
-        }
-      }
-    }
+    appendParams(url, options?.params);
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       Accept: "application/json",
+      ...AUDIT_HEADERS,
     };
 
     // FastAPI endpoints that declare a Pydantic body parameter require
@@ -141,24 +165,16 @@ export class ScfApiClient {
    * export renders markdown or HTML, not a JSON envelope. Returns the body
    * verbatim so the tool can hand it to the model as-is.
    */
-  private async requestText(
-    path: string,
-    params?: Record<string, string | number | boolean | undefined>,
-  ): Promise<{ content_type: string; body: string }> {
+  private async requestText(path: string, params?: QueryParams): Promise<{ content_type: string; body: string }> {
     const url = new URL(`${this.baseUrl}/api${path}`);
-    if (params) {
-      for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
-          url.searchParams.set(key, String(value));
-        }
-      }
-    }
+    appendParams(url, params);
 
     const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         Accept: "text/markdown, text/html, text/plain",
+        ...AUDIT_HEADERS,
       },
     });
 
@@ -184,31 +200,28 @@ export class ScfApiClient {
     };
   }
 
-  async get<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+  async get<T>(path: string, params?: QueryParams): Promise<T> {
     return this.request<T>("GET", path, { params });
   }
 
-  async getText(
-    path: string,
-    params?: Record<string, string | number | boolean | undefined>,
-  ): Promise<{ content_type: string; body: string }> {
+  async getText(path: string, params?: QueryParams): Promise<{ content_type: string; body: string }> {
     return this.requestText(path, params);
   }
 
-  async post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("POST", path, { body });
+  async post<T>(path: string, body?: unknown, params?: QueryParams): Promise<T> {
+    return this.request<T>("POST", path, { body, params });
   }
 
-  async patch<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("PATCH", path, { body });
+  async patch<T>(path: string, body?: unknown, params?: QueryParams): Promise<T> {
+    return this.request<T>("PATCH", path, { body, params });
   }
 
-  async delete<T>(path: string): Promise<T> {
-    return this.request<T>("DELETE", path);
+  async delete<T>(path: string, params?: QueryParams): Promise<T> {
+    return this.request<T>("DELETE", path, { params });
   }
 
-  async put<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("PUT", path, { body });
+  async put<T>(path: string, body?: unknown, params?: QueryParams): Promise<T> {
+    return this.request<T>("PUT", path, { body, params });
   }
 }
 

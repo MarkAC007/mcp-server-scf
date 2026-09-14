@@ -20,7 +20,10 @@ export function registerEngagementTools(server: McpServer) {
     "List the organization's audit engagements (read — viewer role). Each entry carries its frameworks, status, dates and the catalog version its scope was frozen against.",
     {
       org_id: ORG_ID,
-      status: z.string().optional().describe("Filter by engagement status (e.g. 'planning', 'fieldwork', 'closed')"),
+      status: z
+        .enum(["draft", "active", "under_review", "closed"])
+        .optional()
+        .describe("Filter by engagement status: draft, active, under_review or closed"),
     },
     { title: "List Engagements", readOnlyHint: true },
     async ({ org_id, status }) => {
@@ -55,7 +58,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_create_engagement",
-    "Create an audit engagement (write — admin role). This freezes the in-scope controls for the named frameworks against the current catalog version, so the scope renders even after deprecations.",
+    "Create an audit engagement in draft (write — editor role). Freezes the in-scope controls for the named frameworks against the current catalog version, so the scope renders after deprecations.",
     {
       org_id: ORG_ID,
       name: z.string().describe("Engagement name, e.g. a framework and audit period"),
@@ -80,13 +83,16 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_update_engagement",
-    "Update an audit engagement's name, frameworks, status or dates (write — admin role). Only the fields you pass are changed.",
+    "Update an engagement's name, frameworks, status or dates (write — editor role). Only passed fields change; status moves are caller-controlled: draft → active → under_review → closed.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
       name: z.string().optional().describe("New engagement name"),
       frameworks: z.array(z.string()).optional().describe("Replacement framework identifier list"),
-      status: z.string().optional().describe("New engagement status (e.g. 'fieldwork', 'closed')"),
+      status: z
+        .enum(["draft", "active", "under_review", "closed"])
+        .optional()
+        .describe("New engagement status: draft, active, under_review or closed"),
       start_date: z.string().optional().describe("Fieldwork start date, ISO 8601 (YYYY-MM-DD)"),
       end_date: z.string().optional().describe("Fieldwork end date, ISO 8601 (YYYY-MM-DD)"),
     },
@@ -104,7 +110,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_delete_engagement",
-    "Delete an audit engagement and its frozen scope (destructive write — admin role). Returns no content on success. Auditor access granted through this engagement is revoked with it.",
+    "Delete a draft audit engagement and its frozen scope (destructive write — admin role). Non-draft engagements are refused with 409 — close them instead. Auditor grants are revoked with it.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
@@ -171,7 +177,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_list_my_engagements",
-    "List the engagements the calling identity can read as an assigned auditor, across organizations (read). This is the auditor's own view — use scf_list_engagements for the organization-side list.",
+    "List engagements the caller holds an active auditor grant on, across organizations (read). The auditor's own view — use scf_list_engagements for the organization-side list.",
     {},
     { title: "List My Engagements", readOnlyHint: true },
     async () => {
@@ -187,7 +193,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_list_engagement_auditors",
-    "List the auditors granted read access to one engagement (read — viewer role).",
+    "List the auditors granted read access to one engagement (read — viewer role). Each grant carries its status: invited, active or revoked.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
@@ -206,7 +212,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_add_engagement_auditor",
-    "Grant an existing user read access to one engagement (write — admin role). The grant is engagement-scoped: it exposes that engagement's frozen scope and queries, nothing else in the organization.",
+    "Grant an existing user read access to one engagement (write — admin role). Scoped to that engagement's frozen scope and queries only; re-granting a revoked auditor reactivates the grant.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
@@ -262,7 +268,10 @@ export function registerEngagementTools(server: McpServer) {
         .string()
         .optional()
         .describe("Filter to a single SCF control in DOMAIN-NN format — obtain from scf_get_engagement_scope"),
-      status: z.string().optional().describe("Filter by query status: open, answered or closed"),
+      status: z
+        .enum(["open", "answered", "closed"])
+        .optional()
+        .describe("Filter by query status: open, answered or closed"),
     },
     { title: "List Engagement Queries", readOnlyHint: true },
     async ({ org_id, engagement_id, ...params }) => {
@@ -298,7 +307,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_create_engagement_query",
-    "Raise an auditor query against one control in the engagement's scope (write — editor role, or an assigned auditor). The control must be in the engagement's frozen scope.",
+    "Raise an auditor query against one control in the engagement's scope (write — org member or assigned auditor). The control must be in the engagement's frozen scope.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
@@ -324,7 +333,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_respond_to_engagement_query",
-    "Add a response to an auditor query (write — editor role, or an assigned auditor). Returns the updated query with its full thread.",
+    "Add a response to an auditor query (write — org member or assigned auditor). Posting a response moves an open query to answered. Returns the updated query with its full thread.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
@@ -348,7 +357,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_update_engagement_query_status",
-    "Move an auditor query through its lifecycle (write — editor role, or an assigned auditor). The platform validates the transition, so an invalid target is refused rather than recorded.",
+    "Move an auditor query through its lifecycle (write — org member or assigned auditor). Allowed: open → answered|closed, answered → open|closed, closed → open. Others are refused.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,

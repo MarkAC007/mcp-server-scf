@@ -71,6 +71,27 @@ List SCF assessment objectives — the 5,736 test criteria used to evaluate cont
 
 ---
 
+## `scf_get_domain`
+
+Get one SCF domain with its controls (read, no org). Deprecated controls are excluded unless include_deprecated is set; a deprecated domain still resolves, badged.
+
+| Parameter            | Type    | Required | Description                                                     |
+| -------------------- | ------- | -------- | --------------------------------------------------------------- |
+| `identifier`         | string  | Yes      | Domain code or slug (e.g., `IAC`) — get from `scf_list_domains` |
+| `include_deprecated` | boolean | No       | Include deprecated controls (default `false`)                   |
+
+---
+
+## `scf_get_catalog_evidence`
+
+Get one catalog evidence entry with the controls it maps to (read, no org). The reference definition, not an organization's tracking record — see scf_get_evidence for that.
+
+| Parameter     | Type   | Required | Description                                                |
+| ------------- | ------ | -------- | ---------------------------------------------------------- |
+| `evidence_id` | string | Yes      | Catalog evidence ID — get from `scf_list_evidence_catalog` |
+
+---
+
 ## Example prompts
 
 - "What NIST 800-53 controls apply to access control?"

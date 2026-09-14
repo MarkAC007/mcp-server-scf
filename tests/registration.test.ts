@@ -12,6 +12,8 @@ import { registerWebhookTools } from "../src/tools/webhooks.js";
 import { registerDocumentTools } from "../src/tools/documents.js";
 import { registerEngagementTools } from "../src/tools/engagements.js";
 import { registerCatalogReconciliationTools } from "../src/tools/catalog-reconciliation.js";
+import { registerTeamTools } from "../src/tools/teams.js";
+import { registerCollaborationTools } from "../src/tools/collaboration.js";
 
 function makeMockServer() {
   const tool = vi.fn();
@@ -22,17 +24,19 @@ describe("tool registration", () => {
   // Per-domain expected tool counts. If src/tools/*.ts adds/removes tools,
   // bump the number here and in README.md (CI will already catch the README drift).
   const cases: Array<[string, (s: McpServer) => void, number]> = [
-    ["catalog", registerCatalogTools, 6],
-    ["scoped-controls", registerScopedControlTools, 6],
-    ["evidence", registerEvidenceTools, 26],
-    ["risk", registerRiskTools, 12],
-    ["vendors", registerVendorTools, 11],
-    ["organization", registerOrganizationTools, 7],
-    ["capabilities", registerCapabilityTools, 14],
+    ["catalog", registerCatalogTools, 8],
+    ["scoped-controls", registerScopedControlTools, 7],
+    ["evidence", registerEvidenceTools, 39],
+    ["risk", registerRiskTools, 17],
+    ["vendors", registerVendorTools, 23],
+    ["organization", registerOrganizationTools, 10],
+    ["capabilities", registerCapabilityTools, 19],
     ["webhooks", registerWebhookTools, 6],
     ["documents", registerDocumentTools, 15],
     ["engagements", registerEngagementTools, 16],
     ["catalog-reconciliation", registerCatalogReconciliationTools, 9],
+    ["teams", registerTeamTools, 11],
+    ["collaboration", registerCollaborationTools, 7],
   ];
 
   for (const [name, register, expected] of cases) {
@@ -67,9 +71,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 128", () => {
+  it("total tool count equals 187", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(128);
+    expect(server.tool).toHaveBeenCalledTimes(187);
   });
 });
