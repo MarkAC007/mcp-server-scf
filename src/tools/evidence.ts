@@ -11,6 +11,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().optional().describe("System UUID to filter by — obtain from scf_list_systems"),
     },
+    { title: "List Evidence", readOnlyHint: true },
     async ({ org_id, system_id }) => {
       try {
         const client = getClient();
@@ -52,6 +53,7 @@ export function registerEvidenceTools(server: McpServer) {
         .describe("Evidence maturity level L0–L5 (e.g., 'L3'); omit to leave unset"),
       comments: z.string().optional().describe("Free-text notes or context"),
     },
+    { title: "Create Evidence Tracking", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -69,6 +71,7 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Evidence Maturity", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -87,6 +90,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
     },
+    { title: "Get Evidence Item Maturity", readOnlyHint: true },
     async ({ org_id, evidence_id }) => {
       try {
         const client = getClient();
@@ -105,6 +109,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
     },
+    { title: "Get Evidence Upgrade Recommendations", readOnlyHint: true },
     async ({ org_id, evidence_id }) => {
       try {
         const client = getClient();
@@ -123,6 +128,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'E-RSK-02') — obtain from scf_list_evidence"),
     },
+    { title: "Get Evidence Suggestions", readOnlyHint: true },
     async ({ org_id, evidence_id }) => {
       try {
         const client = getClient();
@@ -140,6 +146,7 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "List Evidence Gaps", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -157,6 +164,7 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Evidence Health", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -175,6 +183,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
     },
+    { title: "List Evidence Files", readOnlyHint: true },
     async ({ org_id, evidence_id }) => {
       try {
         const client = getClient();
@@ -194,6 +203,7 @@ export function registerEvidenceTools(server: McpServer) {
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
       file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
+    { title: "Get Evidence File", readOnlyHint: true },
     async ({ org_id, evidence_id, file_id }) => {
       try {
         const client = getClient();
@@ -235,6 +245,7 @@ export function registerEvidenceTools(server: McpServer) {
         .describe("Evidence maturity level L0–L5 (e.g., 'L3'); omitting never clears the stored value"),
       comments: z.string().optional().describe("Free-text notes or context"),
     },
+    { title: "Update Evidence", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_id, ...fields }) => {
       try {
         const client = getClient();
@@ -264,6 +275,7 @@ export function registerEvidenceTools(server: McpServer) {
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
       file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
+    { title: "Get Evidence Validation", readOnlyHint: true },
     async ({ org_id, evidence_id, file_id }) => {
       try {
         const client = getClient();
@@ -283,6 +295,7 @@ export function registerEvidenceTools(server: McpServer) {
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
       file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
+    { title: "Revalidate Evidence File", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_id, file_id }) => {
       try {
         const client = getClient();
@@ -300,6 +313,7 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Evidence Validation Summary", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -328,6 +342,7 @@ export function registerEvidenceTools(server: McpServer) {
         .default("on_demand")
         .describe("Origin tag for the request (default on_demand)"),
     },
+    { title: "Trigger Evidence Assessment", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_id, file_id, assessment_source }) => {
       try {
         const client = getClient();
@@ -349,6 +364,7 @@ export function registerEvidenceTools(server: McpServer) {
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
       file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
     },
+    { title: "Get Evidence Assessment", readOnlyHint: true },
     async ({ org_id, evidence_id, file_id }) => {
       try {
         const client = getClient();
@@ -373,6 +389,7 @@ export function registerEvidenceTools(server: McpServer) {
         .default(false)
         .describe("Also assess every file that has no existing assessment (default false)"),
     },
+    { title: "Bulk Assess Evidence", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_id, file_ids, assess_unassessed }) => {
       try {
         const client = getClient();
@@ -394,6 +411,7 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Evidence Assessment Summary", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -413,6 +431,7 @@ export function registerEvidenceTools(server: McpServer) {
       assignee: z.string().optional().describe("Filter by assigned user ID"),
       status: z.string().optional().describe("Filter by task status (e.g., 'open', 'in_progress', 'done')"),
     },
+    { title: "List Evidence Tasks", readOnlyHint: true },
     async ({ org_id, assignee, status }) => {
       try {
         const client = getClient();
@@ -444,6 +463,7 @@ export function registerEvidenceTools(server: McpServer) {
         .default("on_demand")
         .describe("Origin tag for the request (default on_demand)"),
     },
+    { title: "Trigger Window Assessment", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_id, assessment_source }) => {
       try {
         const client = getClient();
@@ -472,6 +492,7 @@ export function registerEvidenceTools(server: McpServer) {
         .default(0)
         .describe("Pagination offset — number of results to skip (default 0)"),
     },
+    { title: "List Window Assessments", readOnlyHint: true },
     async ({ org_id, evidence_id, limit, offset }) => {
       try {
         const client = getClient();
@@ -493,6 +514,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       assessment_id: z.string().uuid().describe("Windowed assessment UUID — obtain from scf_list_window_assessments"),
     },
+    { title: "Get Window Assessment", readOnlyHint: true },
     async ({ org_id, assessment_id }) => {
       try {
         const client = getClient();
@@ -515,6 +537,7 @@ export function registerEvidenceTools(server: McpServer) {
         .max(25)
         .describe("Evidence IDs to assess (e.g., ['E-IAM-01','E-BCM-11']); 1–25 per request"),
     },
+    { title: "Bulk Assess Windows", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_ids }) => {
       try {
         const client = getClient();
@@ -532,6 +555,7 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "Get Window Assessment Summary", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -554,6 +578,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02')"),
     },
+    { title: "Get Control Assessment Composite", readOnlyHint: true },
     async ({ org_id, scf_id }) => {
       try {
         const client = getClient();
@@ -586,6 +611,7 @@ export function registerEvidenceTools(server: McpServer) {
       limit: z.number().int().min(1).max(500).optional().default(100).describe("Page size (1–500, default 100)"),
       cursor: z.string().optional().describe("Opaque pagination cursor — pass next_cursor from a prior response"),
     },
+    { title: "List Control Assessment Composites", readOnlyHint: true },
     async ({ org_id, status, domain, computation_version, limit, cursor }) => {
       try {
         const client = getClient();

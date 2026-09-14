@@ -11,6 +11,9 @@ import { registerVendorTools } from "./tools/vendors.js";
 import { registerOrganizationTools } from "./tools/organization.js";
 import { registerCapabilityTools } from "./tools/capabilities.js";
 import { registerWebhookTools } from "./tools/webhooks.js";
+import { registerDocumentTools } from "./tools/documents.js";
+import { registerEngagementTools } from "./tools/engagements.js";
+import { registerCatalogReconciliationTools } from "./tools/catalog-reconciliation.js";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { name: string; version: string };
@@ -36,6 +39,9 @@ registerVendorTools(server);
 registerOrganizationTools(server);
 registerCapabilityTools(server);
 registerWebhookTools(server);
+registerDocumentTools(server);
+registerEngagementTools(server);
+registerCatalogReconciliationTools(server);
 
 // Start server
 async function main() {
