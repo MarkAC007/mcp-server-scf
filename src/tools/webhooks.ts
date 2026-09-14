@@ -23,6 +23,7 @@ export function registerWebhookTools(server: McpServer) {
         .optional()
         .describe("Per-endpoint rate limit in requests/min (1–10000); omit to use the org default"),
     },
+    { title: "Create Webhook", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -40,6 +41,7 @@ export function registerWebhookTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
+    { title: "List Webhooks", readOnlyHint: true },
     async ({ org_id }) => {
       try {
         const client = getClient();
@@ -58,6 +60,7 @@ export function registerWebhookTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
     },
+    { title: "Get Webhook", readOnlyHint: true },
     async ({ org_id, endpoint_id }) => {
       try {
         const client = getClient();
@@ -76,6 +79,7 @@ export function registerWebhookTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
     },
+    { title: "Delete Webhook", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, endpoint_id }) => {
       try {
         const client = getClient();
@@ -94,6 +98,7 @@ export function registerWebhookTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       endpoint_id: z.string().uuid().describe("Webhook endpoint UUID — obtain from scf_list_webhooks"),
     },
+    { title: "Rotate Webhook Secret", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, endpoint_id }) => {
       try {
         const client = getClient();
@@ -119,6 +124,7 @@ export function registerWebhookTools(server: McpServer) {
         .default(0)
         .describe("Pagination offset — number of deliveries to skip (default 0)"),
     },
+    { title: "List Webhook Deliveries", readOnlyHint: true },
     async ({ org_id, endpoint_id, limit, offset }) => {
       try {
         const client = getClient();

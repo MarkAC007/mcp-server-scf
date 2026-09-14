@@ -4,11 +4,12 @@
 
 Source: [`src/tools/risk.ts`](../../src/tools/risk.ts).
 
-The 12 tools split into three concerns:
+The 17 tools split into four concerns:
 
-1. **Risk register** — `scf_list_risks`, `scf_get_risk`, `scf_create_risk`, `scf_get_risk_matrix`, `scf_get_risk_summary`
+1. **Risk register** — `scf_list_risks`, `scf_get_risk`, `scf_create_risk`, `scf_update_risk_assessment`, `scf_delete_risk_assessment`, `scf_get_risk_matrix`, `scf_get_risk_summary`, `scf_get_risk_profile`
 2. **Custom risk definitions** — `scf_list_custom_risks`, `scf_create_custom_risk`, `scf_update_custom_risk`, `scf_delete_custom_risk`
 3. **Custom risk control mappings** — `scf_list_custom_risk_controls`, `scf_add_custom_risk_control`, `scf_remove_custom_risk_control`
+4. **Risk ↔ control traceability** — `scf_get_risks_for_control`, `scf_get_controls_for_risk`
 
 ---
 
@@ -40,16 +41,16 @@ Get one risk assessment in detail: likelihood, inherent and residual impact scor
 
 Create a new risk assessment in the risk register (write — editor+ role). Likelihood and impact scores populate the 5×5 risk matrix.
 
-| Parameter          | Type   | Required | Description                               |
-| ------------------ | ------ | -------- | ----------------------------------------- |
-| `org_id`           | string | Yes      | Organization ID (UUID)                    |
-| `title`            | string | Yes      | Risk title                                |
-| `description`      | string | Yes      | Risk description                          |
-| `likelihood`       | number | Yes      | Inherent likelihood (1–5)                 |
-| `impact`           | number | Yes      | Inherent impact (1–5)                     |
-| `owner`            | string | No       | Risk owner                                |
-| `treatment_status` | string | No       | `mitigate`, `accept`, `transfer`, `avoid` |
-| `control_id`       | string | No       | Linked control ID                         |
+| Parameter          | Type   | Required | Description                                                                                          |
+| ------------------ | ------ | -------- | ---------------------------------------------------------------------------------------------------- |
+| `org_id`           | string | Yes      | Organization ID (UUID)                                                                               |
+| `title`            | string | Yes      | Risk title                                                                                           |
+| `description`      | string | Yes      | Risk description                                                                                     |
+| `likelihood`       | number | Yes      | Inherent likelihood (1–5)                                                                            |
+| `impact`           | number | Yes      | Inherent impact (1–5)                                                                                |
+| `owner`            | string | No       | Risk owner                                                                                           |
+| `treatment_status` | string | No       | Treatment workflow status: `identified`, `analysed`, `treating`, `treated`, `accepted`, `monitoring` |
+| `control_id`       | string | No       | Linked control ID                                                                                    |
 
 ---
 
@@ -155,6 +156,70 @@ Unlink a scoped control from a custom risk (write — editor+ role). The control
 | `org_id`    | string | Yes      | Organization ID (UUID)                    |
 | `risk_code` | string | Yes      | Custom risk code (e.g., `R-ORG-1`)        |
 | `scf_id`    | string | Yes      | SCF control ID to unlink (e.g., `AST-01`) |
+
+---
+
+## `scf_update_risk_assessment`
+
+Update a scored risk by its code (write — editor role). Only passed fields change: inherent and residual likelihood/impact 1–5, treatment status and plan, due and review dates, owner, notes.
+
+| Parameter             | Type   | Required | Description                                                               |
+| --------------------- | ------ | -------- | ------------------------------------------------------------------------- |
+| `org_id`              | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                |
+| `risk_code`           | string | Yes      | Risk code — catalog `R-XX-N` or custom `R-ORG-N`                          |
+| `likelihood`          | number | No       | Inherent likelihood (1–5)                                                 |
+| `impact`              | number | No       | Inherent impact (1–5)                                                     |
+| `residual_likelihood` | number | No       | Residual likelihood after treatment (1–5)                                 |
+| `residual_impact`     | number | No       | Residual impact after treatment (1–5)                                     |
+| `treatment_status`    | string | No       | `identified`, `analysed`, `treating`, `treated`, `accepted`, `monitoring` |
+| `treatment_plan`      | string | No       | How the risk is being treated                                             |
+| `treatment_due_date`  | string | No       | `YYYY-MM-DD`                                                              |
+| `next_review_date`    | string | No       | `YYYY-MM-DD`                                                              |
+| `owner_user_id`       | string | No       | Risk owner UUID — get from `scf_list_members`                             |
+| `notes`               | string | No       | Free-text notes on this risk assessment                                   |
+
+---
+
+## `scf_delete_risk_assessment`
+
+Delete an organization's scoring of a risk code (destructive write — editor role). The catalog or custom risk definition itself remains; only this org's assessment row is removed.
+
+| Parameter   | Type   | Required | Description                                      |
+| ----------- | ------ | -------- | ------------------------------------------------ |
+| `org_id`    | string | Yes      | Organization ID (UUID)                           |
+| `risk_code` | string | Yes      | Risk code — catalog `R-XX-N` or custom `R-ORG-N` |
+
+---
+
+## `scf_get_risks_for_control`
+
+List the risk codes a control addresses and this organization's assessments of them (read — viewer role). Control-to-risk traceability from the SCF catalog mapping.
+
+| Parameter | Type   | Required | Description                                           |
+| --------- | ------ | -------- | ----------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID)                                |
+| `scf_id`  | string | Yes      | SCF control ID in `DOMAIN-NN` format (e.g., `IAC-01`) |
+
+---
+
+## `scf_get_controls_for_risk`
+
+List the controls that address a risk code (read — viewer role). Works for catalog risks (`R-XX-N` via the SCF mapping) and custom risks (`R-ORG-N` via the org's control mappings).
+
+| Parameter   | Type   | Required | Description                                      |
+| ----------- | ------ | -------- | ------------------------------------------------ |
+| `org_id`    | string | Yes      | Organization ID (UUID)                           |
+| `risk_code` | string | Yes      | Risk code — catalog `R-XX-N` or custom `R-ORG-N` |
+
+---
+
+## `scf_get_risk_profile`
+
+Get the organization's risk profile (read — viewer role): the severity thresholds that band the 5×5 matrix into low, medium, high and critical. Auto-created with defaults if unset.
+
+| Parameter | Type   | Required | Description            |
+| --------- | ------ | -------- | ---------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) |
 
 ---
 

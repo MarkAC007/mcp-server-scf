@@ -24,7 +24,6 @@
 <!-- Registries & Marketplaces -->
 
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-green)](https://registry.modelcontextprotocol.io/v0/servers?search=scfcontrolsplatform)
-[![smithery badge](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
 
 <!-- Tech Stack -->
 
@@ -47,18 +46,25 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**74 tools** across 8 domains — click through for full parameter tables and example prompts:
+**187 tools** across 13 domains — click through for full parameter tables and example prompts:
 
-| Domain                                           | Tools | Description                                                                                                      |
-| ------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------- |
-| [Catalog](docs/tools/catalog.md)                 | 6     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives                                              |
-| [Control Scoping](docs/tools/scoped-controls.md) | 6     | Track implementation status across an 8-state workflow                                                           |
-| [Evidence](docs/tools/evidence.md)               | 21    | Manage evidence collection, validation, maturity scoring, windowed AI assessments, and control-composite rollups |
-| [Risk Management](docs/tools/risk.md)            | 12    | 5x5 risk matrix, risk register, custom risks and control mapping                                                 |
-| [Vendor Risk (TPRM)](docs/tools/vendors.md)      | 7     | Vendor registry, AI-powered security research, DPSIA                                                             |
-| [Organization](docs/tools/organization.md)       | 7     | Users, orgs, audit trail, work queue, notifications                                                              |
-| [Capabilities](docs/tools/capabilities.md)       | 9     | KSI capability themes, scorecards, evidence posture, systems inventory                                           |
-| [Webhooks](docs/tools/webhooks.md)               | 6     | Webhook endpoints, delivery logs, secret rotation                                                                |
+| Domain                                                         | Tools | Description                                                                                                     |
+| -------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------- |
+| [Catalog](docs/tools/catalog.md)                               | 8     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives, domains and evidence definitions           |
+| [Control Scoping](docs/tools/scoped-controls.md)               | 7     | Track implementation status across an 8-state workflow; bulk scope and unscope by framework                     |
+| [Evidence](docs/tools/evidence.md)                             | 39    | Evidence tracking (single + batch), tasks, file review, health, validation, AI assessments and review queues    |
+| [Risk Management](docs/tools/risk.md)                          | 17    | 5x5 risk matrix, risk register, scoring updates, custom risks, control↔risk traceability, risk profile          |
+| [Vendor Risk (TPRM)](docs/tools/vendors.md)                    | 23    | Vendor registry, AI research and assessments, certifications, action items, compensating controls               |
+| [Organization](docs/tools/organization.md)                     | 10    | Users, orgs, audit trail, change cursor, work queues, notifications                                             |
+| [Capabilities](docs/tools/capabilities.md)                     | 19    | KSI themes, scorecards, evidence posture, systems inventory, system evidence capabilities, catalog + AI recipes |
+| [Webhooks](docs/tools/webhooks.md)                             | 6     | Webhook endpoints, delivery logs, secret rotation                                                               |
+| [Documents](docs/tools/documents.md)                           | 15    | ISMS document generation, section editing, merge resolution, lifecycle transitions, export                      |
+| [Audit Engagements](docs/tools/engagements.md)                 | 16    | Engagement workspaces, frozen scope, framework-native presentation, auditor access, structured queries          |
+| [Catalog Reconciliation](docs/tools/catalog-reconciliation.md) | 9     | Preview, decide, apply and roll back an SCF catalog version upgrade for your org                                |
+| [Teams](docs/tools/teams.md)                                   | 11    | Business functions, teams and rosters, team accountability for controls and evidence (single + batch)           |
+| [Collaboration](docs/tools/collaboration.md)                   | 7     | User assignments to controls, evidence and tasks; comment threads                                               |
+
+Which platform operations became tools, which are deferred, and which stay out on purpose is recorded in [docs/tool-scope.md](docs/tool-scope.md).
 
 ---
 
@@ -70,9 +76,9 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 74 tools, grouped by domain, with their Zod schemas rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 187 tools, grouped by domain, with their Zod schemas rendered as a live form.
 
-Live tool calls need an API key — export `SCF_API_KEY` in the same shell before launching Inspector, or set it under the "Environment Variables" tab inside the Inspector UI. Without a key, you can still browse schemas and descriptions; tool calls return 401.
+Live tool calls need your instance's URL and an API key — export `SCF_API_URL` and `SCF_API_KEY` in the same shell before launching Inspector, or set them under the "Environment Variables" tab inside the Inspector UI. Without them, you can still browse schemas and descriptions; tool calls return a configuration error.
 
 ---
 
@@ -95,11 +101,9 @@ Pick the route for your client.
 
 **Cursor** — click the badge below. Cursor registers the `cursor://` scheme, so the deeplink opens the IDE with the server config pre-filled:
 
-[![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cHM6Ly91ay5zY2Zjb250cm9sc3BsYXRmb3JtLmFwcCJ9fQ%3D%3D)
+[![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=scf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItc2NmIl0sImVudiI6eyJTQ0ZfQVBJX0tFWSI6InNjZl95b3VyX2FwaV9rZXlfaGVyZSIsIlNDRl9BUElfVVJMIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwIn19)
 
-**Smithery** — managed hosted deployment:
-
-[![Try on Smithery](https://smithery.ai/badge/@MarkAC007/mcp-server-scf)](https://smithery.ai/server/@MarkAC007/mcp-server-scf)
+After install, edit the pre-filled `SCF_API_URL` to point at **your** instance — there is no hosted default.
 
 Prefer to edit config by hand, or on a client without a deeplink (Windsurf, Docker)? See **[3. Manual config](#3-manual-config)** below.
 
@@ -110,7 +114,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
 2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
-4. Claude Desktop restarts the server and all 74 tools are available.
+4. Claude Desktop restarts the server and all 187 tools are available.
 
 To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 
@@ -150,8 +154,11 @@ export SCF_API_URL="http://localhost:8000"
   "mcpServers": {
     "scf": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "-e", "SCF_API_KEY", "markac007/mcp-server-scf"],
-      "env": { "SCF_API_KEY": "scf_your_api_key_here" }
+      "args": ["run", "-i", "--rm", "-e", "SCF_API_KEY", "-e", "SCF_API_URL", "markac007/mcp-server-scf"],
+      "env": {
+        "SCF_API_KEY": "scf_your_api_key_here",
+        "SCF_API_URL": "https://scf.your-domain.example"
+      }
     }
   }
 }
@@ -186,7 +193,7 @@ More examples live in each per-domain doc under [`docs/tools/`](docs/tools/).
 
 ## Documentation
 
-- [**docs/authentication.md**](docs/authentication.md) — API key setup, rotation, region selection, scopes.
+- [**docs/authentication.md**](docs/authentication.md) — API key setup, rotation, self-hosted URL configuration, scopes.
 - [**docs/architecture.md**](docs/architecture.md) — request flow, error model, rate limiting, what the server does and does not do.
 - [**docs/troubleshooting.md**](docs/troubleshooting.md) — symptom/cause/fix for the common failure modes.
 - [**docs/tools/**](docs/tools/) — per-domain reference with full parameter tables.
@@ -196,13 +203,19 @@ More examples live in each per-domain doc under [`docs/tools/`](docs/tools/).
 ## Security
 
 - API keys are never logged or included in error messages.
-- All communication uses HTTPS; keys are SHA-256 hashed server-side.
+- Keys are SHA-256 hashed server-side. Use HTTPS for any instance reachable beyond localhost.
 - Rate limiting: 100 req/min read, 20 req/min write.
 - Multi-tenant — all operations scoped to your organization.
 - npm package published with [provenance attestation](https://docs.npmjs.com/generating-provenance-statements) via OIDC trusted publishing.
 - CI includes Gitleaks secret detection, CodeQL analysis, and Semgrep SAST.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
+---
+
+## Privacy Policy
+
+`mcp-server-scf` is a stateless connector — it stores no user data itself. All data flows directly between your MCP client and your own SCF Controls Platform instance, authenticated with your API key; nothing is sent to, or retained by, any third party. See the full [privacy policy](https://scfcontrolsplatform.com/privacy) for details.
 
 ---
 
