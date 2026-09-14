@@ -36,7 +36,7 @@ src/
 │   │                     assessments (per-file + windowed)
 │   ├── risk.ts           12 tools — risk register + custom risks
 │   ├── vendors.ts        11 tools — TPRM + AI research + AI assessments
-│   ├── organization.ts   7 tools — user, orgs, audit, notifications
+│   ├── organization.ts   8 tools — user, orgs, audit, change cursor, notifications
 │   ├── capabilities.ts   14 tools — KSI themes, systems, catalog, recipes
 │   ├── webhooks.ts       6 tools — webhook endpoints + deliveries
 │   ├── documents.ts      15 tools — ISMS doc generation, section merge
@@ -52,7 +52,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **128 tools across 11 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
+Total: **129 tools across 11 domain files**. The per-domain docs live under [`docs/tools/`](tools/).
 
 ---
 

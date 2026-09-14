@@ -1,4 +1,17 @@
 import { ScfApiError } from "./errors.js";
+import { PKG_NAME, PKG_VERSION } from "./version.js";
+
+/**
+ * Identify every outgoing call as MCP traffic. The platform's
+ * `detect_action_source` treats `x-audit-source` as the trusted override and
+ * otherwise sniffs the User-Agent, so without these two headers each write
+ * this client makes is recorded in the audit trail as a plain `api_key`
+ * change rather than an `mcp` one.
+ */
+const AUDIT_HEADERS: Record<string, string> = {
+  "X-Audit-Source": "mcp",
+  "User-Agent": `${PKG_NAME}/${PKG_VERSION}`,
+};
 
 export interface ApiClientConfig {
   baseUrl: string;
@@ -66,6 +79,7 @@ export class ScfApiClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       Accept: "application/json",
+      ...AUDIT_HEADERS,
     };
 
     // FastAPI endpoints that declare a Pydantic body parameter require
@@ -159,6 +173,7 @@ export class ScfApiClient {
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         Accept: "text/markdown, text/html, text/plain",
+        ...AUDIT_HEADERS,
       },
     });
 

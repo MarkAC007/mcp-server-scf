@@ -52,13 +52,38 @@ _No parameters._
 
 ## `scf_get_audit_log`
 
-Get one organization's audit trail: field-level changes to controls, evidence, and related entities, with actor, timestamp, and before/after values.
+Query one organization's append-only audit trail (read — viewer role): field-level changes with actor, source and before/after values. Filter by entity, control, action, actor, source, date or text.
 
-| Parameter | Type   | Required | Description                                |
-| --------- | ------ | -------- | ------------------------------------------ |
-| `org_id`  | string | Yes      | Organization ID (UUID)                     |
-| `limit`   | number | No       | Results to return (1–100, default 50)      |
-| `offset`  | number | No       | Results to skip for pagination (default 0) |
+| Parameter            | Type   | Required | Description                                                                                                                                               |
+| -------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`             | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                    |
+| `entity_type`        | string | No       | Filter by exact entity type as written in the log, e.g. scoped_control, evidence_file, audit_engagement, vendor — unsure of the spelling? use search_text |
+| `entity_id`          | string | No       | Filter by the changed entity's UUID                                                                                                                       |
+| `scf_id`             | string | No       | Filter by SCF control ID in DOMAIN-NN format                                                                                                              |
+| `action`             | enum   | No       | Filter by action: create, update or delete                                                                                                                |
+| `changed_by_user_id` | string | No       | Filter by the user who made the change — obtain from scf_list_members                                                                                     |
+| `action_source`      | enum   | No       | Filter by origin of the change: ui, api_key, mcp or system                                                                                                |
+| `request_id`         | string | No       | Filter by request correlation ID — groups every change one API call made                                                                                  |
+| `date_from`          | string | No       | Include changes at or after this ISO-8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)                                                                                |
+| `date_to`            | string | No       | Include changes at or before this ISO-8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)                                                                               |
+| `actor_id`           | string | No       | Filter by actor user UUID — platform alias of changed_by_user_id                                                                                          |
+| `search_text`        | string | No       | Case-insensitive search across entity_type, field_name, old_value and new_value                                                                           |
+| `limit`              | number | No       | Page size (1–200, default 50)                                                                                                                             |
+| `offset`             | number | No       | Pagination offset — number of results to skip (default 0)                                                                                                 |
+
+Every request this server makes carries `X-Audit-Source: mcp`, so changes made through these tools show up here with `action_source = mcp` rather than `api_key`.
+
+---
+
+## `scf_get_change_cursor`
+
+Cheap has-anything-changed probe (read — viewer role): newest audit timestamp and row count for one organization. Compare with the pair you last saw; poll this before re-pulling the audit log.
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+
+Returns `{ "cursor": "<ISO timestamp or null>", "count": <int> }`. Both values are opaque — the contract is "changed or not", never "how much".
 
 ---
 

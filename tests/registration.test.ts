@@ -27,7 +27,7 @@ describe("tool registration", () => {
     ["evidence", registerEvidenceTools, 26],
     ["risk", registerRiskTools, 12],
     ["vendors", registerVendorTools, 11],
-    ["organization", registerOrganizationTools, 7],
+    ["organization", registerOrganizationTools, 8],
     ["capabilities", registerCapabilityTools, 14],
     ["webhooks", registerWebhookTools, 6],
     ["documents", registerDocumentTools, 15],
@@ -67,9 +67,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 128", () => {
+  it("total tool count equals 129", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(128);
+    expect(server.tool).toHaveBeenCalledTimes(129);
   });
 });

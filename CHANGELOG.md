@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`scf_get_change_cursor`** — the platform's per-organization change cursor (`GET /organizations/{org_id}/changes/cursor`, platform epic #921): newest audit timestamp plus row count, a two-field "has anything changed?" probe to poll before re-pulling the audit log. Organization domain 7 → 8 tools; total 128 → 129.
+- **`scf_get_audit_log` filters.** The tool exposed only `limit`/`offset`; the platform's audit-log endpoint accepts eleven filters and they are now all passed through: `entity_type`, `entity_id`, `scf_id`, `action` (create/update/delete), `changed_by_user_id`, `action_source` (ui/api_key/mcp/system), `request_id`, `date_from`, `date_to`, `actor_id`, `search_text`. `limit` maximum raised 100 → 200 to match the platform.
+- **Audit attribution headers.** Every request now carries `X-Audit-Source: mcp` and `User-Agent: mcp-server-scf/<version>`. The platform only records a change as `action_source = mcp` when one of those is present; without them every MCP write was attributed to `api_key`, indistinguishable from a script.
+
+### Fixed
+- **Engagement tool descriptions matched to the platform.** Status values are the real enum (`draft`, `active`, `under_review`, `closed` — the descriptions cited non-existent `planning`/`fieldwork`), and `scf_list_engagements` / `scf_update_engagement` / `scf_list_engagement_queries` now validate `status` with `z.enum`. Create/update engagement require `editor`, not `admin`; delete is draft-only (409 otherwise); re-granting a revoked auditor reactivates the grant; `scf_list_my_engagements` returns active grants only; the query lifecycle states its allowed transitions (open → answered|closed, answered → open|closed, closed → open) and that posting a response moves an open query to answered.
+
 ## [3.0.0] - 2026-09-07
 
 ### Removed
