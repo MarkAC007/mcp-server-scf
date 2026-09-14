@@ -201,4 +201,30 @@ export function registerScopedControlTools(server: McpServer) {
       }
     },
   );
+
+  server.tool(
+    "scf_bulk_unscope_framework",
+    "Remove from scope every control mapped only to the given frameworks (destructive write — editor role). Controls shared with another in-scope framework are kept; notes and status survive.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      frameworks: z
+        .array(z.string())
+        .min(1)
+        .describe("Framework slugs to remove, e.g. ['iso_27017_2015'] — obtain from scf_list_frameworks"),
+      removal_reason: z.string().optional().describe("Why these controls leave scope — recorded in the audit trail"),
+    },
+    { title: "Bulk Unscope Framework", readOnlyHint: false, destructiveHint: true },
+    async ({ org_id, frameworks, removal_reason }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/scoped-controls/bulk-unscope-framework`, {
+          frameworks,
+          removal_reason,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }

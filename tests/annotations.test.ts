@@ -12,6 +12,8 @@ import { registerWebhookTools } from "../src/tools/webhooks.js";
 import { registerDocumentTools } from "../src/tools/documents.js";
 import { registerEngagementTools } from "../src/tools/engagements.js";
 import { registerCatalogReconciliationTools } from "../src/tools/catalog-reconciliation.js";
+import { registerTeamTools } from "../src/tools/teams.js";
+import { registerCollaborationTools } from "../src/tools/collaboration.js";
 
 function makeMockServer() {
   const tool = vi.fn();
@@ -36,6 +38,8 @@ const registrars: Array<[string, (s: McpServer) => void]> = [
   ["documents", registerDocumentTools],
   ["engagements", registerEngagementTools],
   ["catalog-reconciliation", registerCatalogReconciliationTools],
+  ["teams", registerTeamTools],
+  ["collaboration", registerCollaborationTools],
 ];
 
 function collectCalls(register: (s: McpServer) => void) {

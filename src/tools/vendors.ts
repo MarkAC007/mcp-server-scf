@@ -284,4 +284,317 @@ export function registerVendorTools(server: McpServer) {
       }
     },
   );
+
+  // ===========================================================================
+  // Vendor Certifications
+  // ===========================================================================
+
+  server.tool(
+    "scf_list_vendor_certifications",
+    "List a vendor's certifications (read — viewer role): name, issuing body, certificate number, status, issue and expiry dates, scope and verification URL.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+    },
+    { title: "List Vendor Certifications", readOnlyHint: true },
+    async ({ org_id, vendor_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/vendors/${vendor_id}/certifications`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_create_vendor_certification",
+    "Record a certification a vendor holds (write — editor role), e.g. ISO 27001 or SOC 2 Type II. Status defaults to valid; track expiry_date so renewals surface.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      certification_name: z.string().min(1).max(255).describe("Certification name, e.g. 'ISO 27001:2022'"),
+      certification_body: z.string().optional().describe("Issuing body"),
+      certificate_number: z.string().optional().describe("Certificate number"),
+      status: z.enum(["valid", "expired", "revoked", "pending"]).optional().describe("Status (default valid)"),
+      issue_date: z.string().optional().describe("YYYY-MM-DD"),
+      expiry_date: z.string().optional().describe("YYYY-MM-DD"),
+      scope: z.string().optional().describe("Certification scope statement"),
+      verification_url: z.string().optional().describe("Public verification URL"),
+    },
+    { title: "Create Vendor Certification", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, vendor_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.post(`/organizations/${org_id}/vendors/${vendor_id}/certifications`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_vendor_certification",
+    "Update a vendor certification (write — editor role). Only passed fields change; use it to mark a certificate expired or revoked, or to record the renewed expiry date.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      cert_id: z.string().uuid().describe("Certification UUID — obtain from scf_list_vendor_certifications"),
+      certification_name: z.string().min(1).max(255).optional().describe("Certification name, e.g. 'ISO 27001:2022'"),
+      certification_body: z.string().optional().describe("Issuing body"),
+      certificate_number: z.string().optional().describe("Certificate number"),
+      status: z.enum(["valid", "expired", "revoked", "pending"]).optional().describe("Status"),
+      issue_date: z.string().optional().describe("YYYY-MM-DD"),
+      expiry_date: z.string().optional().describe("YYYY-MM-DD"),
+      scope: z.string().optional().describe("Certification scope statement"),
+      verification_url: z.string().optional().describe("Public verification URL"),
+    },
+    { title: "Update Vendor Certification", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, vendor_id, cert_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.patch(
+          `/organizations/${org_id}/vendors/${vendor_id}/certifications/${cert_id}`,
+          body,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_delete_vendor_certification",
+    "Delete a vendor certification record (destructive write — editor role). Prefer status=expired or revoked when the history matters.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      cert_id: z.string().uuid().describe("Certification UUID — obtain from scf_list_vendor_certifications"),
+    },
+    { title: "Delete Vendor Certification", readOnlyHint: false, destructiveHint: true },
+    async ({ org_id, vendor_id, cert_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.delete(`/organizations/${org_id}/vendors/${vendor_id}/certifications/${cert_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ===========================================================================
+  // Vendor Action Items
+  // ===========================================================================
+
+  server.tool(
+    "scf_list_vendor_action_items",
+    "List remediation action items for one vendor, or across every vendor when vendor_id is omitted (read — viewer role). Filter by status or priority.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().optional().describe("Vendor UUID — omit to list action items across all vendors"),
+      status: z.enum(["open", "in_progress", "completed", "cancelled"]).optional().describe("Filter by status"),
+      priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Filter by priority"),
+    },
+    { title: "List Vendor Action Items", readOnlyHint: true },
+    async ({ org_id, vendor_id, status, priority }) => {
+      try {
+        const client = getClient();
+        const path = vendor_id
+          ? `/organizations/${org_id}/vendors/${vendor_id}/action-items`
+          : `/organizations/${org_id}/vendor-action-items`;
+        const data = await client.get(path, { status, priority });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_create_vendor_action_item",
+    "Create a remediation action item against a vendor (write — editor role), typically from an assessment finding. Priority defaults to medium, status to open.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      title: z.string().min(1).max(255).describe("Action item title"),
+      description: z.string().optional().describe("Action item detail"),
+      priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Priority (default medium)"),
+      status: z.enum(["open", "in_progress", "completed", "cancelled"]).optional().describe("Status (default open)"),
+      category: z.string().optional().describe("Free-text category, e.g. 'contractual', 'technical'"),
+      owner_name: z.string().optional().describe("Owner name"),
+      owner_user_id: z.string().uuid().optional().describe("Owner — obtain from scf_list_members"),
+      due_date: z.string().optional().describe("YYYY-MM-DD"),
+      completed_date: z.string().optional().describe("YYYY-MM-DD"),
+    },
+    { title: "Create Vendor Action Item", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, vendor_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.post(`/organizations/${org_id}/vendors/${vendor_id}/action-items`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_vendor_action_item",
+    "Update a vendor action item (write — editor role). Only passed fields change; set status=completed with completed_date to close it.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      item_id: z.string().uuid().describe("Action item UUID — obtain from scf_list_vendor_action_items"),
+      title: z.string().min(1).max(255).optional().describe("Action item title"),
+      description: z.string().optional().describe("Action item detail"),
+      priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Priority"),
+      status: z.enum(["open", "in_progress", "completed", "cancelled"]).optional().describe("Status"),
+      category: z.string().optional().describe("Free-text category, e.g. 'contractual', 'technical'"),
+      owner_name: z.string().optional().describe("Owner name"),
+      owner_user_id: z.string().uuid().optional().describe("Owner — obtain from scf_list_members"),
+      due_date: z.string().optional().describe("YYYY-MM-DD"),
+      completed_date: z.string().optional().describe("YYYY-MM-DD"),
+    },
+    { title: "Update Vendor Action Item", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, vendor_id, item_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.patch(`/organizations/${org_id}/vendors/${vendor_id}/action-items/${item_id}`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_delete_vendor_action_item",
+    "Delete a vendor action item (destructive write — editor role). Prefer status=cancelled when the record should stay visible.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      item_id: z.string().uuid().describe("Action item UUID — obtain from scf_list_vendor_action_items"),
+    },
+    { title: "Delete Vendor Action Item", readOnlyHint: false, destructiveHint: true },
+    async ({ org_id, vendor_id, item_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.delete(`/organizations/${org_id}/vendors/${vendor_id}/action-items/${item_id}`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ===========================================================================
+  // Compensating Controls
+  // ===========================================================================
+
+  server.tool(
+    "scf_list_compensating_controls",
+    "List the compensating controls recorded against a vendor's gaps (read — viewer role): the gap, the control that offsets it, its effectiveness rating and risk-reduction notes.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+    },
+    { title: "List Compensating Controls", readOnlyHint: true },
+    async ({ org_id, vendor_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/vendors/${vendor_id}/compensating-controls`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_create_compensating_control",
+    "Record a compensating control for a vendor gap (write — editor role): what the gap is, what offsets it, and how effective that is (full, partial or minimal — default partial).",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      gap_description: z.string().min(1).describe("The gap the control offsets"),
+      compensating_control: z.string().min(1).describe("The control that offsets the gap"),
+      effectiveness_rating: z
+        .enum(["full", "partial", "minimal"])
+        .optional()
+        .describe("Effectiveness (default partial)"),
+      risk_reduction_notes: z.string().optional().describe("How much residual risk this removes"),
+    },
+    { title: "Create Compensating Control", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, vendor_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.post(`/organizations/${org_id}/vendors/${vendor_id}/compensating-controls`, body);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_compensating_control",
+    "Update a vendor compensating control (write — editor role). Only passed fields change: gap description, control text, effectiveness rating, risk-reduction notes.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      cc_id: z.string().uuid().describe("Compensating control UUID — obtain from scf_list_compensating_controls"),
+      gap_description: z.string().min(1).optional().describe("The gap the control offsets"),
+      compensating_control: z.string().min(1).optional().describe("The control that offsets the gap"),
+      effectiveness_rating: z
+        .enum(["full", "partial", "minimal"])
+        .optional()
+        .describe("Effectiveness (default partial)"),
+      risk_reduction_notes: z.string().optional().describe("How much residual risk this removes"),
+    },
+    { title: "Update Compensating Control", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, vendor_id, cc_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const body = fields;
+        const data = await client.patch(
+          `/organizations/${org_id}/vendors/${vendor_id}/compensating-controls/${cc_id}`,
+          body,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_delete_compensating_control",
+    "Delete a vendor compensating control record (destructive write — editor role).",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),
+      cc_id: z.string().uuid().describe("Compensating control UUID — obtain from scf_list_compensating_controls"),
+    },
+    { title: "Delete Compensating Control", readOnlyHint: false, destructiveHint: true },
+    async ({ org_id, vendor_id, cc_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.delete(
+          `/organizations/${org_id}/vendors/${vendor_id}/compensating-controls/${cc_id}`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }

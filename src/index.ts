@@ -13,6 +13,8 @@ import { registerWebhookTools } from "./tools/webhooks.js";
 import { registerDocumentTools } from "./tools/documents.js";
 import { registerEngagementTools } from "./tools/engagements.js";
 import { registerCatalogReconciliationTools } from "./tools/catalog-reconciliation.js";
+import { registerTeamTools } from "./tools/teams.js";
+import { registerCollaborationTools } from "./tools/collaboration.js";
 
 import { PKG_NAME, PKG_VERSION } from "./lib/version.js";
 
@@ -40,6 +42,8 @@ registerWebhookTools(server);
 registerDocumentTools(server);
 registerEngagementTools(server);
 registerCatalogReconciliationTools(server);
+registerTeamTools(server);
+registerCollaborationTools(server);
 
 // Start server
 async function main() {

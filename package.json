@@ -24,7 +24,8 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "scope:check": "node scripts/api-coverage.mjs --check"
   },
   "publishConfig": {
     "access": "public",

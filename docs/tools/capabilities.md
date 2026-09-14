@@ -172,6 +172,75 @@ Get the status of a queued AI recipe-generation job for a system.
 
 ---
 
+## `scf_get_system`
+
+Get one system from the organization's inventory (read — viewer role): name, type, vendor, description, catalog template link and the evidence it is configured to provide.
+
+| Parameter   | Type   | Required | Description                                                |
+| ----------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`    | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+| `system_id` | string | Yes      | System UUID — get from `scf_list_systems`                  |
+
+---
+
+## `scf_list_system_capabilities`
+
+List the evidence types a system can provide and how (read — viewer role): capability status potential/configured/active, collection method, confidence and data format.
+
+| Parameter           | Type   | Required | Description                               |
+| ------------------- | ------ | -------- | ----------------------------------------- |
+| `org_id`            | string | Yes      | Organization ID (UUID)                    |
+| `system_id`         | string | Yes      | System UUID — get from `scf_list_systems` |
+| `capability_status` | string | No       | `potential`, `configured`, or `active`    |
+
+---
+
+## `scf_create_system_capability`
+
+Declare that a system can provide one evidence type (write — editor role). One entry per evidence_id per system; status defaults to potential, confidence to medium.
+
+| Parameter           | Type   | Required | Description                                                         |
+| ------------------- | ------ | -------- | ------------------------------------------------------------------- |
+| `org_id`            | string | Yes      | Organization ID (UUID)                                              |
+| `system_id`         | string | Yes      | System UUID — get from `scf_list_systems`                           |
+| `evidence_id`       | string | Yes      | Catalog evidence ID — get from `scf_list_evidence_catalog`          |
+| `capability_status` | string | No       | `potential` (default), `configured`, or `active`                    |
+| `collection_method` | string | No       | `api`, `export`, `manual`, `webhook`, `scheduled`, or `integration` |
+| `confidence_level`  | string | No       | `high`, `medium` (default), or `low`                                |
+| `data_format`       | string | No       | Format of the collected data (e.g., `csv`, `json`, `pdf`)           |
+| `notes`             | string | No       | Free-text notes about the capability                                |
+
+---
+
+## `scf_update_system_capability`
+
+Update a system's evidence capability (write — editor role). Only passed fields change; move status potential → configured → active as the collector is wired up.
+
+| Parameter           | Type   | Required | Description                                                         |
+| ------------------- | ------ | -------- | ------------------------------------------------------------------- |
+| `org_id`            | string | Yes      | Organization ID (UUID)                                              |
+| `system_id`         | string | Yes      | System UUID — get from `scf_list_systems`                           |
+| `capability_id`     | string | Yes      | Capability UUID — get from `scf_list_system_capabilities`           |
+| `capability_status` | string | No       | `potential`, `configured`, or `active`                              |
+| `collection_method` | string | No       | `api`, `export`, `manual`, `webhook`, `scheduled`, or `integration` |
+| `confidence_level`  | string | No       | `high`, `medium`, or `low`                                          |
+| `data_format`       | string | No       | Format of the collected data (e.g., `csv`, `json`, `pdf`)           |
+| `notes`             | string | No       | Free-text notes about the capability                                |
+
+---
+
+## `scf_get_systems_for_evidence`
+
+Find every system that can provide a given evidence type (read — viewer role) — the inverse of the per-system capability list. Filter by capability status.
+
+| Parameter           | Type   | Required | Description                                                |
+| ------------------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`            | string | Yes      | Organization ID (UUID)                                     |
+| `evidence_id`       | string | Yes      | Catalog evidence ID — get from `scf_list_evidence_catalog` |
+| `capability_status` | string | No       | `potential`, `configured`, or `active`                     |
+
+---
+
 ## Example prompts
 
 - "Give me the KSI scorecard for my org."

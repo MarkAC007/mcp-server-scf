@@ -175,3 +175,45 @@ describe("empty and non-JSON responses", () => {
     expect(seen[0]).toContain("format=html");
   });
 });
+
+describe("query parameters on mutation methods", () => {
+  it("post() appends params to the URL and still sends the body", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new ScfApiClient({ baseUrl: "http://api.test", apiKey: "scf_test" });
+    await client.post("/evidence-tasks/t1/complete", undefined, { completion_notes: "done & dusted", skip: undefined });
+    const url = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(url.pathname).toBe("/api/evidence-tasks/t1/complete");
+    expect(url.searchParams.get("completion_notes")).toBe("done & dusted");
+    expect(url.searchParams.has("skip")).toBe(false);
+    expect(fetchMock.mock.calls[0][1].body).toBe("{}");
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("array query parameters", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends string[] values as repeated keys and drops undefined", async () => {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL) => {
+        calls.push(String(input));
+        return jsonResponse(200, {});
+      }),
+    );
+    const client = new ScfApiClient({ baseUrl: "http://api.test", apiKey: "scf_test" });
+    await client.get("/organizations/x/team-assignments", {
+      type: "control",
+      item_ids: ["a", "b"],
+      team_id: undefined,
+      accountable_only: false,
+    });
+    const url = new URL(calls[0]);
+    expect(url.searchParams.getAll("item_ids")).toEqual(["a", "b"]);
+    expect(url.searchParams.get("type")).toBe("control");
+    expect(url.searchParams.get("accountable_only")).toBe("false");
+    expect(url.searchParams.has("team_id")).toBe(false);
+  });
+});
