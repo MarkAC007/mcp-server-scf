@@ -4,7 +4,7 @@ Track evidence artifacts that demonstrate control implementation, run AI-powered
 
 Source: [`src/tools/evidence.ts`](../../src/tools/evidence.ts).
 
-The 39 tools in this domain split into eight concerns:
+The 41 tools in this domain split into eight concerns:
 
 1. **CRUD** — `scf_list_evidence`, `scf_get_evidence`, `scf_create_evidence`, `scf_update_evidence`, `scf_batch_update_evidence`, `scf_get_evidence_maturity`
 2. **Tasks** — `scf_list_evidence_tasks`, `scf_create_evidence_task`, `scf_update_evidence_task`, `scf_complete_evidence_task`

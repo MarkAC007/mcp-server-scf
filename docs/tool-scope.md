@@ -61,9 +61,10 @@ MCP clients receive every tool definition on connect. The number below is measur
 | Surface                       | Tools | `tools/list` bytes | ≈ tokens (4 B/token) | Description chars |
 | ----------------------------- | ----- | ------------------ | -------------------- | ----------------- |
 | v3.0.0 + audit sync (PR #212) | 129   | 142,384 (139 KiB)  | ≈ 35,600             | 20,393            |
-| this release                  | 187   | 218,064 (213 KiB)  | ≈ 54,500             | 29,526            |
+| v3.4.0 (PR #213)              | 187   | 218,064 (213 KiB)  | ≈ 54,500             | 29,526            |
+| this release (PR #237)        | 189   | 222,245 (217 KiB)  | ≈ 55,600             | 29,955            |
 
-Measured 2026-09-13 with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`. 58 tools added ≈ 76 KB, about 1.3 KB per tool; the per-tool average is unchanged, so the growth is linear in tool count, not in verbosity. Every description stays ≤ 200 characters (max 199).
+Measured 2026-09-16 with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`. The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.1 KB for 2, about 1.3 KB per tool either way; the per-tool average is unchanged, so the growth is linear in tool count, not in verbosity. Every description stays ≤ 200 characters (max 199).
 
 <!-- PAYLOAD:END -->
 
