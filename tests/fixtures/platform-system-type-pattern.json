@@ -1,0 +1,6 @@
+{
+  "_comment": "Platform OpenAPI pattern for SystemCreate.system_type, captured verbatim. Refresh with: node scripts/api-coverage.mjs --spec <openapi.json> --write (it rewrites this file when the spec differs).",
+  "source": "scf-controls-platform openapi.json -> components.schemas.SystemCreate.properties.system_type.pattern",
+  "platform_commit": "dbdfc001",
+  "pattern": "^(cloud_provider|identity_provider|ticketing|logging|security_tool|code_repository|document_management|endpoint_management|vulnerability_management|email_security|security_awareness|password_manager|communication|hr_system|custom)$"
+}

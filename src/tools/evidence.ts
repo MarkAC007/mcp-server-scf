@@ -908,18 +908,25 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_assessment_review_queue",
-    "List AI evidence assessments waiting for a human decision, worst first (read — viewer role): most gaps, then most unassessable objectives, then least relevant, then oldest.",
+    "List AI verdicts awaiting a human decision, worst first (read — viewer role). tier=window (default) is the web app's Awaiting-confirmation queue; tier=file lists per-file verdicts.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      tier: z
+        .enum(["window", "file"])
+        .default("window")
+        .describe(
+          "Which verdict tier to list (default window): window entries carry window_assessment_id (act with scf_review_window_assessment_verdict); file entries carry file_id (act with scf_review_evidence_assessment)",
+        ),
       status: z.enum(["awaiting", "reviewed", "all"]).default("awaiting").describe("Queue filter (default awaiting)"),
       limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset (default 0)"),
     },
     { title: "Get Assessment Review Queue", readOnlyHint: true },
-    async ({ org_id, status, limit, offset }) => {
+    async ({ org_id, tier, status, limit, offset }) => {
       try {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/evidence/assessment/review-queue`, {
+          tier,
           status,
           limit,
           offset,
@@ -993,7 +1000,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_review_window_assessment",
-    "Set the review state of a windowed evidence assessment (write — editor role): approved, rejected, needs_revision, or not_reviewed to revoke a prior decision.",
+    "Set the acceptance review of a windowed assessment (write — editor role): approved, rejected, needs_revision, or not_reviewed to revoke. Verdict itself: scf_review_window_assessment_verdict.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       ewa_id: z.string().uuid().describe("Window assessment UUID — obtain from scf_list_window_assessments"),
@@ -1010,6 +1017,70 @@ export function registerEvidenceTools(server: McpServer) {
           review_status,
           review_notes,
         });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_review_window_assessment_verdict",
+    "Confirm or override a window's current AI verdict (write — editor role). overridden needs a reason and ≥1 objective re-designation; status and gap counts are re-derived. One decision per version.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      assessment_id: z
+        .string()
+        .uuid()
+        .describe(
+          "Window assessment UUID — obtain from scf_get_assessment_review_queue (window_assessment_id) or scf_list_window_assessments",
+        ),
+      decision: z
+        .enum(["confirmed", "overridden"])
+        .describe("confirmed = AI verdict stands; overridden = you are changing it"),
+      reason: z.string().optional().describe("Why the verdict is overridden — required when decision is overridden"),
+      ao_overrides: z
+        .array(
+          z.object({
+            ao_id: z.string().describe("Assessment objective ID"),
+            human_designation: z
+              .enum(["appears_satisfied", "gap_identified", "not_applicable", "cannot_assess"])
+              .describe("Reviewer's designation for this objective"),
+            note: z.string().optional().describe("Why, for this objective specifically"),
+          }),
+        )
+        .optional()
+        .describe(
+          "Objectives to re-designate — required (≥1) when overriding, forbidden when confirming; unlisted objectives keep the AI's designation",
+        ),
+    },
+    { title: "Review Window Assessment Verdict", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, assessment_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(
+          `/organizations/${org_id}/evidence/window-assessments/${assessment_id}/verdict/review`,
+          fields,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_window_assessment_versions",
+    "List every AI verdict a window assessment has received, newest first (read — viewer role). Each version is frozen as reached (model, prompt version, designations) plus any human decision on it.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      assessment_id: z.string().uuid().describe("Window assessment UUID — obtain from scf_list_window_assessments"),
+    },
+    { title: "Get Window Assessment Versions", readOnlyHint: true },
+    async ({ org_id, assessment_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/window-assessments/${assessment_id}/versions`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

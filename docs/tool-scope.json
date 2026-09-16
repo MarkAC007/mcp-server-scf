@@ -555,6 +555,9 @@
     "GET /api/organizations/{org_id}/evidence/window-assessments/{assessment_id}": {
       "verdict": "in"
     },
+    "GET /api/organizations/{org_id}/evidence/window-assessments/{assessment_id}/versions": {
+      "verdict": "in"
+    },
     "GET /api/organizations/{org_id}/evidence/{evidence_id}/files": {
       "verdict": "in"
     },
@@ -1122,6 +1125,9 @@
       "verdict": "in"
     },
     "POST /api/organizations/{org_id}/evidence/window-assessments/refresh-stale": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/evidence/window-assessments/{assessment_id}/verdict/review": {
       "verdict": "in"
     },
     "POST /api/organizations/{org_id}/evidence/{evidence_id}/assess-window": {

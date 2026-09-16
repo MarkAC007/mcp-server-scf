@@ -136,6 +136,40 @@ for (const key of Object.keys(map.operations)) {
   if (!seen.has(key)) problems.push(`verdict for ${key} but the spec no longer has it`);
 }
 
+// Vocabulary drift: the platform's system_type pattern must equal src/lib/system-types.ts.
+// The same pattern is kept in tests/fixtures/platform-system-type-pattern.json for the unit test;
+// --write refreshes the fixture from the spec so the two can never disagree for long.
+{
+  const pattern = spec.components?.schemas?.SystemCreate?.properties?.system_type?.pattern;
+  if (!pattern) {
+    problems.push("spec has no SystemCreate.system_type pattern — cannot check the system-type vocabulary");
+  } else {
+    const fromSpec = pattern.replace(/^\^\(/, "").replace(/\)\$$/, "").split("|");
+    const tsSrc = readFileSync(join(ROOT, "src", "lib", "system-types.ts"), "utf8");
+    const fromCode = [...tsSrc.match(/SYSTEM_TYPES = \[([\s\S]*?)\] as const/)[1].matchAll(/"([a-z_]+)"/g)].map(
+      (m) => m[1],
+    );
+    const missing = fromSpec.filter((t) => !fromCode.includes(t));
+    const extra = fromCode.filter((t) => !fromSpec.includes(t));
+    if (missing.length || extra.length)
+      problems.push(
+        `system_type vocabulary drift — platform has [${missing.join(", ")}] the enum lacks; enum has [${extra.join(", ")}] the platform lacks. Update src/lib/system-types.ts`,
+      );
+    const fixturePath = join(ROOT, "tests", "fixtures", "platform-system-type-pattern.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    if (fixture.pattern !== pattern) {
+      if (flag("--write")) {
+        writeFileSync(fixturePath, JSON.stringify({ ...fixture, pattern }, null, 2) + "\n");
+        console.log("refreshed tests/fixtures/platform-system-type-pattern.json from the spec");
+      } else {
+        problems.push(
+          "tests/fixtures/platform-system-type-pattern.json is stale — run with --write to refresh it from the spec",
+        );
+      }
+    }
+  }
+}
+
 const order = { in: 0, deferred: 1, out: 2 };
 rows.sort((a, b) => order[a.verdict] - order[b.verdict] || a.tag.localeCompare(b.tag) || a.key.localeCompare(b.key));
 

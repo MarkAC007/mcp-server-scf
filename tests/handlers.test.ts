@@ -122,3 +122,43 @@ describe("handlers translate tool arguments into the platform's routes", () => {
     expect(res.content[0].text).toContain("boom");
   });
 });
+
+describe("evidence assurance: review-queue tier and window verdict tools (#236)", () => {
+  it("scf_get_assessment_review_queue defaults tier to window and sends it as a query param", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_assessment_review_queue")!;
+    await h({ org_id: ORG, tier: "window", status: "awaiting", limit: 50, offset: 0 });
+    expect(calls[0]).toEqual({
+      method: "GET",
+      path: `/organizations/${ORG}/evidence/assessment/review-queue`,
+      params: { tier: "window", status: "awaiting", limit: 50, offset: 0 },
+    });
+  });
+
+  it("scf_get_assessment_review_queue passes tier=file through unchanged", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_assessment_review_queue")!;
+    await h({ org_id: ORG, tier: "file", status: "all", limit: 10, offset: 20 });
+    expect(calls[0].params).toEqual({ tier: "file", status: "all", limit: 10, offset: 20 });
+  });
+
+  it("scf_review_window_assessment_verdict posts decision, reason and ao_overrides to the verdict route", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_review_window_assessment_verdict")!;
+    const ao_overrides = [{ ao_id: "AST-01.1", human_designation: "gap_identified", note: "screenshot is stale" }];
+    await h({ org_id: ORG, assessment_id: ID, decision: "overridden", reason: "stale evidence", ao_overrides });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/evidence/window-assessments/${ID}/verdict/review`,
+      body: { decision: "overridden", reason: "stale evidence", ao_overrides },
+      params: undefined,
+    });
+  });
+
+  it("scf_get_window_assessment_versions reads the window's version history", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_window_assessment_versions")!;
+    await h({ org_id: ORG, assessment_id: ID });
+    expect(calls[0]).toEqual({
+      method: "GET",
+      path: `/organizations/${ORG}/evidence/window-assessments/${ID}/versions`,
+      params: undefined,
+    });
+  });
+});
