@@ -17,13 +17,13 @@ The 23 tools split into four concerns:
 
 List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Optionally filter by status or criticality. Paginated.
 
-| Parameter     | Type   | Required | Description                                      |
-| ------------- | ------ | -------- | ------------------------------------------------ |
-| `org_id`      | string | Yes      | Organization ID (UUID)                           |
-| `status`      | string | No       | `prospect`, `active`, `inactive`, `under_review` |
-| `criticality` | string | No       | `critical`, `high`, `medium`, `low`              |
-| `page`        | number | No       | Page number (default 1)                          |
-| `per_page`    | number | No       | Results per page (1–100, default 25)             |
+| Parameter     | Type   | Required | Description                                                                                                                                      |
+| ------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`      | string | Yes      | Organization ID (UUID)                                                                                                                           |
+| `status`      | string | No       | `prospect`, `active`, `under_review`, `approved`, `suspended`, `offboarded` — the platform's full list, mirrored in `src/lib/vendor-statuses.ts` |
+| `criticality` | string | No       | `critical`, `high`, `medium`, `low`                                                                                                              |
+| `page`        | number | No       | Page number (default 1)                                                                                                                          |
+| `per_page`    | number | No       | Results per page (1–100, default 25)                                                                                                             |
 
 ---
 
@@ -42,16 +42,16 @@ Get one vendor's detail: certifications, assessments, computed risk score, and l
 
 Create a vendor in the TPRM registry (write — editor+ role). Platform auto-scores risk based on criticality and data handling.
 
-| Parameter       | Type   | Required | Description                                                |
-| --------------- | ------ | -------- | ---------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization ID (UUID)                                     |
-| `name`          | string | Yes      | Vendor name                                                |
-| `description`   | string | No       | Vendor description                                         |
-| `category`      | string | No       | Category (e.g., `SaaS`, `Infrastructure`, `Consulting`)    |
-| `criticality`   | string | No       | `critical`, `high`, `medium` (default), `low`              |
-| `status`        | string | No       | `prospect` (default), `active`, `inactive`, `under_review` |
-| `website`       | string | No       | Vendor website URL                                         |
-| `contact_email` | string | No       | Primary contact email                                      |
+| Parameter       | Type   | Required | Description                                                                           |
+| --------------- | ------ | -------- | ------------------------------------------------------------------------------------- |
+| `org_id`        | string | Yes      | Organization ID (UUID)                                                                |
+| `name`          | string | Yes      | Vendor name                                                                           |
+| `description`   | string | No       | Vendor description                                                                    |
+| `category`      | string | No       | Category (e.g., `SaaS`, `Infrastructure`, `Consulting`)                               |
+| `criticality`   | string | No       | `critical`, `high`, `medium` (default), `low`                                         |
+| `status`        | string | No       | `prospect` (default), `active`, `under_review`, `approved`, `suspended`, `offboarded` |
+| `website`       | string | No       | Vendor website URL                                                                    |
+| `contact_email` | string | No       | Primary contact email                                                                 |
 
 ---
 
@@ -59,17 +59,17 @@ Create a vendor in the TPRM registry (write — editor+ role). Platform auto-sco
 
 Update an existing vendor record (write — editor+ role). Only provided fields are applied.
 
-| Parameter       | Type   | Required | Description                                      |
-| --------------- | ------ | -------- | ------------------------------------------------ |
-| `org_id`        | string | Yes      | Organization ID (UUID)                           |
-| `vendor_id`     | string | Yes      | Vendor ID — get from `scf_list_vendors`          |
-| `name`          | string | No       | Vendor name                                      |
-| `description`   | string | No       | Vendor description                               |
-| `category`      | string | No       | Category                                         |
-| `criticality`   | string | No       | `critical`, `high`, `medium`, `low`              |
-| `status`        | string | No       | `prospect`, `active`, `inactive`, `under_review` |
-| `website`       | string | No       | Vendor website URL                               |
-| `contact_email` | string | No       | Primary contact email                            |
+| Parameter       | Type   | Required | Description                              |
+| --------------- | ------ | -------- | ---------------------------------------- |
+| `org_id`        | string | Yes      | Organization ID (UUID)                   |
+| `vendor_id`     | string | Yes      | Vendor ID — get from `scf_list_vendors`  |
+| `name`          | string | No       | Vendor name                              |
+| `description`   | string | No       | Vendor description                       |
+| `category`      | string | No       | Category                                 |
+| `criticality`   | string | No       | `critical`, `high`, `medium`, `low`      |
+| `status`        | string | No       | Same 6-value enum as `scf_create_vendor` |
+| `website`       | string | No       | Vendor website URL                       |
+| `contact_email` | string | No       | Primary contact email                    |
 
 ---
 

@@ -136,37 +136,72 @@ for (const key of Object.keys(map.operations)) {
   if (!seen.has(key)) problems.push(`verdict for ${key} but the spec no longer has it`);
 }
 
-// Vocabulary drift: the platform's system_type pattern must equal src/lib/system-types.ts.
-// The same pattern is kept in tests/fixtures/platform-system-type-pattern.json for the unit test;
-// --write refreshes the fixture from the spec so the two can never disagree for long.
+// Vocabulary drift: every hand-copied enum the platform expresses as a `^(a|b)$` pattern must equal the
+// exported `X = [...] as const` in src/lib. One row per vocabulary; the same patterns are kept in
+// tests/fixtures/platform-vocabularies.json for tests/vocabularies.test.ts, and --write refreshes that
+// fixture from the spec (pass --platform-commit <sha> to record where the spec came from).
+const VOCABULARIES = [
+  {
+    key: "system_type",
+    schema: "SystemCreate",
+    property: "system_type",
+    file: "src/lib/system-types.ts",
+    constName: "SYSTEM_TYPES",
+  },
+  {
+    key: "vendor_status",
+    schema: "VendorCreate",
+    property: "status",
+    file: "src/lib/vendor-statuses.ts",
+    constName: "VENDOR_STATUSES",
+  },
+];
 {
-  const pattern = spec.components?.schemas?.SystemCreate?.properties?.system_type?.pattern;
-  if (!pattern) {
-    problems.push("spec has no SystemCreate.system_type pattern — cannot check the system-type vocabulary");
-  } else {
+  const fixturePath = join(ROOT, "tests", "fixtures", "platform-vocabularies.json");
+  const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+  let fixtureDirty = false;
+  for (const v of VOCABULARIES) {
+    const prop = spec.components?.schemas?.[v.schema]?.properties?.[v.property];
+    // Optional properties nest the pattern under anyOf (Pydantic emits `Optional[str]` that way).
+    const pattern = prop?.pattern ?? prop?.anyOf?.find((s) => s.pattern)?.pattern;
+    if (!pattern) {
+      problems.push(`spec has no ${v.schema}.${v.property} pattern — cannot check the ${v.key} vocabulary`);
+      continue;
+    }
     const fromSpec = pattern.replace(/^\^\(/, "").replace(/\)\$$/, "").split("|");
-    const tsSrc = readFileSync(join(ROOT, "src", "lib", "system-types.ts"), "utf8");
-    const fromCode = [...tsSrc.match(/SYSTEM_TYPES = \[([\s\S]*?)\] as const/)[1].matchAll(/"([a-z_]+)"/g)].map(
-      (m) => m[1],
-    );
+    const tsSrc = readFileSync(join(ROOT, v.file), "utf8");
+    const match = tsSrc.match(new RegExp(`${v.constName}\\s*=\\s*\\[([\\s\\S]*?)\\]\\s*as const`));
+    if (!match) {
+      problems.push(`${v.file} has no \`${v.constName} = [...] as const\` — cannot check the ${v.key} vocabulary`);
+      continue;
+    }
+    const fromCode = [...match[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
     const missing = fromSpec.filter((t) => !fromCode.includes(t));
     const extra = fromCode.filter((t) => !fromSpec.includes(t));
     if (missing.length || extra.length)
       problems.push(
-        `system_type vocabulary drift — platform has [${missing.join(", ")}] the enum lacks; enum has [${extra.join(", ")}] the platform lacks. Update src/lib/system-types.ts`,
+        `${v.key} vocabulary drift — platform has [${missing.join(", ")}] the enum lacks; enum has [${extra.join(", ")}] the platform lacks. Update ${v.file}`,
       );
-    const fixturePath = join(ROOT, "tests", "fixtures", "platform-system-type-pattern.json");
-    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
-    if (fixture.pattern !== pattern) {
+    if (fixture.patterns?.[v.key]?.pattern !== pattern) {
       if (flag("--write")) {
-        writeFileSync(fixturePath, JSON.stringify({ ...fixture, pattern }, null, 2) + "\n");
-        console.log("refreshed tests/fixtures/platform-system-type-pattern.json from the spec");
+        fixture.patterns = fixture.patterns ?? {};
+        fixture.patterns[v.key] = {
+          source: `components.schemas.${v.schema}.properties.${v.property}.pattern`,
+          pattern,
+        };
+        fixtureDirty = true;
       } else {
         problems.push(
-          "tests/fixtures/platform-system-type-pattern.json is stale — run with --write to refresh it from the spec",
+          `tests/fixtures/platform-vocabularies.json is stale for ${v.key} — run with --write to refresh it from the spec`,
         );
       }
     }
+  }
+  if (fixtureDirty) {
+    const at = process.argv.indexOf("--platform-commit");
+    if (at > -1 && process.argv[at + 1]) fixture.platform_commit = process.argv[at + 1];
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n");
+    console.log("refreshed tests/fixtures/platform-vocabularies.json from the spec");
   }
 }
 

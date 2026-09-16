@@ -7,10 +7,10 @@ Source of truth: [`tool-scope.json`](tool-scope.json) (the verdict map) joined w
 ```
 node scripts/api-coverage.mjs --write            # regenerate the table from http://localhost:8000/openapi.json
 node scripts/api-coverage.mjs --spec spec.json   # or from a saved spec
-node scripts/api-coverage.mjs --check            # CI: fail if the table is stale or the map disagrees with the code
+node scripts/api-coverage.mjs --check            # pre-merge: fail if the table is stale or the map disagrees with the code
 ```
 
-The script exits non-zero when an operation has no verdict, a verdict names an operation the spec no longer has, an `in` operation has no tool, or an `out`/`deferred` operation does. A platform release that adds an endpoint, or a PR that adds a tool, therefore forces a decision here.
+The script exits non-zero when an operation has no verdict, a verdict names an operation the spec no longer has, an `in` operation has no tool, or an `out`/`deferred` operation does. A platform release that adds an endpoint, or a PR that adds a tool, therefore forces a decision here. It also checks the hand-copied vocabularies (`VOCABULARIES` in the script) against the spec's `^(a|b)$` patterns and refreshes `tests/fixtures/platform-vocabularies.json` with `--write`. The check needs a platform spec, which the platform does not publish as an artifact, so it is not wired into `ci.yml`: run it locally against a spec generated from the platform checkout before merging tool or vocabulary changes.
 
 One limit to know about: a verdict may carry `tools: [...]` for the handful of tools that pick their route at runtime (`scf_list_vendor_action_items`, `scf_mark_notifications_read`, `scf_list_assessment_objectives`). The script checks that a tool of that name is registered, not that it calls the declared route — `tests/handlers.test.ts` covers that for the route-switching tools.
 
@@ -62,9 +62,9 @@ MCP clients receive every tool definition on connect. The number below is measur
 | ----------------------------- | ----- | ------------------ | -------------------- | ----------------- |
 | v3.0.0 + audit sync (PR #212) | 129   | 142,384 (139 KiB)  | ≈ 35,600             | 20,393            |
 | v3.4.0 (PR #213)              | 187   | 218,064 (213 KiB)  | ≈ 54,500             | 29,526            |
-| this release (PR #237)        | 189   | 222,245 (217 KiB)  | ≈ 55,600             | 29,955            |
+| this release (PR #237)        | 189   | 222,698 (217 KiB)  | ≈ 55,700             | 29,950            |
 
-Measured 2026-09-16 with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`. The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.1 KB for 2, about 1.3 KB per tool either way; the per-tool average is unchanged, so the growth is linear in tool count, not in verbosity. Every description stays ≤ 200 characters (max 199).
+Measured 2026-09-16 with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`. The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.6 KB for 2, about 1.3 KB per tool either way; the per-tool average is unchanged, so the growth is linear in tool count, not in verbosity. Every description stays ≤ 200 characters (max 199).
 
 <!-- PAYLOAD:END -->
 

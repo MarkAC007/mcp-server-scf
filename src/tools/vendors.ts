@@ -2,6 +2,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
+import { VENDOR_STATUSES, VENDOR_STATUSES_PROSE } from "../lib/vendor-statuses.js";
+
+const VendorStatus = z.enum(VENDOR_STATUSES);
 
 export function registerVendorTools(server: McpServer) {
   server.tool(
@@ -9,7 +12,7 @@ export function registerVendorTools(server: McpServer) {
     "List third-party vendors in the organization's TPRM (Third-Party Risk Management) registry. Optionally filter by status or criticality. Paginated.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("Lifecycle status filter"),
+      status: VendorStatus.optional().describe(`Lifecycle status filter — one of: ${VENDOR_STATUSES_PROSE}`),
       criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("Criticality tier filter"),
       page: z.number().int().min(1).default(1).describe("1-indexed page number (default 1)"),
       per_page: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
@@ -57,10 +60,9 @@ export function registerVendorTools(server: McpServer) {
         .enum(["critical", "high", "medium", "low"])
         .default("medium")
         .describe("Business criticality tier (default 'medium')"),
-      status: z
-        .enum(["prospect", "active", "inactive", "under_review"])
-        .default("prospect")
-        .describe("Lifecycle status (default 'prospect')"),
+      status: VendorStatus.default("prospect").describe(
+        `Lifecycle status (default prospect) — one of: ${VENDOR_STATUSES_PROSE}`,
+      ),
       website: z.string().optional().describe("Vendor website URL"),
       contact_email: z.string().optional().describe("Primary contact email address"),
     },
@@ -86,7 +88,7 @@ export function registerVendorTools(server: McpServer) {
       description: z.string().optional().describe("New free-text description"),
       category: z.string().optional().describe("New category label"),
       criticality: z.enum(["critical", "high", "medium", "low"]).optional().describe("New criticality tier"),
-      status: z.enum(["prospect", "active", "inactive", "under_review"]).optional().describe("New lifecycle status"),
+      status: VendorStatus.optional().describe(`New lifecycle status — one of: ${VENDOR_STATUSES_PROSE}`),
       website: z.string().optional().describe("New website URL"),
       contact_email: z.string().optional().describe("New primary contact email"),
     },

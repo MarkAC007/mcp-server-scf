@@ -10,8 +10,8 @@ The 41 tools in this domain split into eight concerns:
 2. **Tasks** — `scf_list_evidence_tasks`, `scf_create_evidence_task`, `scf_update_evidence_task`, `scf_complete_evidence_task`
 3. **Files** — `scf_list_evidence_files`, `scf_get_evidence_file`, `scf_review_evidence_file`, `scf_delete_evidence_file`
 4. **Validation** — `scf_get_evidence_validation`, `scf_revalidate_evidence_file`, `scf_get_evidence_validation_summary`
-5. **Per-file AI assessment** — `scf_trigger_evidence_assessment`, `scf_get_evidence_assessment`, `scf_bulk_assess_evidence`, `scf_get_evidence_assessment_summary`, `scf_get_assessment_review_queue`, `scf_review_evidence_assessment`
-6. **Windowed AI assessment** — `scf_trigger_window_assessment`, `scf_list_window_assessments`, `scf_get_window_assessment`, `scf_bulk_assess_windows`, `scf_get_window_assessment_summary`, `scf_refresh_stale_window_assessments`, `scf_review_window_assessment`, `scf_review_window_assessment_verdict`, `scf_get_window_assessment_versions`
+5. **Per-file AI assessment** — `scf_trigger_evidence_assessment`, `scf_get_evidence_assessment`, `scf_bulk_assess_evidence`, `scf_get_evidence_assessment_summary`, `scf_get_assessment_review_queue` (both tiers), `scf_review_evidence_assessment`
+6. **Windowed AI assessment** — `scf_trigger_window_assessment`, `scf_list_window_assessments`, `scf_get_window_assessment`, `scf_bulk_assess_windows`, `scf_get_window_assessment_summary`, `scf_refresh_stale_window_assessments`, `scf_review_window_assessment`, `scf_review_window_assessment_verdict`, `scf_get_window_assessment_versions` (and `scf_get_assessment_review_queue` with `tier=window`)
 7. **Cadence health & maturity guidance** — `scf_get_upcoming_evidence`, `scf_get_frequency_health`, `scf_get_evidence_item_maturity`, `scf_get_evidence_upgrade_recommendations`, `scf_get_evidence_suggestions`, `scf_list_evidence_gaps`, `scf_get_evidence_health`
 8. **Control assessment composites** — `scf_get_control_assessment_composite`, `scf_list_control_assessment_composites`
 
@@ -435,12 +435,12 @@ Report evidence whose declared frequency disagrees with the observed upload cade
 
 ## `scf_get_assessment_review_queue`
 
-List AI verdicts waiting for a human decision, worst first (read — viewer role): most gaps, then most unassessable objectives, then least relevant, then oldest. `tier=window` (default) is the web app's **Awaiting confirmation** queue; `tier=file` lists per-file verdicts. Every entry says which it is in `kind`: window entries carry `window_assessment_id` (act with `scf_review_window_assessment_verdict`), file entries carry `file_id` (act with `scf_review_evidence_assessment`).
+List AI verdicts waiting for a human decision, worst first (read — viewer role): most gaps, then most unassessable objectives, then least relevant, then oldest. `tier=file` (default, the platform's own default) lists per-file verdicts; `tier=window` is the web app's **Awaiting confirmation** queue. Every entry says which it is in `kind`: window entries carry `window_assessment_id` (act with `scf_review_window_assessment_verdict`), file entries carry `file_id` (act with `scf_review_evidence_assessment`). Platforms older than v1.192.1 ignore `tier`; asking them for `window` returns an error rather than per-file entries mislabelled as window verdicts.
 
 | Parameter | Type   | Required | Description                                        |
 | --------- | ------ | -------- | -------------------------------------------------- |
 | `org_id`  | string | Yes      | Organization ID (UUID)                             |
-| `tier`    | string | No       | `window` (default) or `file`                       |
+| `tier`    | string | No       | `file` (default) or `window`                       |
 | `status`  | string | No       | `awaiting`, `reviewed`, `all` (default `awaiting`) |
 | `limit`   | number | No       | Page size (1–200, default 50)                      |
 | `offset`  | number | No       | Pagination offset (default 0)                      |
@@ -490,7 +490,7 @@ Set the acceptance review state of a windowed evidence assessment (write — edi
 
 ## `scf_review_window_assessment_verdict`
 
-Confirm or override a window's current AI verdict (write — editor role). `confirmed` keeps the verdict as the AI produced it; `overridden` needs a reason and at least one objective re-designation, after which the window's status and gap counts are re-derived. One decision per version — re-assessing the window produces a new version that starts unreviewed. Independent of the acceptance review (`scf_review_window_assessment`). The platform returns 403 when the reviewer is the sole uploader of the window's files (segregation of duties) and 409 when the verdict is not reviewable or already decided.
+Confirm or override a window's current AI verdict (write — editor role). `confirmed` keeps the verdict as the AI produced it; `overridden` needs a reason and at least one objective re-designation, after which the window's status and gap counts are re-derived. One decision per version — re-assessing the window produces a new version that starts unreviewed. Independent of the acceptance review (`scf_review_window_assessment`). The platform returns 403 when the reviewer is the sole uploader of the window's files (segregation of duties), 409 when the verdict is not reviewable or already decided, and 422 when an override names an objective the verdict does not have, lists one twice, or the version has no per-objective answers at all (windows backfilled as version 1) — in that last case confirm the verdict as it stands rather than re-assessing.
 
 | Parameter                          | Type   | Required | Description                                                                                             |
 | ---------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------- |

@@ -7,7 +7,7 @@
  * tests all derive from it.
  *
  * Drift is caught twice: `npm run scope:check` compares this list with the spec it is given,
- * and `tests/system-types.test.ts` compares it with the platform pattern captured in
+ * and `tests/vocabularies.test.ts` compares it with the platform pattern captured in
  * `tests/fixtures/platform-system-type-pattern.json`. When the platform adds a type, update
  * the fixture and this list together.
  */
