@@ -3,6 +3,31 @@ import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
 
+/**
+ * Body of both verdict-review tools (per-file and window). The platform's AOOverrideRequestItem is one
+ * schema for both routes, so the two tools share one definition and cannot drift apart.
+ */
+const verdictReviewFields = {
+  decision: z
+    .enum(["confirmed", "overridden"])
+    .describe("confirmed = AI verdict stands; overridden = you are changing it"),
+  reason: z.string().optional().describe("Why the verdict is overridden — required when decision is overridden"),
+  ao_overrides: z
+    .array(
+      z.object({
+        ao_id: z.string().min(1).describe("Assessment objective ID"),
+        human_designation: z
+          .enum(["appears_satisfied", "gap_identified", "not_applicable", "cannot_assess"])
+          .describe("Reviewer's designation for this objective"),
+        note: z.string().optional().describe("Why, for this objective specifically"),
+      }),
+    )
+    .optional()
+    .describe(
+      "Objectives to re-designate — required (≥1) when overriding, forbidden when confirming; unlisted objectives keep the AI's designation. 422 if the version has no per-objective answers: confirm instead",
+    ),
+};
+
 export function registerEvidenceTools(server: McpServer) {
   server.tool(
     "scf_list_evidence",
@@ -908,22 +933,39 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_assessment_review_queue",
-    "List AI evidence assessments waiting for a human decision, worst first (read — viewer role): most gaps, then most unassessable objectives, then least relevant, then oldest.",
+    "List AI verdicts awaiting a human decision, worst first (read — viewer role). tier=file (default) lists per-file verdicts; tier=window is the web app's Awaiting-confirmation queue.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      tier: z
+        .enum(["file", "window"])
+        .default("file")
+        .describe(
+          "file (default): entries carry file_id, act with scf_review_evidence_assessment. window: entries carry window_assessment_id, act with scf_review_window_assessment_verdict",
+        ),
       status: z.enum(["awaiting", "reviewed", "all"]).default("awaiting").describe("Queue filter (default awaiting)"),
       limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset (default 0)"),
     },
     { title: "Get Assessment Review Queue", readOnlyHint: true },
-    async ({ org_id, status, limit, offset }) => {
+    async ({ org_id, tier, status, limit, offset }) => {
       try {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/evidence/assessment/review-queue`, {
+          tier,
           status,
           limit,
           offset,
         });
+        // Platforms before v1.192.1 ignore `tier` and answer with per-file entries (no `kind`); never
+        // present those as window verdicts.
+        const items = (data as { items?: Array<{ kind?: string }> } | null)?.items;
+        if (tier === "window" && Array.isArray(items) && items.some((item) => (item.kind ?? "file") !== "window")) {
+          return errorResult(
+            new Error(
+              "This platform ignored tier=window and returned per-file entries; the window review queue needs scf-controls-platform v1.192.1 or later. Use tier=file on this platform.",
+            ),
+          );
+        }
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -938,24 +980,7 @@ export function registerEvidenceTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Catalog evidence ID the file belongs to, e.g. E-IAM-01"),
       file_id: z.string().uuid().describe("Evidence file UUID — obtain from scf_list_evidence_files"),
-      decision: z
-        .enum(["confirmed", "overridden"])
-        .describe("confirmed = AI verdict stands; overridden = you are changing it"),
-      reason: z.string().optional().describe("Why the verdict is overridden — required when decision is overridden"),
-      ao_overrides: z
-        .array(
-          z.object({
-            ao_id: z.string().describe("Assessment objective ID"),
-            human_designation: z
-              .enum(["appears_satisfied", "gap_identified", "not_applicable", "cannot_assess"])
-              .describe("Reviewer's designation for this objective"),
-            note: z.string().optional().describe("Why, for this objective specifically"),
-          }),
-        )
-        .optional()
-        .describe(
-          "Objectives to re-designate — required (≥1) when overriding, forbidden when confirming; unlisted objectives keep the AI's designation",
-        ),
+      ...verdictReviewFields,
     },
     { title: "Review Evidence Assessment", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, evidence_id, file_id, ...fields }) => {
@@ -993,7 +1018,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_review_window_assessment",
-    "Set the review state of a windowed evidence assessment (write — editor role): approved, rejected, needs_revision, or not_reviewed to revoke a prior decision.",
+    "Set the acceptance review of a windowed assessment (write — editor role): approved, rejected, needs_revision, or not_reviewed to revoke. Verdict itself: scf_review_window_assessment_verdict.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       ewa_id: z.string().uuid().describe("Window assessment UUID — obtain from scf_list_window_assessments"),
@@ -1010,6 +1035,53 @@ export function registerEvidenceTools(server: McpServer) {
           review_status,
           review_notes,
         });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_review_window_assessment_verdict",
+    "Confirm or override a window's current AI verdict (write — editor role). overridden needs a reason and ≥1 objective re-designation. One decision per version; 422 without objectives: confirm.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      assessment_id: z
+        .string()
+        .uuid()
+        .describe(
+          "Window assessment UUID — obtain from scf_get_assessment_review_queue (window_assessment_id) or scf_list_window_assessments",
+        ),
+      ...verdictReviewFields,
+    },
+    { title: "Review Window Assessment Verdict", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, assessment_id, ...fields }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(
+          `/organizations/${org_id}/evidence/window-assessments/${assessment_id}/verdict/review`,
+          fields,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_window_assessment_versions",
+    "List every AI verdict a window assessment has received, newest first (read — viewer role). Each version is frozen as reached (model, prompt version, designations) plus any human decision on it.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      assessment_id: z.string().uuid().describe("Window assessment UUID — obtain from scf_list_window_assessments"),
+    },
+    { title: "Get Window Assessment Versions", readOnlyHint: true },
+    async ({ org_id, assessment_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/evidence/window-assessments/${assessment_id}/versions`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

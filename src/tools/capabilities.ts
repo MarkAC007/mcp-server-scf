@@ -2,17 +2,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
+import { SYSTEM_TYPES, SYSTEM_TYPES_PROSE } from "../lib/system-types.js";
 
-const SystemType = z.enum([
-  "cloud_provider",
-  "identity_provider",
-  "ticketing",
-  "logging",
-  "security_tool",
-  "code_repository",
-  "document_management",
-  "custom",
-]);
+const SystemType = z.enum(SYSTEM_TYPES);
 
 const CapabilityStatus = z.enum(["potential", "configured", "active"]);
 
@@ -87,9 +79,7 @@ export function registerCapabilityTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       name: z.string().describe("Human-readable system name (required)"),
       description: z.string().optional().describe("Free-text description of the system"),
-      system_type: SystemType.describe(
-        "System classification: cloud_provider, identity_provider, ticketing, logging, security_tool, code_repository, document_management, or custom",
-      ),
+      system_type: SystemType.describe(`System classification — one of: ${SYSTEM_TYPES_PROSE}`),
       status: z
         .enum(["active", "inactive", "deprecated"])
         .default("active")
@@ -127,7 +117,7 @@ export function registerCapabilityTools(server: McpServer) {
       system_id: z.string().uuid().describe("System UUID to update — obtain from scf_list_systems"),
       name: z.string().optional().describe("New system name"),
       description: z.string().optional().describe("New system description"),
-      system_type: SystemType.optional().describe("New system classification"),
+      system_type: SystemType.optional().describe(`New system classification — one of: ${SYSTEM_TYPES_PROSE}`),
       status: z.enum(["active", "inactive", "deprecated"]).optional().describe("New lifecycle status"),
       vendor: z.string().optional().describe("New legacy free-text vendor name (prefer vendor_id)"),
       vendor_id: z

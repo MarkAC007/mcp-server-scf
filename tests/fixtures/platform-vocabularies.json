@@ -1,0 +1,14 @@
+{
+  "_comment": "Platform OpenAPI `^(a|b)$` patterns, captured verbatim, one per vocabulary in scripts/api-coverage.mjs VOCABULARIES. Refresh with: node scripts/api-coverage.mjs --spec <openapi.json> --write --platform-commit <sha>.",
+  "platform_commit": "dbdfc001",
+  "patterns": {
+    "system_type": {
+      "source": "components.schemas.SystemCreate.properties.system_type.pattern",
+      "pattern": "^(cloud_provider|identity_provider|ticketing|logging|security_tool|code_repository|document_management|endpoint_management|vulnerability_management|email_security|security_awareness|password_manager|communication|hr_system|custom)$"
+    },
+    "vendor_status": {
+      "source": "components.schemas.VendorCreate.properties.status.pattern",
+      "pattern": "^(prospect|active|under_review|approved|suspended|offboarded)$"
+    }
+  }
+}

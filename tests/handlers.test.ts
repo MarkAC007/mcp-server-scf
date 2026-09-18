@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Record every client call the handlers make instead of hitting the network.
 const calls: Array<{ method: string; path: string; body?: unknown; params?: unknown }> = [];
 let nextError: Error | null = null;
+let nextGetResponse: unknown = null;
 const fakeClient = {
   get: vi.fn(async (path: string, params?: unknown) => {
     if (nextError) throw nextError;
     calls.push({ method: "GET", path, params });
-    return { ok: true };
+    return nextGetResponse ?? { ok: true };
   }),
   post: vi.fn(async (path: string, body?: unknown, params?: unknown) => {
     calls.push({ method: "POST", path, body, params });
@@ -31,6 +33,19 @@ import { registerOrganizationTools } from "../src/tools/organization.js";
 import { registerTeamTools } from "../src/tools/teams.js";
 
 type Handler = (args: Record<string, unknown>) => Promise<{ isError?: boolean; content: Array<{ text: string }> }>;
+
+/** Register a module against a stub server and return one tool's Zod input shape. */
+function shapeOf(register: (s: McpServer) => void, tool: string): Record<string, z.ZodTypeAny> {
+  let shape: Record<string, z.ZodTypeAny> | undefined;
+  const server = {
+    tool: (name: string, _d: string, s: Record<string, z.ZodTypeAny>) => {
+      if (name === tool) shape = s;
+    },
+  };
+  register(server as unknown as McpServer);
+  if (!shape) throw new Error(`tool ${tool} not registered`);
+  return shape;
+}
 
 /** Register a module against a stub server and return its handlers by tool name. */
 function handlersOf(register: (s: McpServer) => void): Map<string, Handler> {
@@ -120,5 +135,88 @@ describe("handlers translate tool arguments into the platform's routes", () => {
     const res = await h({ org_id: ORG });
     expect(res.isError).toBe(true);
     expect(res.content[0].text).toContain("boom");
+  });
+});
+
+describe("evidence assurance: review-queue tier and window verdict tools (#236)", () => {
+  it("scf_get_assessment_review_queue defaults tier to file at the schema layer (the platform default)", () => {
+    const parsed = z.object(shapeOf(registerEvidenceTools, "scf_get_assessment_review_queue")).parse({ org_id: ORG });
+    expect(parsed.tier).toBe("file");
+    expect(parsed.status).toBe("awaiting");
+  });
+
+  it("scf_get_assessment_review_queue sends tier=window as a query param and passes window entries through", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_assessment_review_queue")!;
+    nextGetResponse = { items: [{ kind: "window", window_assessment_id: "w1" }], total: 1 };
+    try {
+      const res = await h({ org_id: ORG, tier: "window", status: "awaiting", limit: 50, offset: 0 });
+      expect(res.isError).toBeFalsy();
+      expect(JSON.parse(res.content[0].text).items[0].window_assessment_id).toBe("w1");
+    } finally {
+      nextGetResponse = null;
+    }
+    expect(calls[0]).toEqual({
+      method: "GET",
+      path: `/organizations/${ORG}/evidence/assessment/review-queue`,
+      params: { tier: "window", status: "awaiting", limit: 50, offset: 0 },
+    });
+  });
+
+  it("scf_get_assessment_review_queue refuses to present per-file entries as window verdicts (platform ignored tier)", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_assessment_review_queue")!;
+    nextGetResponse = { items: [{ file_id: "f1", evidence_id: "E-IAM-01" }], total: 1 };
+    try {
+      const res = await h({ org_id: ORG, tier: "window", status: "awaiting", limit: 50, offset: 0 });
+      expect(res.isError).toBe(true);
+      expect(res.content[0].text).toContain("v1.192.1");
+      const file = await h({ org_id: ORG, tier: "file", status: "awaiting", limit: 50, offset: 0 });
+      expect(file.isError).toBeFalsy();
+    } finally {
+      nextGetResponse = null;
+    }
+  });
+
+  it("scf_review_window_assessment_verdict rejects an empty ao_id at the schema layer", () => {
+    const schema = z.object(shapeOf(registerEvidenceTools, "scf_review_window_assessment_verdict"));
+    const base = {
+      org_id: ORG,
+      assessment_id: "8a6c1d8e-3d1a-4c25-9c5c-8f2c8b2d6e11",
+      decision: "overridden",
+      reason: "x",
+    };
+    expect(
+      schema.safeParse({ ...base, ao_overrides: [{ ao_id: "", human_designation: "gap_identified" }] }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({ ...base, ao_overrides: [{ ao_id: "AO-1", human_designation: "gap_identified" }] }).success,
+    ).toBe(true);
+  });
+
+  it("scf_get_assessment_review_queue passes tier=file through unchanged", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_assessment_review_queue")!;
+    await h({ org_id: ORG, tier: "file", status: "all", limit: 10, offset: 20 });
+    expect(calls[0].params).toEqual({ tier: "file", status: "all", limit: 10, offset: 20 });
+  });
+
+  it("scf_review_window_assessment_verdict posts decision, reason and ao_overrides to the verdict route", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_review_window_assessment_verdict")!;
+    const ao_overrides = [{ ao_id: "AST-01.1", human_designation: "gap_identified", note: "screenshot is stale" }];
+    await h({ org_id: ORG, assessment_id: ID, decision: "overridden", reason: "stale evidence", ao_overrides });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/evidence/window-assessments/${ID}/verdict/review`,
+      body: { decision: "overridden", reason: "stale evidence", ao_overrides },
+      params: undefined,
+    });
+  });
+
+  it("scf_get_window_assessment_versions reads the window's version history", async () => {
+    const h = handlersOf(registerEvidenceTools).get("scf_get_window_assessment_versions")!;
+    await h({ org_id: ORG, assessment_id: ID });
+    expect(calls[0]).toEqual({
+      method: "GET",
+      path: `/organizations/${ORG}/evidence/window-assessments/${ID}/versions`,
+      params: undefined,
+    });
   });
 });

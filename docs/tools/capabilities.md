@@ -86,17 +86,17 @@ List the organization's infrastructure systems — the tools and platforms that 
 
 Create a system in the organization's infrastructure inventory (write — editor+ role). Systems can be linked to capabilities, evidence, a vendor, and a catalog template.
 
-| Parameter             | Type   | Required | Description                                                                                                                        |
-| --------------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `org_id`              | string | Yes      | Organization ID (UUID)                                                                                                             |
-| `name`                | string | Yes      | System name                                                                                                                        |
-| `system_type`         | string | Yes      | `cloud_provider`, `identity_provider`, `ticketing`, `logging`, `security_tool`, `code_repository`, `document_management`, `custom` |
-| `description`         | string | No       | System description                                                                                                                 |
-| `status`              | string | No       | `active` (default), `inactive`, `deprecated`                                                                                       |
-| `vendor`              | string | No       | Legacy free-text vendor name (prefer `vendor_id`)                                                                                  |
-| `vendor_id`           | string | No       | Vendor UUID for a structural link (same org) — get from `scf_list_vendors`                                                         |
-| `catalog_template_id` | number | No       | System-catalog template ID — get from `scf_list_system_catalog`                                                                    |
-| `category`            | string | No       | System category (e.g., `SIEM`, `Endpoint`, `Identity`)                                                                             |
+| Parameter             | Type   | Required | Description                                                                                                                                                                                                                                                                                                                                       |
+| --------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`              | string | Yes      | Organization ID (UUID)                                                                                                                                                                                                                                                                                                                            |
+| `name`                | string | Yes      | System name                                                                                                                                                                                                                                                                                                                                       |
+| `system_type`         | string | Yes      | `cloud_provider`, `identity_provider`, `ticketing`, `logging`, `security_tool`, `code_repository`, `document_management`, `endpoint_management`, `vulnerability_management`, `email_security`, `security_awareness`, `password_manager`, `communication`, `hr_system`, `custom` — the platform's full list, mirrored in `src/lib/system-types.ts` |
+| `description`         | string | No       | System description                                                                                                                                                                                                                                                                                                                                |
+| `status`              | string | No       | `active` (default), `inactive`, `deprecated`                                                                                                                                                                                                                                                                                                      |
+| `vendor`              | string | No       | Legacy free-text vendor name (prefer `vendor_id`)                                                                                                                                                                                                                                                                                                 |
+| `vendor_id`           | string | No       | Vendor UUID for a structural link (same org) — get from `scf_list_vendors`                                                                                                                                                                                                                                                                        |
+| `catalog_template_id` | number | No       | System-catalog template ID — get from `scf_list_system_catalog`                                                                                                                                                                                                                                                                                   |
+| `category`            | string | No       | System category (e.g., `SIEM`, `Endpoint`, `Identity`)                                                                                                                                                                                                                                                                                            |
 
 ---
 
@@ -110,7 +110,7 @@ Update an existing system record (write — editor+ role). All fields are option
 | `system_id`           | string | Yes      | System ID — get from `scf_list_systems`           |
 | `name`                | string | No       | System name                                       |
 | `description`         | string | No       | System description                                |
-| `system_type`         | string | No       | Same enum as `scf_create_system`                  |
+| `system_type`         | string | No       | Same 15-value enum as `scf_create_system`         |
 | `status`              | string | No       | `active`, `inactive`, `deprecated`                |
 | `vendor`              | string | No       | Legacy free-text vendor name (prefer `vendor_id`) |
 | `vendor_id`           | string | No       | Vendor UUID for a structural link (same org)      |

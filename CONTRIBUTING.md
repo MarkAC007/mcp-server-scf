@@ -13,15 +13,16 @@ By participating in this project you agree to abide by the [Code of Conduct](COD
 
 ### Everyday scripts
 
-| Script                 | What it does                                  |
-| ---------------------- | --------------------------------------------- |
-| `npm run build`        | Type-check + compile to `build/`              |
-| `npm run dev`          | Watch-mode rebuild with `tsx`                 |
-| `npm run lint`         | Run ESLint on the repo                        |
-| `npm run lint:fix`     | ESLint with `--fix`                           |
-| `npm run format`       | Run Prettier `--write` on the repo            |
-| `npm run format:check` | Run Prettier `--check` (CI-friendly)          |
-| `npm run inspector`    | Launch MCP Inspector against the built server |
+| Script                 | What it does                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run build`        | Type-check + compile to `build/`                                                                                                                                   |
+| `npm run dev`          | Watch-mode rebuild with `tsx`                                                                                                                                      |
+| `npm run lint`         | Run ESLint on the repo                                                                                                                                             |
+| `npm run lint:fix`     | ESLint with `--fix`                                                                                                                                                |
+| `npm run format`       | Run Prettier `--write` on the repo                                                                                                                                 |
+| `npm run format:check` | Run Prettier `--check` (CI-friendly)                                                                                                                               |
+| `npm run inspector`    | Launch MCP Inspector against the built server                                                                                                                      |
+| `npm run scope:check`  | Reconcile the platform OpenAPI spec (`--spec <file>` or localhost:8000) with `docs/tool-scope.json`, the code and the vocabulary modules; see `docs/tool-scope.md` |
 
 ### Pre-commit hook
 
