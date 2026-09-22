@@ -1,6 +1,6 @@
 # Tool scope — what is in the MCP, what is deferred, what stays out
 
-The SCF Controls Platform exposes 337 HTTP operations. This server deliberately wraps a subset. This page records the policy that decides which, the verdict for every operation, and the cost of the surface as it stands, so that the next endpoint the platform adds gets a recorded decision rather than a reflexive tool.
+The SCF Controls Platform exposes 346 HTTP operations. This server deliberately wraps a subset. This page records the policy that decides which, the verdict for every operation, and the cost of the surface as it stands, so that the next endpoint the platform adds gets a recorded decision rather than a reflexive tool.
 
 Source of truth: [`tool-scope.json`](tool-scope.json) (the verdict map) joined with the live OpenAPI spec and `src/tools/*.ts` by [`scripts/api-coverage.mjs`](../scripts/api-coverage.mjs). The table at the bottom is generated; edit the JSON, not the table.
 
@@ -62,9 +62,10 @@ MCP clients receive every tool definition on connect. The number below is measur
 | ----------------------------- | ----- | ------------------ | -------------------- | ----------------- |
 | v3.0.0 + audit sync (PR #212) | 129   | 142,384 (139 KiB)  | ≈ 35,600             | 20,393            |
 | v3.4.0 (PR #213)              | 187   | 218,064 (213 KiB)  | ≈ 54,500             | 29,526            |
-| this release (PR #237)        | 189   | 222,698 (217 KiB)  | ≈ 55,700             | 29,950            |
+| PR #237 (unreleased)          | 189   | 222,664 (217 KiB)  | ≈ 55,700             | 29,950            |
+| this release (+ v0.40 align)  | 196   | 234,396 (229 KiB)  | ≈ 58,600             | 31,322            |
 
-Measured 2026-09-16 with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`. The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.6 KB for 2, about 1.3 KB per tool either way; the per-tool average is unchanged, so the growth is linear in tool count, not in verbosity. Every description stays ≤ 200 characters (max 199).
+Measured with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`; the last two rows were re-measured 2026-09-22, the #237 row against a clean `origin/main` build (the 222,698 previously recorded was 34 bytes high). The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.5 KB for 2 — about 1.3 KB per tool. The 189 → 196 step added ≈ 11.7 KB for 7, about **1.7 KB per tool**: the first step above the historical average, because `scf_import_journey` carries a nested template schema rather than a flat parameter list. Every description stays ≤ 200 characters, but the cap is now binding (max 200, up from 199) — three of the seven new descriptions had to be cut to fit it.
 
 <!-- PAYLOAD:END -->
 
