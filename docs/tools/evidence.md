@@ -74,10 +74,14 @@ Get evidence collection health for the organization: per-item freshness status (
 
 List evidence items tracked against an organization's controls. Returns each item's tracking status, maturity level, and linked controls. Optionally filter by system.
 
-| Parameter   | Type   | Required | Description                                                |
-| ----------- | ------ | -------- | ---------------------------------------------------------- |
-| `org_id`    | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
-| `system_id` | string | No       | Filter by system ID                                        |
+| Parameter                | Type    | Required | Description                                                                                                                                                                                                                                |
+| ------------------------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`                 | string  | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                                                                                                                                                                 |
+| `system_id`              | string  | No       | Filter by system ID                                                                                                                                                                                                                        |
+| `team_id`                | string  | No       | Filter to evidence this team is assigned to, accountable or consulted — get from `scf_list_teams`                                                                                                                                          |
+| `my_teams`               | boolean | No       | Evidence assigned to any team the caller belongs to (default `false`); intersects with `team_id`. 'The caller' is the API key's identity — on a self-hosted instance a service account on no team, so this returns nothing; use `team_id`. |
+| `function_id`            | string  | No       | Evidence assigned to any team aligned to this function — get from `scf_list_functions`                                                                                                                                                     |
+| `accountable_owner_type` | string  | No       | Accountable team's primary owner: `internal` or `external_contractor`                                                                                                                                                                      |
 
 ---
 

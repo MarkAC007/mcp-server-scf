@@ -18,6 +18,13 @@ const MaturityLevel = z.enum(["L0", "L1", "L2", "L3", "L4", "L5"]);
 
 const ScopeStatus = z.enum(["in_scope", "out_of_scope", "all"]);
 
+const AccountableOwnerType = z.enum(["internal", "external_contractor"]);
+
+// An individual control's override of whatever the framework selection implies
+// for it. 'inherit' is not a no-op — it clears a previously set override and
+// hands the control back to the framework rollup.
+const ScopeOverrideAction = z.enum(["include", "exclude", "inherit"]);
+
 export function registerScopedControlTools(server: McpServer) {
   server.tool(
     "scf_list_scoped_controls",
@@ -35,11 +42,45 @@ export function registerScopedControlTools(server: McpServer) {
         .describe("NIST CSF function: 'GOVERN', 'IDENTIFY', 'PROTECT', 'DETECT', 'RESPOND', or 'RECOVER'"),
       control_weighting: z.number().int().min(0).max(10).optional().describe("Weighting threshold on a 0–10 scale"),
       search: z.string().optional().describe("Free-text filter applied to control ID, name, or description"),
+      team_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter to controls this team is assigned to, accountable or consulted — obtain from scf_list_teams"),
+      my_teams: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Filter to controls assigned to any team the caller belongs to; intersects with team_id rather than overriding it." +
+            " 'The caller' is the API key's identity; on a self-hosted instance that is a service account on no team, so this returns nothing — use team_id instead.",
+        ),
+      function_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter to controls assigned to any team aligned to this function — obtain from scf_list_functions"),
+      accountable_owner_type: AccountableOwnerType.optional().describe(
+        "Filter by the accountable team's primary owner: 'internal' or 'external_contractor'",
+      ),
       limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
     { title: "List Scoped Controls", readOnlyHint: true },
-    async ({ org_id, scope_status, domain, framework, csf_function, control_weighting, search, limit, offset }) => {
+    async ({
+      org_id,
+      scope_status,
+      domain,
+      framework,
+      csf_function,
+      control_weighting,
+      search,
+      team_id,
+      my_teams,
+      function_id,
+      accountable_owner_type,
+      limit,
+      offset,
+    }) => {
       try {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/scoped-controls-paginated`, {
@@ -49,6 +90,10 @@ export function registerScopedControlTools(server: McpServer) {
           csf_function,
           control_weighting,
           search,
+          team_id,
+          my_teams,
+          function_id,
+          accountable_owner_type,
           limit,
           offset,
         });
@@ -220,6 +265,79 @@ export function registerScopedControlTools(server: McpServer) {
         const data = await client.post(`/organizations/${org_id}/scoped-controls/bulk-unscope-framework`, {
           frameworks,
           removal_reason,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_framework_scope_summary",
+    "Get framework coverage and selection state in one view (read — viewer role): which frameworks are selected and how their controls sit against the scope. Read side of scoping; changing it is elsewhere.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    { title: "Get Framework Scope Summary", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/framework-scoping`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_preview_framework_scope_change",
+    "Preview what adding or removing frameworks would do to the scope WITHOUT applying it (read — viewer role). Returns the controls that would enter or leave, so the blast radius is known beforehand.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      operation: z
+        .enum(["add", "remove"])
+        .describe("'add' to preview scoping these frameworks in, 'remove' to preview taking them out"),
+      frameworks: z.array(z.string()).min(1).describe("Framework slugs to model — obtain from scf_list_frameworks"),
+    },
+    { title: "Preview Framework Scope Change", readOnlyHint: true },
+    async ({ org_id, operation, frameworks }) => {
+      try {
+        const client = getClient();
+        const data = await client.post(`/organizations/${org_id}/framework-scoping/preview`, {
+          operation,
+          frameworks,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_set_scope_override",
+    "Force one control in or out of scope whatever its frameworks imply (write — editor+). 'include'/'exclude' pin it; 'inherit' clears the override back to the framework rollup. Scope only, not status.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
+      action: ScopeOverrideAction.describe(
+        "'include' pins the control in scope, 'exclude' pins it out, 'inherit' clears the override AND discards the recorded rationale (it stays in the audit trail)",
+      ),
+      reason: z
+        .string()
+        .max(2000)
+        .optional()
+        .describe("Why this control is being overridden — recorded in the audit trail (max 2000 characters)"),
+    },
+    { title: "Set Scope Override", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, scf_id, action, reason }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/scoped-controls/${scf_id}/scope-override`, {
+          action,
+          reason,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {

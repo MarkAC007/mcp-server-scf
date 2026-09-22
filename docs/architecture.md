@@ -31,7 +31,7 @@ src/
 │                         function to attach tools, starts the loop.
 ├── tools/
 │   ├── catalog.ts        8 tools — read-only SCF reference data
-│   ├── scoped-controls.ts 7 tools — per-org implementation tracking
+│   ├── scoped-controls.ts 10 tools — per-org implementation tracking
 │   ├── evidence.ts       41 tools — CRUD, batch, tasks, files, health, AI
 │   │                     assessments (per-file + windowed)
 │   ├── risk.ts           17 tools — risk register, scoring, custom risks
@@ -48,6 +48,7 @@ src/
 │   │                     9 tools — per-org SCF catalog version upgrades
 │   ├── teams.ts          11 tools — functions, teams, rosters, team assignments
 │   ├── collaboration.ts  7 tools — user assignments, comments
+│   ├── journey.ts         4 tools — guided journey, templates, attestation
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
     │                     pagination helpers, typed get/post/patch/delete,
@@ -55,7 +56,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **189 tools across 13 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
+Total: **196 tools across 14 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 

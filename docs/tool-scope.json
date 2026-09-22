@@ -1312,6 +1312,27 @@
     },
     "PUT /api/organizations/{org_id}/window-assessments/{ewa_id}/review": {
       "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/framework-scoping": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/framework-scoping/preview": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/scoped-controls/{scf_id}/scope-override": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/journey": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/journey/templates": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/journey/import": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/journey/stages/{stage_id}/attest": {
+      "verdict": "in"
     }
   }
 }

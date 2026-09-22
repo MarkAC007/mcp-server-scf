@@ -10,17 +10,21 @@ Source: [`src/tools/scoped-controls.ts`](../../src/tools/scoped-controls.ts).
 
 List controls scoped to the organization with implementation status. Filter by scope status, domain, framework, CSF function, weighting, or free-text search. Paginated.
 
-| Parameter           | Type   | Required | Description                                                 |
-| ------------------- | ------ | -------- | ----------------------------------------------------------- |
-| `org_id`            | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`  |
-| `scope_status`      | string | No       | `in_scope` (selected only), `out_of_scope`, `all` (default) |
-| `domain`            | string | No       | Filter by SCF domain (e.g., `GOV`, `AST`, `IAC`)            |
-| `framework`         | string | No       | Filter by framework mapping                                 |
-| `csf_function`      | string | No       | Filter by NIST CSF function                                 |
-| `control_weighting` | number | No       | Filter by control weighting (0–10)                          |
-| `search`            | string | No       | Search term for control ID, name, or description            |
-| `limit`             | number | No       | Number of results to return (1–200, default 50)             |
-| `offset`            | number | No       | Number of results to skip for pagination (default 0)        |
+| Parameter                | Type    | Required | Description                                                                                                                                                                                                                                |
+| ------------------------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`                 | string  | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                                                                                                                                                                 |
+| `scope_status`           | string  | No       | `in_scope` (selected only), `out_of_scope`, `all` (default)                                                                                                                                                                                |
+| `domain`                 | string  | No       | Filter by SCF domain (e.g., `GOV`, `AST`, `IAC`)                                                                                                                                                                                           |
+| `framework`              | string  | No       | Filter by framework mapping                                                                                                                                                                                                                |
+| `csf_function`           | string  | No       | Filter by NIST CSF function                                                                                                                                                                                                                |
+| `control_weighting`      | number  | No       | Filter by control weighting (0–10)                                                                                                                                                                                                         |
+| `search`                 | string  | No       | Search term for control ID, name, or description                                                                                                                                                                                           |
+| `team_id`                | string  | No       | Filter to controls this team is assigned to, accountable or consulted — get from `scf_list_teams`                                                                                                                                          |
+| `my_teams`               | boolean | No       | Controls assigned to any team the caller belongs to (default `false`); intersects with `team_id`. 'The caller' is the API key's identity — on a self-hosted instance a service account on no team, so this returns nothing; use `team_id`. |
+| `function_id`            | string  | No       | Controls assigned to any team aligned to this function — get from `scf_list_functions`                                                                                                                                                     |
+| `accountable_owner_type` | string  | No       | Accountable team's primary owner: `internal` or `external_contractor`                                                                                                                                                                      |
+| `limit`                  | number  | No       | Number of results to return (1–200, default 50)                                                                                                                                                                                            |
+| `offset`                 | number  | No       | Number of results to skip for pagination (default 0)                                                                                                                                                                                       |
 
 ---
 
@@ -121,3 +125,42 @@ Remove from scope every control mapped only to the given frameworks (destructive
 - "Scope the ISO 27001 framework for my org."
 - "Batch update all access-control controls to `in_progress`."
 - "Get the implementation status of `AST-01`."
+
+---
+
+## `scf_get_framework_scope_summary`
+
+Get framework coverage and selection state in one view (read — viewer role): which frameworks are selected and how their controls sit against the scope. Read side of scoping; changing it is elsewhere.
+
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+
+---
+
+## `scf_preview_framework_scope_change`
+
+Preview what adding or removing frameworks would do to the scope WITHOUT applying it (read — viewer role). Returns the controls that would enter or leave, so the blast radius is known beforehand.
+
+| Parameter    | Type     | Required | Description                                                |
+| ------------ | -------- | -------- | ---------------------------------------------------------- |
+| `org_id`     | string   | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+| `operation`  | string   | Yes      | `add` or `remove`                                          |
+| `frameworks` | string[] | Yes      | Framework slugs to model — get from `scf_list_frameworks`  |
+
+Run this before `scf_scope_framework` or `scf_bulk_unscope_framework`.
+
+---
+
+## `scf_set_scope_override`
+
+Force one control in or out of scope whatever its frameworks imply (write — editor+). `include`/`exclude` pin it; `inherit` clears the override back to the framework rollup. Scope only, not status.
+
+| Parameter | Type   | Required | Description                                                                      |
+| --------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                       |
+| `scf_id`  | string | Yes      | SCF control identifier in DOMAIN-NN format — NOT the UUID                        |
+| `action`  | string | Yes      | `include`, `exclude`, or `inherit` (`inherit` also discards the stored `reason`) |
+| `reason`  | string | No       | Why this control is overridden — recorded in the audit trail (≤2000 chars)       |
+
+`inherit` is not a no-op: it clears a previously set override and hands the control back to the framework rollup. It also discards the recorded `reason` — the rationale survives only in the audit trail.
