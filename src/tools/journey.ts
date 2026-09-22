@@ -38,7 +38,7 @@ export function registerJourneyTools(server: McpServer) {
 
   server.tool(
     "scf_list_journey_templates",
-    "List the journey templates this deployment ships (read — viewer role). Use the returned template_key with scf_import_journey; a self-hosted deployment may carry a different set than another.",
+    "List the journey templates this deployment ships (read — viewer role). If importing a returned template_key 404s, the file's declared key differs from its filename stem — import by the stem.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
@@ -56,7 +56,7 @@ export function registerJourneyTools(server: McpServer) {
 
   server.tool(
     "scf_import_journey",
-    "Create or REPLACE the org's journey from a template (write — editor+). Replaces any existing path, losing its attestations — check scf_get_journey first. An uploaded `template` wins over template_key.",
+    "Set or re-issue the org's journey from a template (write — ADMIN role). Merges by stage key: attestations survive; dropping an attested stage is refused (409). An uploaded `template` wins outright.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       template_key: z
@@ -98,7 +98,9 @@ export function registerJourneyTools(server: McpServer) {
           "A practitioner-authored journey artefact to upload. When present it wins over template_key entirely.",
         ),
     },
-    { title: "Import Journey", readOnlyHint: false, destructiveHint: true },
+    // Not destructive: import merges by stage key and the platform refuses (409) a
+    // revision that would drop an attested stage. The irreversible one is attest.
+    { title: "Import Journey", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {
         const client = getClient();
@@ -127,7 +129,9 @@ export function registerJourneyTools(server: McpServer) {
         .optional()
         .describe("When outstanding items are due (YYYY-MM-DD) — required when conditional is true"),
     },
-    { title: "Attest Journey Stage", readOnlyHint: false, destructiveHint: false },
+    // Irreversible: the platform exposes no un-attest route, and a second attempt
+    // on the same stage 409s. This is the permanent one, not import.
+    { title: "Attest Journey Stage", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, stage_id, ...body }) => {
       try {
         const client = getClient();

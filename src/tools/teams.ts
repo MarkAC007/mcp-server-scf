@@ -39,7 +39,8 @@ export function registerTeamTools(server: McpServer) {
         .boolean()
         .default(false)
         .describe(
-          "Only teams the caller is a member of (default false). When set, each team also carries membership_role — why it is on your list, not just that it is.",
+          "Only teams the caller is a member of (default false); each team then also carries membership_role." +
+            " 'The caller' is the API key's identity; on a self-hosted instance that is a service account on no team, so this returns nothing — use team_id instead.",
         ),
     },
     { title: "List Teams", readOnlyHint: true },

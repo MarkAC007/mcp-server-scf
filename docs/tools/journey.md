@@ -30,7 +30,9 @@ Stage IDs for `scf_attest_journey_stage` come from this call.
 
 ## `scf_list_journey_templates`
 
-List the journey templates this deployment ships (read — viewer role). Use the returned template_key with scf_import_journey; a self-hosted deployment may carry a different set than another.
+List the journey templates this deployment ships (read — viewer role). If importing a returned template_key 404s, the file's declared key differs from its filename stem — import by the stem.
+
+The platform resolves an import against a file on disk by its **filename stem**, but lists each template by the `template_key` declared inside the file. An operator who renames a template file makes the two disagree; when the listed key 404s on import, pass the stem.
 
 | Parameter | Type   | Required | Description                                                |
 | --------- | ------ | -------- | ---------------------------------------------------------- |
@@ -40,7 +42,9 @@ List the journey templates this deployment ships (read — viewer role). Use the
 
 ## `scf_import_journey`
 
-Create or REPLACE the org's journey from a template (write — editor+). Replaces any existing path, losing its attestations — check scf_get_journey first. An uploaded `template` wins over template_key.
+Set or re-issue the org's journey from a template (write — ADMIN role). Merges by stage key: attestations survive; dropping an attested stage is refused (409). An uploaded `template` wins outright.
+
+Re-issuing a revised journey is safe: stages are merged on their `key`, so an attested stage keeps its attestation, and a template that would drop an attested stage is refused with a 409 rather than silently discarding the record. This route requires the **admin** role, not editor.
 
 | Parameter           | Type    | Required | Description                                                                                           |
 | ------------------- | ------- | -------- | ----------------------------------------------------------------------------------------------------- |

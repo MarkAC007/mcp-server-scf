@@ -26,11 +26,12 @@ List the platform's business functions (read — any member): the fixed set ever
 
 List the organization's teams (read — viewer role). Archived teams are hidden unless include_inactive is set; they are kept, never deleted, so history still resolves.
 
-| Parameter          | Type    | Required | Description                                                        |
-| ------------------ | ------- | -------- | ------------------------------------------------------------------ |
-| `org_id`           | string  | Yes      | Organization ID (UUID) — get from `scf_list_organizations`         |
-| `function_id`      | string  | No       | Filter by business function (UUID) — get from `scf_list_functions` |
-| `include_inactive` | boolean | No       | Include archived teams (default `false`)                           |
+| Parameter          | Type    | Required | Description                                                                                                                                                                                                                                     |
+| ------------------ | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`           | string  | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                                                                                                                                                                      |
+| `function_id`      | string  | No       | Filter by business function (UUID) — get from `scf_list_functions`                                                                                                                                                                              |
+| `include_inactive` | boolean | No       | Include archived teams (default `false`)                                                                                                                                                                                                        |
+| `mine`             | boolean | No       | Only teams the caller is a member of (default `false`); each team then also carries `membership_role`. 'The caller' is the API key's identity — on a self-hosted instance a service account on no team, so this returns nothing; use `team_id`. |
 
 ---
 

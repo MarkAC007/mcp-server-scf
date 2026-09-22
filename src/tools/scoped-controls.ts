@@ -51,7 +51,8 @@ export function registerScopedControlTools(server: McpServer) {
         .boolean()
         .default(false)
         .describe(
-          "Filter to controls assigned to any team the caller belongs to. Intersects with team_id rather than overriding it, so asking for a team you are not on returns nothing.",
+          "Filter to controls assigned to any team the caller belongs to; intersects with team_id rather than overriding it." +
+            " 'The caller' is the API key's identity; on a self-hosted instance that is a service account on no team, so this returns nothing — use team_id instead.",
         ),
       function_id: z
         .string()
@@ -322,7 +323,7 @@ export function registerScopedControlTools(server: McpServer) {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
       action: ScopeOverrideAction.describe(
-        "'include' pins the control in scope, 'exclude' pins it out, 'inherit' clears the override",
+        "'include' pins the control in scope, 'exclude' pins it out, 'inherit' clears the override AND discards the recorded rationale (it stays in the audit trail)",
       ),
       reason: z
         .string()

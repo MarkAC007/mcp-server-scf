@@ -44,7 +44,8 @@ export function registerEvidenceTools(server: McpServer) {
         .boolean()
         .default(false)
         .describe(
-          "Filter to evidence assigned to any team the caller belongs to. Intersects with team_id rather than overriding it, so asking for a team you are not on returns nothing.",
+          "Filter to evidence assigned to any team the caller belongs to; intersects with team_id rather than overriding it." +
+            " 'The caller' is the API key's identity; on a self-hosted instance that is a service account on no team, so this returns nothing — use team_id instead.",
         ),
       function_id: z
         .string()
