@@ -12,12 +12,15 @@ updates:
     commit-message:
       prefix: "deps"
     ignore:
-      # typescript 7.x is blocked until typescript-eslint widens its peer range
-      # (8.70.0 declares typescript ">=4.8.4 <6.1.0"; #226 failed npm ci on it).
+      # typescript is capped at the bound typescript-eslint actually declares:
+      # 8.70.0 peers typescript ">=4.8.4 <6.1.0", so 6.1.0 breaks `npm ci` exactly
+      # as 7.0.2 did in #226 — and 6.0.3 -> 6.1.0 is a *minor*, which a
+      # semver-major ignore would have waved straight through into the
+      # dev-dependencies group. Pin to the peer bound, not to an update type.
       # Drop this entry once `npm view typescript-eslint peerDependencies.typescript`
-      # admits 7.x, then let Dependabot re-open the bump.
+      # admits the newer range, then let Dependabot re-open the bump.
       - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
+        versions: [">=6.1.0"]
     groups:
       # vitest and its coverage plugin pin each other exactly (peer vitest@X.Y.Z),
       # so a major of one can never install alone (#225/#228 both failed npm ci).
