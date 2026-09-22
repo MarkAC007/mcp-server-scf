@@ -14,6 +14,7 @@ import { registerEngagementTools } from "../src/tools/engagements.js";
 import { registerCatalogReconciliationTools } from "../src/tools/catalog-reconciliation.js";
 import { registerTeamTools } from "../src/tools/teams.js";
 import { registerCollaborationTools } from "../src/tools/collaboration.js";
+import { registerJourneyTools } from "../src/tools/journey.js";
 
 function makeMockServer() {
   const tool = vi.fn();
@@ -25,7 +26,7 @@ describe("tool registration", () => {
   // bump the number here and in README.md (CI will already catch the README drift).
   const cases: Array<[string, (s: McpServer) => void, number]> = [
     ["catalog", registerCatalogTools, 8],
-    ["scoped-controls", registerScopedControlTools, 7],
+    ["scoped-controls", registerScopedControlTools, 10],
     ["evidence", registerEvidenceTools, 41],
     ["risk", registerRiskTools, 17],
     ["vendors", registerVendorTools, 23],
@@ -37,6 +38,7 @@ describe("tool registration", () => {
     ["catalog-reconciliation", registerCatalogReconciliationTools, 9],
     ["teams", registerTeamTools, 11],
     ["collaboration", registerCollaborationTools, 7],
+    ["journey", registerJourneyTools, 4],
   ];
 
   for (const [name, register, expected] of cases) {
@@ -71,9 +73,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 189", () => {
+  it("total tool count equals 196", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(189);
+    expect(server.tool).toHaveBeenCalledTimes(196);
   });
 });

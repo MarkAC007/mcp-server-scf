@@ -35,13 +35,37 @@ export function registerEvidenceTools(server: McpServer) {
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().optional().describe("System UUID to filter by — obtain from scf_list_systems"),
+      team_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter to evidence this team is assigned to, accountable or consulted — obtain from scf_list_teams"),
+      my_teams: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Filter to evidence assigned to any team the caller belongs to. Intersects with team_id rather than overriding it, so asking for a team you are not on returns nothing.",
+        ),
+      function_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Filter to evidence assigned to any team aligned to this function — obtain from scf_list_functions"),
+      accountable_owner_type: z
+        .enum(["internal", "external_contractor"])
+        .optional()
+        .describe("Filter by the accountable team's primary owner: 'internal' or 'external_contractor'"),
     },
     { title: "List Evidence", readOnlyHint: true },
-    async ({ org_id, system_id }) => {
+    async ({ org_id, system_id, team_id, my_teams, function_id, accountable_owner_type }) => {
       try {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/evidence-tracking`, {
           system_id,
+          team_id,
+          my_teams,
+          function_id,
+          accountable_owner_type,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {

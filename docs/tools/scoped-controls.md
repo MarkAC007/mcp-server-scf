@@ -121,3 +121,42 @@ Remove from scope every control mapped only to the given frameworks (destructive
 - "Scope the ISO 27001 framework for my org."
 - "Batch update all access-control controls to `in_progress`."
 - "Get the implementation status of `AST-01`."
+
+---
+
+## `scf_get_framework_scope_summary`
+
+Get framework coverage and selection state in one view (read — viewer role): which frameworks are selected and how their controls sit against the scope. Read side of scoping; changing it is elsewhere.
+
+| Parameter | Type   | Required | Description                                                |
+| --------- | ------ | -------- | ---------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+
+---
+
+## `scf_preview_framework_scope_change`
+
+Preview what adding or removing frameworks would do to the scope WITHOUT applying it (read — viewer role). Returns the controls that would enter or leave, so the blast radius is known beforehand.
+
+| Parameter    | Type     | Required | Description                                                |
+| ------------ | -------- | -------- | ---------------------------------------------------------- |
+| `org_id`     | string   | Yes      | Organization ID (UUID) — get from `scf_list_organizations` |
+| `operation`  | string   | Yes      | `add` or `remove`                                          |
+| `frameworks` | string[] | Yes      | Framework slugs to model — get from `scf_list_frameworks`  |
+
+Run this before `scf_scope_framework` or `scf_bulk_unscope_framework`.
+
+---
+
+## `scf_set_scope_override`
+
+Force one control in or out of scope whatever its frameworks imply (write — editor+). `include`/`exclude` pin it; `inherit` clears the override back to the framework rollup. Scope only, not status.
+
+| Parameter | Type   | Required | Description                                                                |
+| --------- | ------ | -------- | -------------------------------------------------------------------------- |
+| `org_id`  | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                 |
+| `scf_id`  | string | Yes      | SCF control identifier in DOMAIN-NN format — NOT the UUID                  |
+| `action`  | string | Yes      | `include`, `exclude`, or `inherit`                                         |
+| `reason`  | string | No       | Why this control is overridden — recorded in the audit trail (≤2000 chars) |
+
+`inherit` is not a no-op: it clears a previously set override and hands the control back to the framework rollup.

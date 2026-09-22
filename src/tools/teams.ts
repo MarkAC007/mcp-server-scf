@@ -35,12 +35,18 @@ export function registerTeamTools(server: McpServer) {
         .optional()
         .describe("Filter by business function — obtain from scf_list_functions"),
       include_inactive: z.boolean().default(false).describe("Include archived teams (default false)"),
+      mine: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Only teams the caller is a member of (default false). When set, each team also carries membership_role — why it is on your list, not just that it is.",
+        ),
     },
     { title: "List Teams", readOnlyHint: true },
-    async ({ org_id, function_id, include_inactive }) => {
+    async ({ org_id, function_id, include_inactive, mine }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/teams`, { function_id, include_inactive });
+        const data = await client.get(`/organizations/${org_id}/teams`, { function_id, include_inactive, mine });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

@@ -46,23 +46,24 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**189 tools** across 13 domains — click through for full parameter tables and example prompts:
+**196 tools** across 14 domains — click through for full parameter tables and example prompts:
 
-| Domain                                                         | Tools | Description                                                                                                     |
-| -------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------- |
-| [Catalog](docs/tools/catalog.md)                               | 8     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives, domains and evidence definitions           |
-| [Control Scoping](docs/tools/scoped-controls.md)               | 7     | Track implementation status across an 8-state workflow; bulk scope and unscope by framework                     |
-| [Evidence](docs/tools/evidence.md)                             | 41    | Evidence tracking (single + batch), tasks, file review, health, validation, AI assessments and review queues    |
-| [Risk Management](docs/tools/risk.md)                          | 17    | 5x5 risk matrix, risk register, scoring updates, custom risks, control↔risk traceability, risk profile          |
-| [Vendor Risk (TPRM)](docs/tools/vendors.md)                    | 23    | Vendor registry, AI research and assessments, certifications, action items, compensating controls               |
-| [Organization](docs/tools/organization.md)                     | 10    | Users, orgs, audit trail, change cursor, work queues, notifications                                             |
-| [Capabilities](docs/tools/capabilities.md)                     | 19    | KSI themes, scorecards, evidence posture, systems inventory, system evidence capabilities, catalog + AI recipes |
-| [Webhooks](docs/tools/webhooks.md)                             | 6     | Webhook endpoints, delivery logs, secret rotation                                                               |
-| [Documents](docs/tools/documents.md)                           | 15    | ISMS document generation, section editing, merge resolution, lifecycle transitions, export                      |
-| [Audit Engagements](docs/tools/engagements.md)                 | 16    | Engagement workspaces, frozen scope, framework-native presentation, auditor access, structured queries          |
-| [Catalog Reconciliation](docs/tools/catalog-reconciliation.md) | 9     | Preview, decide, apply and roll back an SCF catalog version upgrade for your org                                |
-| [Teams](docs/tools/teams.md)                                   | 11    | Business functions, teams and rosters, team accountability for controls and evidence (single + batch)           |
-| [Collaboration](docs/tools/collaboration.md)                   | 7     | User assignments to controls, evidence and tasks; comment threads                                               |
+| Domain                                                         | Tools | Description                                                                                                                                                     |
+| -------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Catalog](docs/tools/catalog.md)                               | 8     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives, domains and evidence definitions                                                           |
+| [Control Scoping](docs/tools/scoped-controls.md)               | 10    | Track implementation status across an 8-state workflow; bulk scope and unscope by framework; framework coverage, scope-change preview and per-control overrides |
+| [Evidence](docs/tools/evidence.md)                             | 41    | Evidence tracking (single + batch), tasks, file review, health, validation, AI assessments and review queues                                                    |
+| [Risk Management](docs/tools/risk.md)                          | 17    | 5x5 risk matrix, risk register, scoring updates, custom risks, control↔risk traceability, risk profile                                                          |
+| [Vendor Risk (TPRM)](docs/tools/vendors.md)                    | 23    | Vendor registry, AI research and assessments, certifications, action items, compensating controls                                                               |
+| [Organization](docs/tools/organization.md)                     | 10    | Users, orgs, audit trail, change cursor, work queues, notifications                                                                                             |
+| [Capabilities](docs/tools/capabilities.md)                     | 19    | KSI themes, scorecards, evidence posture, systems inventory, system evidence capabilities, catalog + AI recipes                                                 |
+| [Webhooks](docs/tools/webhooks.md)                             | 6     | Webhook endpoints, delivery logs, secret rotation                                                                                                               |
+| [Documents](docs/tools/documents.md)                           | 15    | ISMS document generation, section editing, merge resolution, lifecycle transitions, export                                                                      |
+| [Audit Engagements](docs/tools/engagements.md)                 | 16    | Engagement workspaces, frozen scope, framework-native presentation, auditor access, structured queries                                                          |
+| [Catalog Reconciliation](docs/tools/catalog-reconciliation.md) | 9     | Preview, decide, apply and roll back an SCF catalog version upgrade for your org                                                                                |
+| [Teams](docs/tools/teams.md)                                   | 11    | Business functions, teams and rosters, team accountability for controls and evidence (single + batch)                                                           |
+| [Collaboration](docs/tools/collaboration.md)                   | 7     | User assignments to controls, evidence and tasks; comment threads                                                                                               |
+| [Guided Journey](docs/tools/journey.md)                        | 4     | The staged path an organisation walks, journey templates, import, and named stage attestation                                                                   |
 
 Which platform operations became tools, which are deferred, and which stay out on purpose is recorded in [docs/tool-scope.md](docs/tool-scope.md).
 
@@ -76,7 +77,7 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 189 tools, grouped by domain, with their Zod schemas rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 196 tools, grouped by domain, with their Zod schemas rendered as a live form.
 
 Live tool calls need your instance's URL and an API key — export `SCF_API_URL` and `SCF_API_KEY` in the same shell before launching Inspector, or set them under the "Environment Variables" tab inside the Inspector UI. Without them, you can still browse schemas and descriptions; tool calls return a configuration error.
 
@@ -114,7 +115,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
 2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
-4. Claude Desktop restarts the server and all 189 tools are available.
+4. Claude Desktop restarts the server and all 196 tools are available.
 
 To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 
