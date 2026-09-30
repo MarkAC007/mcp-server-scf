@@ -31,6 +31,7 @@ import { registerEvidenceTools } from "../src/tools/evidence.js";
 import { registerVendorTools } from "../src/tools/vendors.js";
 import { registerOrganizationTools } from "../src/tools/organization.js";
 import { registerTeamTools } from "../src/tools/teams.js";
+import { registerScopedControlTools } from "../src/tools/scoped-controls.js";
 
 type Handler = (args: Record<string, unknown>) => Promise<{ isError?: boolean; content: Array<{ text: string }> }>;
 
@@ -127,6 +128,33 @@ describe("handlers translate tool arguments into the platform's routes", () => {
       body: { type: "evidence", team_id: ID, item_ids: [ORG], is_accountable: true },
       params: undefined,
     });
+  });
+
+  it("scf_bulk_unscope_framework forwards orphan_evidence_action and omits it when unset", async () => {
+    const h = handlersOf(registerScopedControlTools).get("scf_bulk_unscope_framework")!;
+    await h({
+      org_id: ORG,
+      frameworks: ["iso_42001_2023"],
+      removal_reason: "not pursued",
+      orphan_evidence_action: "untrack",
+    });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/scoped-controls/bulk-unscope-framework`,
+      body: { frameworks: ["iso_42001_2023"], removal_reason: "not pursued", orphan_evidence_action: "untrack" },
+      params: undefined,
+    });
+    // Unset means the platform default (keep) — the key is not sent at all.
+    await h({ org_id: ORG, frameworks: ["iso_42001_2023"] });
+    expect(calls[1].body).toEqual({ frameworks: ["iso_42001_2023"], removal_reason: undefined });
+    expect(Object.keys(calls[1].body as object)).not.toContain("orphan_evidence_action");
+  });
+
+  it("scf_bulk_unscope_framework only accepts keep or untrack", () => {
+    const shape = shapeOf(registerScopedControlTools, "scf_bulk_unscope_framework");
+    expect(shape.orphan_evidence_action.safeParse("untrack").success).toBe(true);
+    expect(shape.orphan_evidence_action.safeParse(undefined).success).toBe(true);
+    expect(shape.orphan_evidence_action.safeParse("delete").success).toBe(false);
   });
 
   it("a client error becomes an errorResult, never a throw", async () => {
