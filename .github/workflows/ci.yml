@@ -60,5 +60,8 @@ jobs:
           fi
           echo "Tool count OK: $ACTUAL"
 
+      # Fails on any high/critical advisory unless it is listed with a reason
+      # and an unexpired date in .github/audit-exceptions.json; an expired
+      # entry for a still-reported advisory fails too. See scripts/audit-gate.mjs.
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        run: node scripts/audit-gate.mjs
