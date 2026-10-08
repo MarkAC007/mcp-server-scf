@@ -1,0 +1,20 @@
+[
+  {
+    "advisory": "GHSA-6qxp-vccf-f47h",
+    "package": "@modelcontextprotocol/sdk",
+    "reason": "Fixed in 1.31.0 (published 2026-09-28), which is inside the 14-day release-age cooldown until 2026-10-12. The affected code is the SDK's OAuth *client*; this server is a stdio MCP server and never acts as an OAuth client. Bump @modelcontextprotocol/sdk to >=1.31.0 on or after 2026-10-12 and remove this entry.",
+    "expires": "2026-10-14"
+  },
+  {
+    "advisory": "GHSA-68fv-2mgg-jv7q",
+    "package": "source-map-js",
+    "reason": "Fixed in 1.2.2 (published 2026-09-30), inside the 14-day release-age cooldown until 2026-10-14. Dev-only path (vitest/vite/postcss source-map handling in the test runner); not shipped in the published package or the .mcpb bundle. Refresh the lockfile on or after 2026-10-14 and remove this entry.",
+    "expires": "2026-10-14"
+  },
+  {
+    "advisory": "GHSA-86w9-cpqp-85rv",
+    "package": "node-forge",
+    "reason": "No patched node-forge release exists (every version <=1.4.0 is in the vulnerable range). Reached only through devDependency @anthropic-ai/mcpb@2.1.2, the latest release, which uses node-forge to sign .mcpb bundles; the flaw is in RSA PKCS#1 v1.5 signature *verification*, which this repository never performs. Not shipped in the published package or the .mcpb bundle. Re-check for a node-forge or @anthropic-ai/mcpb fix before this expires.",
+    "expires": "2026-12-31"
+  }
+]
