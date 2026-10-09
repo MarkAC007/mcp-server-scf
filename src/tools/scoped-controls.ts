@@ -249,7 +249,7 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_bulk_unscope_framework",
-    "Remove from scope every control mapped only to the given frameworks (destructive write — editor role). Controls shared with another in-scope framework are kept; notes and status survive.",
+    "Remove from scope every control mapped only to the given frameworks (destructive write — editor role). Shared controls, notes and status survive; orphan_evidence_action handles orphaned evidence.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       frameworks: z
@@ -257,14 +257,21 @@ export function registerScopedControlTools(server: McpServer) {
         .min(1)
         .describe("Framework slugs to remove, e.g. ['iso_27017_2015'] — obtain from scf_list_frameworks"),
       removal_reason: z.string().optional().describe("Why these controls leave scope — recorded in the audit trail"),
+      orphan_evidence_action: z
+        .enum(["keep", "untrack"])
+        .optional()
+        .describe(
+          "What to do with tracked evidence no in-scope control requires after this change: 'keep' (default) leaves tracking and tasks as they are; 'untrack' sets is_tracked=false and closes its open tasks as won't do. Evidence files are kept either way.",
+        ),
     },
     { title: "Bulk Unscope Framework", readOnlyHint: false, destructiveHint: true },
-    async ({ org_id, frameworks, removal_reason }) => {
+    async ({ org_id, frameworks, removal_reason, orphan_evidence_action }) => {
       try {
         const client = getClient();
         const data = await client.post(`/organizations/${org_id}/scoped-controls/bulk-unscope-framework`, {
           frameworks,
           removal_reason,
+          ...(orphan_evidence_action ? { orphan_evidence_action } : {}),
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
