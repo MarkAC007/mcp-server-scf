@@ -39,7 +39,19 @@ mkdir -p "$STAGING_DIR/server/build"
 echo "  · Staging server/build…"
 cp -R build/* "$STAGING_DIR/server/build/"
 
-# 4) Stripped-down package.json: keep runtime bits only.
+# 4) Production install inside staging from the repository's own lockfile, so
+#    every package is resolved and hash-verified exactly as in package-lock.json
+#    (OpenSSF Scorecard Pinned-Dependencies: `npm ci` only, no `npm install`).
+#    The full package.json is copied first because `npm ci` refuses a
+#    package.json that disagrees with the lockfile; it is replaced by the
+#    stripped runtime manifest in step 5.
+echo "  · Installing production deps into server/node_modules…"
+cp package.json package-lock.json "$STAGING_DIR/server/"
+(cd "$STAGING_DIR/server" \
+  && npm ci --omit=dev --no-audit --no-fund --ignore-scripts --silent)
+rm "$STAGING_DIR/server/package-lock.json"
+
+# 5) Stripped-down package.json: keep runtime bits only.
 #    Drop devDependencies, scripts (prepare/husky), lint-staged, etc.
 echo "  · Writing stripped server/package.json…"
 node -e "
@@ -55,14 +67,6 @@ node -e "
   };
   require('fs').writeFileSync('$STAGING_DIR/server/package.json', JSON.stringify(out, null, 2) + '\n');
 "
-
-# 5) Production install inside staging — generate a lockfile for the stripped
-#    package.json, then `npm ci` so installs are reproducible and dependency
-#    integrity is verified by hash (OpenSSF Scorecard Pinned-Dependencies).
-echo "  · Installing production deps into server/node_modules…"
-(cd "$STAGING_DIR/server" \
-  && npm install --package-lock-only --omit=dev --no-audit --no-fund --ignore-scripts --silent \
-  && npm ci --omit=dev --no-audit --no-fund --ignore-scripts --silent)
 
 # 6) Manifest: copy then sync version from package.json so the two can't drift.
 echo "  · Writing manifest.json with version ${PKG_VERSION}…"
