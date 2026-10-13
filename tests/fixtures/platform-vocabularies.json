@@ -1,6 +1,6 @@
 {
   "_comment": "Platform OpenAPI `^(a|b)$` patterns, captured verbatim, one per vocabulary in scripts/api-coverage.mjs VOCABULARIES. Refresh with: node scripts/api-coverage.mjs --spec <openapi.json> --write --platform-commit <sha>.",
-  "platform_commit": "dbdfc001",
+  "platform_commit": "ea65f985",
   "patterns": {
     "system_type": {
       "source": "components.schemas.SystemCreate.properties.system_type.pattern",
@@ -9,6 +9,34 @@
     "vendor_status": {
       "source": "components.schemas.VendorCreate.properties.status.pattern",
       "pattern": "^(prospect|active|under_review|approved|suspended|offboarded)$"
+    },
+    "system_criticality": {
+      "source": "components.schemas.SystemCreate.properties.criticality.pattern",
+      "pattern": "^(low|medium|high|critical)$"
+    },
+    "data_classification": {
+      "source": "components.schemas.SystemCreate.properties.data_classification.pattern",
+      "pattern": "^(public|internal|confidential|restricted)$"
+    },
+    "deficiency_priority": {
+      "source": "components.schemas.DeficiencyCreate.properties.priority.pattern",
+      "pattern": "^(critical|high|medium|low)$"
+    },
+    "deficiency_status": {
+      "source": "components.schemas.DeficiencyUpdate.properties.status.pattern",
+      "pattern": "^(open|in_progress|completed|cancelled)$"
+    },
+    "effectiveness_rating": {
+      "source": "components.schemas.CompensatingControlCreate.properties.effectiveness_rating.pattern",
+      "pattern": "^(full|partial|minimal)$"
+    },
+    "capability_test_type": {
+      "source": "components.schemas.CapabilityTestCreate.properties.test_type.pattern",
+      "pattern": "^(incident_response|continuity|other)$"
+    },
+    "capability_test_result": {
+      "source": "components.schemas.CapabilityTestCreate.properties.result.pattern",
+      "pattern": "^(passed|passed_with_findings|failed)$"
     }
   }
 }

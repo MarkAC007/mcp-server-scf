@@ -65,6 +65,12 @@ export function registerVendorTools(server: McpServer) {
       ),
       website: z.string().optional().describe("Vendor website URL"),
       contact_email: z.string().optional().describe("Primary contact email address"),
+      data_location: z.string().max(255).optional().describe("Where the vendor stores or processes our data"),
+      flow_down_requirements: z.string().optional().describe("Requirements passed down to the vendor by contract"),
+      shared_responsibility_note: z
+        .string()
+        .optional()
+        .describe("Who is responsible for what between us and the vendor"),
     },
     { title: "Create Vendor", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
@@ -91,6 +97,22 @@ export function registerVendorTools(server: McpServer) {
       status: VendorStatus.optional().describe(`New lifecycle status — one of: ${VENDOR_STATUSES_PROSE}`),
       website: z.string().optional().describe("New website URL"),
       contact_email: z.string().optional().describe("New primary contact email"),
+      data_location: z
+        .string()
+        .max(255)
+        .nullable()
+        .optional()
+        .describe("Where the vendor stores or processes our data; null clears"),
+      flow_down_requirements: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Requirements passed down to the vendor by contract; null clears"),
+      shared_responsibility_note: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Who is responsible for what between us and the vendor; null clears"),
     },
     { title: "Update Vendor", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, vendor_id, ...fields }) => {
@@ -503,7 +525,7 @@ export function registerVendorTools(server: McpServer) {
 
   server.tool(
     "scf_list_compensating_controls",
-    "List the compensating controls recorded against a vendor's gaps (read — viewer role): the gap, the control that offsets it, its effectiveness rating and risk-reduction notes.",
+    "List compensating controls recorded against a vendor's gaps (read — viewer): gap, offsetting control, effectiveness, notes. For the org's own controls use scf_list_org_compensating_controls.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z.string().uuid().describe("Vendor UUID — obtain from scf_list_vendors"),

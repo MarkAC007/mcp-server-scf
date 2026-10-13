@@ -20,6 +20,10 @@ const fakeClient = {
     calls.push({ method: "PATCH", path, body });
     return { ok: true };
   }),
+  put: vi.fn(async (path: string, body?: unknown) => {
+    calls.push({ method: "PUT", path, body });
+    return { ok: true };
+  }),
   delete: vi.fn(async (path: string) => {
     calls.push({ method: "DELETE", path });
     return { ok: true };
@@ -31,6 +35,10 @@ import { registerEvidenceTools } from "../src/tools/evidence.js";
 import { registerVendorTools } from "../src/tools/vendors.js";
 import { registerOrganizationTools } from "../src/tools/organization.js";
 import { registerTeamTools } from "../src/tools/teams.js";
+import { registerScopedControlTools } from "../src/tools/scoped-controls.js";
+import { registerRiskTools } from "../src/tools/risk.js";
+import { registerAssuranceTools } from "../src/tools/assurance.js";
+import { registerCapabilityTools } from "../src/tools/capabilities.js";
 
 type Handler = (args: Record<string, unknown>) => Promise<{ isError?: boolean; content: Array<{ text: string }> }>;
 
@@ -217,6 +225,255 @@ describe("evidence assurance: review-queue tier and window verdict tools (#236)"
       method: "GET",
       path: `/organizations/${ORG}/evidence/window-assessments/${ID}/versions`,
       params: undefined,
+    });
+  });
+});
+
+// PIG (scf-controls-platform #1120): routes, methods and bodies for the parity tools. Control IDs are built at
+// runtime so no literal catalogue ID appears in the source.
+describe("PIG parity tools call the platform routes they document", () => {
+  const CTRL = ["GOV", "01"].join("-");
+  const RISK = ["R", "AC", "1"].join("-");
+  const ORG_RISK = ["R", "ORG", "1"].join("-");
+  const scoped = handlersOf(registerScopedControlTools);
+  const risk = handlersOf(registerRiskTools);
+  const assurance = handlersOf(registerAssuranceTools);
+
+  it("scf_list_scoped_controls passes basis, material and sort to the paginated route", async () => {
+    await scoped.get("scf_list_scoped_controls")!({ org_id: ORG, basis: "mcr", material: true, sort: "weighting" });
+    expect(calls[0].method).toBe("GET");
+    expect(calls[0].path).toBe(`/organizations/${ORG}/scoped-controls-paginated`);
+    expect(calls[0].params).toMatchObject({ basis: "mcr", material: true, sort: "weighting" });
+  });
+
+  it("scf_set_framework_basis PUTs all three fields, an omitted one as an explicit null", async () => {
+    await scoped.get("scf_set_framework_basis")!({ org_id: ORG, framework_id: "gdpr", basis: "mcr" });
+    expect(calls[0]).toEqual({
+      method: "PUT",
+      path: `/organizations/${ORG}/framework-scoping/gdpr/basis`,
+      body: { basis: "mcr", obligation_type: null, obligation_source: null },
+    });
+  });
+
+  it.each([
+    ["scf_set_control_basis_override", "basis-override", { basis: "dsr", reason: "contract ended" }],
+    ["scf_set_target_maturity", "target-maturity", { level: "L3", reason: "board target" }],
+    ["scf_set_control_materiality", "materiality", { material: true, reason: "customer data" }],
+    ["scf_set_control_procedure", "procedure-document", { document_id: ID }],
+  ])("%s PUTs to /scoped-controls/{scf_id}/%s", async (tool, suffix, body) => {
+    await scoped.get(tool)!({ org_id: ORG, scf_id: CTRL, ...body });
+    expect(calls[0]).toEqual({
+      method: "PUT",
+      path: `/organizations/${ORG}/scoped-controls/${CTRL}/${suffix}`,
+      body: expect.objectContaining(body),
+    });
+  });
+
+  it("scf_list_risks sends status as treatment_status and the PIG acceptance filter", async () => {
+    await risk.get("scf_list_risks")!({ org_id: ORG, status: "accepted", acceptance_state: "expired", category: "AC" });
+    expect(calls[0]).toEqual({
+      method: "GET",
+      path: `/organizations/${ORG}/risk-assessments`,
+      params: {
+        treatment_status: "accepted",
+        acceptance_state: "expired",
+        risk_level: undefined,
+        category: "AC",
+      },
+    });
+  });
+
+  it("scf_accept_risk PUTs rationale and expiry to the acceptance route", async () => {
+    await risk.get("scf_accept_risk")!({ org_id: ORG, risk_code: RISK, rationale: "cost", expires_on: "2027-03-31" });
+    expect(calls[0]).toEqual({
+      method: "PUT",
+      path: `/organizations/${ORG}/risk-assessments/${RISK}/acceptance`,
+      body: { rationale: "cost", expires_on: "2027-03-31" },
+    });
+  });
+
+  it("scf_withdraw_risk_acceptance DELETEs the acceptance", async () => {
+    await risk.get("scf_withdraw_risk_acceptance")!({ org_id: ORG, risk_code: RISK });
+    expect(calls[0]).toEqual({ method: "DELETE", path: `/organizations/${ORG}/risk-assessments/${RISK}/acceptance` });
+  });
+
+  it("scf_add_custom_risk_control sends the optional document_id; scf_update_custom_risk_control PATCHes it", async () => {
+    await risk.get("scf_add_custom_risk_control")!({ org_id: ORG, risk_code: ORG_RISK, scf_id: CTRL, document_id: ID });
+    await risk.get("scf_update_custom_risk_control")!({
+      org_id: ORG,
+      risk_code: ORG_RISK,
+      scf_id: CTRL,
+      document_id: null,
+    });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/custom-risks/${ORG_RISK}/controls`,
+      body: { scf_id: CTRL, document_id: ID },
+      params: undefined,
+    });
+    expect(calls[1]).toEqual({
+      method: "PATCH",
+      path: `/organizations/${ORG}/custom-risks/${ORG_RISK}/controls/${CTRL}`,
+      body: { document_id: null },
+    });
+  });
+
+  it("scf_update_custom_risk_control requires document_id but accepts null", () => {
+    const schema = z.object(shapeOf(registerRiskTools, "scf_update_custom_risk_control"));
+    const base = { org_id: ORG, risk_code: ORG_RISK, scf_id: CTRL };
+    expect(schema.safeParse(base).success).toBe(false);
+    expect(schema.safeParse({ ...base, document_id: null }).success).toBe(true);
+  });
+
+  it.each([
+    ["scf_list_deficiencies", { open_only: true, domain: "GOV" }, "GET", "/deficiencies"],
+    ["scf_get_deficiency_summary", {}, "GET", "/deficiencies/summary"],
+    ["scf_get_deficiency", { deficiency_id: ID }, "GET", `/deficiencies/${ID}`],
+    ["scf_list_org_compensating_controls", { risk_code: "R-X" }, "GET", "/compensating-controls"],
+    ["scf_get_org_compensating_control", { cc_id: ID }, "GET", `/compensating-controls/${ID}`],
+    ["scf_delete_org_compensating_control", { cc_id: ID }, "DELETE", `/compensating-controls/${ID}`],
+    ["scf_list_control_validations", { state: "overdue" }, "GET", "/control-validations"],
+    ["scf_list_posture_snapshots", { limit: 12 }, "GET", "/posture-snapshots"],
+    ["scf_get_posture_snapshot", { period: "2026-09" }, "GET", "/posture-snapshots/2026-09"],
+    ["scf_take_posture_snapshot", {}, "POST", "/posture-snapshots"],
+    ["scf_list_capability_tests", { test_type: "continuity" }, "GET", "/capability-tests"],
+    ["scf_get_capability_test", { test_id: ID }, "GET", `/capability-tests/${ID}`],
+  ])("%s → %s on the org route", async (tool, args, method, suffix) => {
+    await assurance.get(tool)!({ org_id: ORG, ...args });
+    expect(calls[0].method).toBe(method);
+    expect(calls[0].path).toBe(`/organizations/${ORG}${suffix}`);
+  });
+
+  it("scf_create_deficiency posts the body without org_id", async () => {
+    await assurance.get("scf_create_deficiency")!({ org_id: ORG, title: "No MFA", scf_id: CTRL, priority: "high" });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/deficiencies`,
+      body: { title: "No MFA", scf_id: CTRL, priority: "high" },
+      params: undefined,
+    });
+  });
+
+  it("scf_update_deficiency PATCHes only the fields passed, nulls included", async () => {
+    await assurance.get("scf_update_deficiency")!({
+      org_id: ORG,
+      deficiency_id: ID,
+      status: "completed",
+      retest_note: "retested, passes",
+      due_date: null,
+    });
+    expect(calls[0]).toEqual({
+      method: "PATCH",
+      path: `/organizations/${ORG}/deficiencies/${ID}`,
+      body: { status: "completed", retest_note: "retested, passes", due_date: null },
+    });
+  });
+
+  it("org compensating-control create and update hit the org route, not the vendor one", async () => {
+    await assurance.get("scf_create_org_compensating_control")!({
+      org_id: ORG,
+      scf_id: CTRL,
+      gap_description: "no SSO",
+      compensating_control: "manual review",
+      risk_code: RISK,
+    });
+    await assurance.get("scf_update_org_compensating_control")!({ org_id: ORG, cc_id: ID, risk_code: null });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/compensating-controls`,
+      body: { scf_id: CTRL, gap_description: "no SSO", compensating_control: "manual review", risk_code: RISK },
+      params: undefined,
+    });
+    expect(calls[1]).toEqual({
+      method: "PATCH",
+      path: `/organizations/${ORG}/compensating-controls/${ID}`,
+      body: { risk_code: null },
+    });
+  });
+
+  it("scf_record_control_validation posts the note to the control's validation route", async () => {
+    await assurance.get("scf_record_control_validation")!({ org_id: ORG, scf_id: CTRL, note: "sampled 5 joiners" });
+    expect(calls[0]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/scoped-controls/${CTRL}/validation`,
+      body: { note: "sampled 5 joiners" },
+      params: undefined,
+    });
+  });
+
+  it("capability test create, update and add-finding send their bodies to the right routes", async () => {
+    const finding = { title: "Runbook out of date", scf_id: CTRL };
+    await assurance.get("scf_create_capability_test")!({
+      org_id: ORG,
+      test_type: "incident_response",
+      title: "Tabletop",
+      tested_on: "2026-09-30",
+      scenario: "ransomware",
+      result: "passed_with_findings",
+      outcome: "contained",
+      findings: [finding],
+    });
+    await assurance.get("scf_update_capability_test")!({ org_id: ORG, test_id: ID, result: "failed" });
+    await assurance.get("scf_add_capability_test_finding")!({ org_id: ORG, test_id: ID, ...finding });
+    expect(calls[0].path).toBe(`/organizations/${ORG}/capability-tests`);
+    expect(calls[0].body).toMatchObject({ test_type: "incident_response", findings: [finding] });
+    expect(calls[1]).toEqual({
+      method: "PATCH",
+      path: `/organizations/${ORG}/capability-tests/${ID}`,
+      body: { result: "failed" },
+    });
+    expect(calls[2]).toEqual({
+      method: "POST",
+      path: `/organizations/${ORG}/capability-tests/${ID}/findings`,
+      body: finding,
+      params: undefined,
+    });
+  });
+
+  it("capability-test findings reject unknown fields, as the platform does", () => {
+    const schema = z.object(shapeOf(registerAssuranceTools, "scf_create_capability_test"));
+    const base = {
+      org_id: ORG,
+      test_type: "other",
+      title: "t",
+      tested_on: "2026-09-30",
+      scenario: "s",
+      result: "failed",
+      outcome: "o",
+    };
+    expect(schema.safeParse({ ...base, findings: [{ title: "f" }] }).success).toBe(true);
+    expect(schema.safeParse({ ...base, findings: [{ title: "f", severity: "high" }] }).success).toBe(false);
+  });
+
+  it("scf_get_org_settings and scf_update_org_settings use the settings route; an empty update is refused locally", async () => {
+    const org = handlersOf(registerOrganizationTools);
+    await org.get("scf_get_org_settings")!({ org_id: ORG });
+    const empty = await org.get("scf_update_org_settings")!({ org_id: ORG });
+    await org.get("scf_update_org_settings")!({ org_id: ORG, maturity_targets: { GOV: "L3" }, business_size: null });
+    expect(empty.isError).toBe(true);
+    expect(calls).toEqual([
+      { method: "GET", path: `/organizations/${ORG}/settings`, params: undefined },
+      {
+        method: "PATCH",
+        path: `/organizations/${ORG}/settings`,
+        body: { business_size: null, mission_statement: undefined, maturity_targets: { GOV: "L3" } },
+      },
+    ]);
+  });
+
+  it("scf_list_systems passes the in_scope boundary filter; scf_update_system can mark a system undecided", async () => {
+    const cap = handlersOf(registerCapabilityTools);
+    await cap.get("scf_list_systems")!({ org_id: ORG, in_scope: "undecided" });
+    await cap.get("scf_update_system")!({ org_id: ORG, system_id: ID, in_scope: null, rto_hours: 4 });
+    expect(calls[0]).toEqual({
+      method: "GET",
+      path: `/organizations/${ORG}/systems`,
+      params: { vendor_id: undefined, in_scope: "undecided" },
+    });
+    expect(calls[1]).toEqual({
+      method: "PATCH",
+      path: `/organizations/${ORG}/systems/${ID}`,
+      body: { in_scope: null, rto_hours: 4 },
     });
   });
 });

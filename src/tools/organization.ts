@@ -3,6 +3,9 @@ import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
 
+// PIG R4: the organisation profile's business size, keyed like the catalogue's business_size_guidance.
+const BUSINESS_SIZES = ["micro_small", "small", "medium", "large", "enterprise"] as const;
+
 export function registerOrganizationTools(server: McpServer) {
   server.tool(
     "scf_get_current_user",
@@ -90,7 +93,7 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_org_work_queue",
-    "Get one organization's consolidated GRC work queue (read — viewer role): overdue evidence tasks, blocking controls, stale collection schedules. assigned_to_me narrows to the caller.",
+    "Get one org's GRC work queue (read — viewer): overdue evidence tasks, blocking controls (material first, then catalogue weighting), stale schedules. assigned_to_me narrows to the caller.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       assigned_to_me: z
@@ -190,7 +193,7 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_get_notifications",
-    "Get the caller's notifications: new assignments, comments, status changes, and system alerts.",
+    "Get the caller's notifications: assignments, comments, status changes and alerts, including risk_acceptance_expired (a risk) and control_validation_due (a control).",
     {
       unread_only: z.boolean().default(false).describe("Return only unread notifications (default false)"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
@@ -230,6 +233,70 @@ export function registerOrganizationTools(server: McpServer) {
         const client = getClient();
         const path = notification_id ? `/notifications/${notification_id}/read` : "/notifications/read-all";
         const data = await client.patch(path);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_org_settings",
+    "Get an organization's settings (read — viewer): profile (business_size, mission_statement), per-domain maturity_targets, name, industry, owner teams and feature switches.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+    },
+    { title: "Get Organization Settings", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/settings`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_org_settings",
+    "Update the organization profile and maturity targets (write — admin): business_size, mission_statement, maturity_targets. Partial: only passed fields change.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      business_size: z
+        .enum(BUSINESS_SIZES)
+        .nullable()
+        .optional()
+        .describe(
+          `Business size, which picks the matching row of each control's right-sizing guidance: ${BUSINESS_SIZES.join(", ")}; null clears`,
+        ),
+      mission_statement: z
+        .string()
+        .max(4000)
+        .nullable()
+        .optional()
+        .describe("Mission statement (up to 4000 chars); blank or null clears"),
+      maturity_targets: z
+        .record(z.string(), z.enum(["L0", "L1", "L2", "L3", "L4", "L5"]))
+        .optional()
+        .describe(
+          'Target maturity per SCF domain code (domain code → L0–L5), e.g. {"GOV": "L3"}. Replaces the whole map; {} clears every target. Unknown domain codes, or one code given twice in different case, are refused (422). A control\'s own target (scf_set_target_maturity) overrides its domain\'s',
+        ),
+    },
+    { title: "Update Organization Settings", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, business_size, mission_statement, maturity_targets }) => {
+      try {
+        if (business_size === undefined && mission_statement === undefined && maturity_targets === undefined) {
+          return errorResult(
+            new Error("Pass at least one of business_size, mission_statement or maturity_targets to update"),
+          );
+        }
+        const client = getClient();
+        const data = await client.patch(`/organizations/${org_id}/settings`, {
+          business_size,
+          mission_statement,
+          maturity_targets,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
