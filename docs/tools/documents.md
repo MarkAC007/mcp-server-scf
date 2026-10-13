@@ -80,6 +80,8 @@ Queue ISMS document generation for one or more generators (write — admin role)
 | `requests` | array   | Yes      | Between 1 and 40 generation requests to queue in this batch                                  |
 | `force`    | boolean | No       | Regenerate even when a document already exists for that generator and domain (default false) |
 
+Each request is `{generator, domain_id?}`. The `governance-report` generator produces the Governance Oversight Report: the figures a board needs to exercise due care (implementation and known deficiencies, change in the risk profile, what validation found and corrected, the obligations in scope, and red flags). It is not domain-scoped, and approving it records the board's review.
+
 ---
 
 ## `scf_get_document_generation_status`

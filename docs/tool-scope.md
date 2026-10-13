@@ -48,8 +48,8 @@ Bulk endpoints (`…/batch`, `bulk-scope`, `bulk-unscope`, `refresh-stale`) are 
 
 ## Where the line fell
 
-- **In:** evidence tracking single and batch, evidence tasks, file review, evidence health and frequency checks, AI-assessment review queue and decisions, windowed assessment refresh and review; bulk unscope by framework; system evidence capabilities; catalog domain and evidence definitions; risk scoring updates, control↔risk traceability, the risk profile; vendor certifications, action items and compensating controls; business functions, teams, rosters and team accountability (single and batch); user assignments and comments; notification acknowledgement; the organisation work queue.
-- **Deferred:** whole-org scope reset, hard deletes of scoped controls, systems and vendors, vendor-assessment edits, seat promotion on a team, comment edit/delete/history, assessment version history, risk-profile threshold edits, organisation settings. All rare, all reversible to add.
+- **In:** evidence tracking single and batch, evidence tasks, file review, evidence health and frequency checks, AI-assessment review queue and decisions, windowed assessment refresh and review; bulk unscope by framework; system evidence capabilities; catalog domain and evidence definitions; risk scoring updates, control↔risk traceability, the risk profile; vendor certifications, action items and compensating controls; business functions, teams, rosters and team accountability (single and batch); user assignments and comments; notification acknowledgement; the organisation work queue; the SCRMS programme record (#1120) — obligation basis, materiality, target maturity and procedure links on scoped controls, risk acceptance with an approver, standards exceptions, deficiencies, organisation compensating controls, control validation, posture snapshots, capability tests, and the organisation profile and maturity targets in settings.
+- **Deferred:** whole-org scope reset, hard deletes of scoped controls, systems and vendors, vendor-assessment edits, seat promotion on a team, comment edit/delete/history, assessment version history, risk-profile threshold edits, organisation settings beyond the profile and maturity targets (owner teams, trust-portal exposure, name, industry, engine switches). All rare, all reversible to add.
 - **Out:** platform administration, consultant workspace, provisioning and billing, OIDC, catalog import and upgrade, database and queue operations, evidence storage configuration, API-key issuance, membership and invites, organisation create/delete, logo, uploads and downloads, per-user UI preferences, the deprecated DPSIA aliases, the public trust portal.
 
 ## What the surface costs
@@ -58,14 +58,15 @@ MCP clients receive every tool definition on connect. The number below is measur
 
 <!-- PAYLOAD:START -->
 
-| Surface                       | Tools | `tools/list` bytes | ≈ tokens (4 B/token) | Description chars |
-| ----------------------------- | ----- | ------------------ | -------------------- | ----------------- |
-| v3.0.0 + audit sync (PR #212) | 129   | 142,384 (139 KiB)  | ≈ 35,600             | 20,393            |
-| v3.4.0 (PR #213)              | 187   | 218,064 (213 KiB)  | ≈ 54,500             | 29,526            |
-| PR #237 (unreleased)          | 189   | 222,664 (217 KiB)  | ≈ 55,700             | 29,950            |
-| this release (+ v0.40 align)  | 196   | 234,396 (229 KiB)  | ≈ 58,600             | 31,322            |
+| Surface                        | Tools | `tools/list` bytes | ≈ tokens (4 B/token) | Description chars |
+| ------------------------------ | ----- | ------------------ | -------------------- | ----------------- |
+| v3.0.0 + audit sync (PR #212)  | 129   | 142,384 (139 KiB)  | ≈ 35,600             | 20,393            |
+| v3.4.0 (PR #213)               | 187   | 218,064 (213 KiB)  | ≈ 54,500             | 29,526            |
+| PR #237 (unreleased)           | 189   | 222,664 (217 KiB)  | ≈ 55,700             | 29,950            |
+| v0.40 align (main `3724135`)   | 196   | 234,396 (229 KiB)  | ≈ 58,600             | 31,322            |
+| PIG parity (#1120, unreleased) | 226   | 284,868 (278 KiB)  | ≈ 71,200             | 36,452            |
 
-Measured with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`; the last two rows were re-measured 2026-09-22, the #237 row against a clean `origin/main` build (the 222,698 previously recorded was 34 bytes high). The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.5 KB for 2 — about 1.3 KB per tool. The 189 → 196 step added ≈ 11.7 KB for 7, about **1.7 KB per tool**: the first step above the historical average, because `scf_import_journey` carries a nested template schema rather than a flat parameter list. Every description stays ≤ 200 characters, but the cap is now binding (max 200, up from 199) — three of the seven new descriptions had to be cut to fit it.
+Measured with `@modelcontextprotocol/sdk` `Client.listTools()` against `build/index.js`; the last two rows were re-measured 2026-09-22, the #237 row against a clean `origin/main` build (the 222,698 previously recorded was 34 bytes high). The 129 → 187 step added ≈ 76 KB for 58 tools and the 187 → 189 step ≈ 4.5 KB for 2 — about 1.3 KB per tool. The 189 → 196 step added ≈ 11.7 KB for 7, about **1.7 KB per tool**: the first step above the historical average, because `scf_import_journey` carries a nested template schema rather than a flat parameter list. Every description stays ≤ 200 characters, but the cap is now binding (max 200, up from 199) — three of the seven new descriptions had to be cut to fit it. The 196 → 226 step (SCRMS PIG parity, scf-controls-platform #1120) added ≈ 50.5 KB for 30 tools, again about **1.7 KB per tool**: the new write tools carry their refusal rules (403/409/422) in parameter descriptions, and the capability-test tools carry a nested finding schema. Measured 2026-10-13 against `build/index.js` on this branch and a clean build of `main` at `3724135`, which reproduced the 234,396 recorded for it byte for byte; the longest description is now 199 characters.
 
 <!-- PAYLOAD:END -->
 

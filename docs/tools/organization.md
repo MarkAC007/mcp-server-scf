@@ -1,6 +1,6 @@
 # Organization & Platform tools
 
-Current user profile, organization management, membership lookups, personal work queue, field-level audit trail, and notification feed.
+Current user profile, organization management, membership lookups, organisation settings (business size, mission statement and per-domain maturity targets), personal and organisation work queues, field-level audit trail, and notification feed.
 
 Source: [`src/tools/organization.ts`](../../src/tools/organization.ts).
 
@@ -52,12 +52,12 @@ _No parameters._
 
 ## `scf_get_org_work_queue`
 
-Get one organization's consolidated GRC work queue: overdue evidence tasks, blocking controls, and stale collection schedules. `assigned_to_me` narrows to the caller's items.
+Get one org's GRC work queue (read — viewer): overdue evidence tasks, blocking controls (material first, then catalogue weighting), stale schedules. assigned_to_me narrows to the caller.
 
 | Parameter        | Type    | Required | Description                                                   |
 | ---------------- | ------- | -------- | ------------------------------------------------------------- |
-| `org_id`         | string  | yes      | Organization UUID — obtain from `scf_list_organizations`      |
-| `assigned_to_me` | boolean | no       | Only items owned by or assigned to the caller (default false) |
+| `org_id`         | string  | Yes      | Organization UUID — obtain from scf_list_organizations        |
+| `assigned_to_me` | boolean | No       | Only items owned by or assigned to the caller (default false) |
 
 Overdue evidence and stale collections are disjoint by construction: an overdue item has an open task to complete, a stale one has no task and needs one raised. `total_items` is therefore a real count.
 
@@ -102,12 +102,12 @@ Returns `{ "cursor": "<ISO timestamp or null>", "count": <int> }`. Both values a
 
 ## `scf_get_notifications`
 
-Get the caller's notifications: new assignments, comments, status changes, and system alerts.
+Get the caller's notifications: assignments, comments, status changes and alerts, including risk_acceptance_expired (a risk) and control_validation_due (a control).
 
-| Parameter     | Type    | Required | Description                                        |
-| ------------- | ------- | -------- | -------------------------------------------------- |
-| `unread_only` | boolean | No       | Only return unread notifications (default `false`) |
-| `limit`       | number  | No       | Notifications to return (1–100, default 25)        |
+| Parameter     | Type    | Required | Description                                      |
+| ------------- | ------- | -------- | ------------------------------------------------ |
+| `unread_only` | boolean | No       | Return only unread notifications (default false) |
+| `limit`       | integer | No       | Page size (1–100, default 25)                    |
 
 ---
 
@@ -124,6 +124,29 @@ Calling with neither returns an error rather than defaulting to the broader writ
 
 ----------------- | ------ | -------- | ----------------------------------------- |
 | `notification_id` | string | No | Notification UUID — omit to mark all read |
+
+---
+
+## `scf_get_org_settings`
+
+Get an organization's settings (read — viewer): profile (business_size, mission_statement), per-domain maturity_targets, name, industry, owner teams and feature switches.
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+
+---
+
+## `scf_update_org_settings`
+
+Update the organization profile and maturity targets (write — admin): business_size, mission_statement, maturity_targets. Partial: only passed fields change.
+
+| Parameter           | Type           | Required | Description                                                                                                                                                                                                                                                                                |
+| ------------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`            | string         | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                                                                                                     |
+| `business_size`     | string \| null | No       | Business size, which picks the matching row of each control's right-sizing guidance: micro_small, small, medium, large, enterprise; null clears                                                                                                                                            |
+| `mission_statement` | string \| null | No       | Mission statement (up to 4000 chars); blank or null clears                                                                                                                                                                                                                                 |
+| `maturity_targets`  | object         | No       | Target maturity per SCF domain code (domain code → L0–L5), e.g. {"GOV": "L3"}. Replaces the whole map; {} clears every target. Unknown domain codes, or one code given twice in different case, are refused (422). A control's own target (scf_set_target_maturity) overrides its domain's |
 
 ---
 

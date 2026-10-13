@@ -31,13 +31,13 @@ src/
 │                         function to attach tools, starts the loop.
 ├── tools/
 │   ├── catalog.ts        8 tools — read-only SCF reference data
-│   ├── scoped-controls.ts 10 tools — per-org implementation tracking
+│   ├── scoped-controls.ts 15 tools — per-org implementation tracking, basis, materiality
 │   ├── evidence.ts       41 tools — CRUD, batch, tasks, files, health, AI
 │   │                     assessments (per-file + windowed)
-│   ├── risk.ts           17 tools — risk register, scoring, custom risks
+│   ├── risk.ts           20 tools — risk register, scoring, acceptance, custom risks
 │   ├── vendors.ts        23 tools — TPRM, AI research, certifications,
 │   │                     action items, compensating controls
-│   ├── organization.ts  10 tools — user, orgs, audit, change cursor, work queues, notifications
+│   ├── organization.ts  12 tools — user, orgs, settings, audit, change cursor, work queues, notifications
 │   ├── capabilities.ts   19 tools — KSI themes, systems, capabilities, recipes
 │   ├── webhooks.ts       6 tools — webhook endpoints + deliveries
 │   ├── documents.ts      15 tools — ISMS doc generation, section merge
@@ -49,6 +49,8 @@ src/
 │   ├── teams.ts          11 tools — functions, teams, rosters, team assignments
 │   ├── collaboration.ts  7 tools — user assignments, comments
 │   ├── journey.ts         4 tools — guided journey, templates, attestation
+│   ├── assurance.ts      20 tools — deficiencies, org compensating controls,
+│   │                     control validation, posture snapshots, capability tests
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
     │                     pagination helpers, typed get/post/patch/delete,
@@ -56,7 +58,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **196 tools across 14 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
+Total: **226 tools across 15 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 

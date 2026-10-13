@@ -392,14 +392,14 @@ Mark an evidence collection task completed (write — editor role). Sets status 
 
 ## `scf_review_evidence_file`
 
-Approve, reject or request revision on an uploaded evidence file (write — editor role). Records the reviewer and time; notes are optional and shown with the decision.
+Approve, reject or request revision on one uploaded file (write — editor). Rejecting raises a deficiency on each in-scope control it supports. 410 where per-window review is on.
 
 | Parameter       | Type   | Required | Description                                                |
 | --------------- | ------ | -------- | ---------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization ID (UUID)                                     |
+| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations     |
 | `evidence_id`   | string | Yes      | Catalog evidence ID the file belongs to (e.g., `E-IAM-01`) |
-| `file_id`       | string | Yes      | Evidence file UUID — get from `scf_list_evidence_files`    |
-| `review_status` | string | Yes      | `approved`, `rejected`, `needs_revision`                   |
+| `file_id`       | string | Yes      | Evidence file UUID — obtain from scf_list_evidence_files   |
+| `review_status` | string | Yes      | Review decision                                            |
 | `review_notes`  | string | No       | Reviewer notes                                             |
 
 ---
@@ -481,14 +481,16 @@ Queue a fresh windowed AI assessment for every evidence item whose newest file p
 
 ## `scf_review_window_assessment`
 
-Set the acceptance review state of a windowed evidence assessment (write — editor role): `approved`, `rejected`, `needs_revision`, or `not_reviewed` to revoke a prior decision. This records what the organisation decided to do with the evidence; to confirm or override the AI's verdict itself use `scf_review_window_assessment_verdict`.
+Set a windowed assessment's acceptance review (write — editor): approved, rejected (raises a deficiency per in-scope control), needs_revision, or not_reviewed to revoke.
 
-| Parameter       | Type   | Required | Description                                                     |
-| --------------- | ------ | -------- | --------------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization ID (UUID)                                          |
-| `ewa_id`        | string | Yes      | Window assessment UUID — get from `scf_list_window_assessments` |
-| `review_status` | string | Yes      | `approved`, `rejected`, `needs_revision`, `not_reviewed`        |
-| `review_notes`  | string | No       | Reviewer notes                                                  |
+| Parameter       | Type   | Required | Description                                                      |
+| --------------- | ------ | -------- | ---------------------------------------------------------------- |
+| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations           |
+| `ewa_id`        | string | Yes      | Window assessment UUID — obtain from scf_list_window_assessments |
+| `review_status` | string | Yes      | Review state to set; not_reviewed revokes                        |
+| `review_notes`  | string | No       | Reviewer notes                                                   |
+
+This records what the organisation decided to do with the evidence; to confirm or override the AI's verdict itself use `scf_review_window_assessment_verdict`.
 
 ---
 
