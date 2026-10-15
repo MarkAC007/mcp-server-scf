@@ -42,16 +42,19 @@ Get one vendor's detail: certifications, assessments, computed risk score, and l
 
 Create a vendor in the TPRM registry (write — editor+ role). Platform auto-scores risk based on criticality and data handling.
 
-| Parameter       | Type   | Required | Description                                                                           |
-| --------------- | ------ | -------- | ------------------------------------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization ID (UUID)                                                                |
-| `name`          | string | Yes      | Vendor name                                                                           |
-| `description`   | string | No       | Vendor description                                                                    |
-| `category`      | string | No       | Category (e.g., `SaaS`, `Infrastructure`, `Consulting`)                               |
-| `criticality`   | string | No       | `critical`, `high`, `medium` (default), `low`                                         |
-| `status`        | string | No       | `prospect` (default), `active`, `under_review`, `approved`, `suspended`, `offboarded` |
-| `website`       | string | No       | Vendor website URL                                                                    |
-| `contact_email` | string | No       | Primary contact email                                                                 |
+| Parameter                    | Type   | Required | Description                                                                                                   |
+| ---------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `org_id`                     | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                        |
+| `name`                       | string | Yes      | Vendor legal or trading name (required)                                                                       |
+| `description`                | string | No       | Short free-text description of the vendor                                                                     |
+| `category`                   | string | No       | Category label (e.g., 'SaaS', 'Infrastructure', 'Consulting')                                                 |
+| `criticality`                | string | No       | Business criticality tier (default 'medium')                                                                  |
+| `status`                     | string | No       | Lifecycle status (default prospect) — one of: prospect, active, under_review, approved, suspended, offboarded |
+| `website`                    | string | No       | Vendor website URL                                                                                            |
+| `contact_email`              | string | No       | Primary contact email address                                                                                 |
+| `data_location`              | string | No       | Where the vendor stores or processes our data                                                                 |
+| `flow_down_requirements`     | string | No       | Requirements passed down to the vendor by contract                                                            |
+| `shared_responsibility_note` | string | No       | Who is responsible for what between us and the vendor                                                         |
 
 ---
 
@@ -59,17 +62,20 @@ Create a vendor in the TPRM registry (write — editor+ role). Platform auto-sco
 
 Update an existing vendor record (write — editor+ role). Only provided fields are applied.
 
-| Parameter       | Type   | Required | Description                              |
-| --------------- | ------ | -------- | ---------------------------------------- |
-| `org_id`        | string | Yes      | Organization ID (UUID)                   |
-| `vendor_id`     | string | Yes      | Vendor ID — get from `scf_list_vendors`  |
-| `name`          | string | No       | Vendor name                              |
-| `description`   | string | No       | Vendor description                       |
-| `category`      | string | No       | Category                                 |
-| `criticality`   | string | No       | `critical`, `high`, `medium`, `low`      |
-| `status`        | string | No       | Same 6-value enum as `scf_create_vendor` |
-| `website`       | string | No       | Vendor website URL                       |
-| `contact_email` | string | No       | Primary contact email                    |
+| Parameter                    | Type           | Required | Description                                                                                    |
+| ---------------------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `org_id`                     | string         | Yes      | Organization UUID — obtain from scf_list_organizations                                         |
+| `vendor_id`                  | string         | Yes      | Vendor UUID — obtain from scf_list_vendors                                                     |
+| `name`                       | string         | No       | New vendor name                                                                                |
+| `description`                | string         | No       | New free-text description                                                                      |
+| `category`                   | string         | No       | New category label                                                                             |
+| `criticality`                | string         | No       | New criticality tier                                                                           |
+| `status`                     | string         | No       | New lifecycle status — one of: prospect, active, under_review, approved, suspended, offboarded |
+| `website`                    | string         | No       | New website URL                                                                                |
+| `contact_email`              | string         | No       | New primary contact email                                                                      |
+| `data_location`              | string \| null | No       | Where the vendor stores or processes our data; null clears                                     |
+| `flow_down_requirements`     | string \| null | No       | Requirements passed down to the vendor by contract; null clears                                |
+| `shared_responsibility_note` | string \| null | No       | Who is responsible for what between us and the vendor; null clears                             |
 
 ---
 
@@ -287,12 +293,12 @@ Delete a vendor action item (destructive write — editor role). Prefer `status=
 
 ## `scf_list_compensating_controls`
 
-List the compensating controls recorded against a vendor's gaps (read — viewer role): the gap, the control that offsets it, its effectiveness rating and risk-reduction notes.
+List compensating controls recorded against a vendor's gaps (read — viewer): gap, offsetting control, effectiveness, notes. For the org's own controls use scf_list_org_compensating_controls.
 
-| Parameter   | Type   | Required | Description                               |
-| ----------- | ------ | -------- | ----------------------------------------- |
-| `org_id`    | string | Yes      | Organization ID (UUID)                    |
-| `vendor_id` | string | Yes      | Vendor UUID — get from `scf_list_vendors` |
+| Parameter   | Type   | Required | Description                                            |
+| ----------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`    | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+| `vendor_id` | string | Yes      | Vendor UUID — obtain from scf_list_vendors             |
 
 ---
 

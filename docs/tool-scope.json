@@ -1,5 +1,5 @@
 {
-  "$comment": "Verdict map for scripts/api-coverage.mjs. Key = METHOD + OpenAPI path. verdict: in | deferred | out. Reasons for out: auth-unreachable, identity-admin, infra-admin, binary-transport, ui-only, deprecated, covered, public. Every deferred row's note names its promotion trigger. Policy: docs/tool-scope.md.",
+  "$comment": "Verdict map for scripts/api-coverage.mjs. Key = METHOD + OpenAPI path. verdict: in | deferred | out. Reasons for out: auth-unreachable, identity-admin, infra-admin, binary-transport, ui-only, deprecated, covered, public, destructive. Every deferred row's note names its promotion trigger. Policy: docs/tool-scope.md.",
   "reasons": {
     "auth-unreachable": "An org-scoped user API key cannot reach it (platform-admin session, consultant relationship, OIDC, HMAC, Stripe).",
     "identity-admin": "Membership, invites, API keys, organisation lifecycle — access decisions a person makes in the UI.",
@@ -8,7 +8,8 @@
     "ui-only": "Exists to serve a web page: preferences, page-load exports, form feedback, computed scores the UI assembles.",
     "deprecated": "The platform marks it a deprecated alias.",
     "covered": "An existing tool already serves the need through another route or parameter.",
-    "public": "Unauthenticated; not organisation work."
+    "public": "Unauthenticated; not organisation work.",
+    "destructive": "Deletes or withdraws a record; removal stays a human decision in the UI."
   },
   "operations": {
     "DELETE /api/admin/integrations/{name}": {
@@ -642,8 +643,8 @@
       "verdict": "in"
     },
     "GET /api/organizations/{org_id}/settings": {
-      "verdict": "deferred",
-      "note": "Owner-team settings read. Promote when team accountability defaults are agent-managed."
+      "verdict": "in",
+      "note": "Promoted for PIG R4/R5 (scf-controls-platform #1120): the organisation profile and per-domain maturity targets live here."
     },
     "GET /api/organizations/{org_id}/systems": {
       "verdict": "in"
@@ -899,8 +900,8 @@
       "verdict": "in"
     },
     "PATCH /api/organizations/{org_id}/settings": {
-      "verdict": "deferred",
-      "note": "Owner-team defaults, trust-portal exposure, name and industry in one body. Promote with the settings read when an agent workflow manages accountability defaults, splitting trust-portal fields out."
+      "verdict": "in",
+      "note": "Promoted for PIG R4/R5 (scf-controls-platform #1120). scf_update_org_settings exposes only business_size, mission_statement and maturity_targets; owner teams, trust-portal exposure, name, industry and the engine switches stay out of the tool body."
     },
     "PATCH /api/organizations/{org_id}/systems/{system_id}": {
       "verdict": "in"
@@ -1332,6 +1333,94 @@
       "verdict": "in"
     },
     "POST /api/organizations/{org_id}/journey/stages/{stage_id}/attest": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/framework-scoping/{framework_id}/basis": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/scoped-controls/{scf_id}/basis-override": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/scoped-controls/{scf_id}/target-maturity": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/scoped-controls/{scf_id}/materiality": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/scoped-controls/{scf_id}/procedure-document": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/risk-assessments/{risk_code}/acceptance": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/risk-assessments/{risk_code}/acceptance": {
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Withdraws an approved risk acceptance; a person does this in the UI. scf_accept_risk still records and renews acceptance"
+    },
+    "PATCH /api/organizations/{org_id}/custom-risks/{risk_code}/controls/{scf_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/deficiencies": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/deficiencies/summary": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/deficiencies/{deficiency_id}": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/deficiencies": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/deficiencies/{deficiency_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/compensating-controls": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/compensating-controls/{cc_id}": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/compensating-controls": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/compensating-controls/{cc_id}": {
+      "verdict": "in"
+    },
+    "DELETE /api/organizations/{org_id}/compensating-controls/{cc_id}": {
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Removes an organisation compensating control; retire it in the UI. scf_update_org_compensating_control covers edits"
+    },
+    "POST /api/organizations/{org_id}/scoped-controls/{scf_id}/validation": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/control-validations": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/posture-snapshots": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/posture-snapshots/{period}": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/posture-snapshots": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-tests": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/capability-tests/{test_id}": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/capability-tests": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/capability-tests/{test_id}": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/capability-tests/{test_id}/findings": {
       "verdict": "in"
     }
   }

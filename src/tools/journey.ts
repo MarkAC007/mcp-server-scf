@@ -14,7 +14,24 @@ const StageSpec = z.object({
   precondition_spec: z
     .array(z.record(z.string(), z.unknown()))
     .optional()
-    .describe("Machine-checked preconditions evaluated for display only — they never advance a stage on their own"),
+    .describe(
+      "Machine-checked preconditions evaluated for display only — they never advance a stage on their own. " +
+        "Each entry is {type, label?, ...params}; an unknown type or a parameter the type does not take reads as " +
+        "'cannot evaluate', never as met. Types: frameworks_scoped(min_count); controls_with_decision, " +
+        "controls_with_owner(min_fraction, domains, scf_ids); controls_at_status(statuses, min_fraction, domains, scf_ids); " +
+        "controls_at_risk_max(max_count, domains, scf_ids); documents_approved(min_count, generator e.g. 'soa' or " +
+        "'<generator>:<domain>' such as 'policy:GOV', within_days 1–3660 = approved in the last N days); evidence_items_tracked(min_count); evidence_files_uploaded(min_count); " +
+        "evidence_upload_spread_days(min_days, default 30); engagement_exists; frameworks_with_basis(basis mcr|dsr " +
+        "required, min_count); controls_with_basis(basis?, min_fraction, domains, scf_ids); " +
+        "systems_with_criticality(min_fraction); controls_with_target, controls_at_target(min_fraction, domains, " +
+        "scf_ids); material_controls_at_status(statuses required, min_fraction, domains, scf_ids); " +
+        "risks_accepted_without_approver_max(max_count, default 0); open_deficiencies_max, " +
+        "material_deficiencies_max(max_count default 0, domains); controls_validated_within_cadence(min_fraction, " +
+        "domains, scf_ids); capability_tests_within_days(days 1–3660 required, min_count default 1, test_types: " +
+        "incident_response|continuity|other). scf_ids and domains apply only where listed; an unknown control ID or " +
+        'domain code is refused at upload (422). Example: {"type": "documents_approved", "generator": "soa"}. ' +
+        "Full table: docs/tools/journey.md",
+    ),
 });
 
 export function registerJourneyTools(server: McpServer) {
