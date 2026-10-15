@@ -110,7 +110,11 @@ export function registerDocumentTools(server: McpServer) {
       requests: z
         .array(
           z.object({
-            generator: z.string().describe("Generator name from scf_list_document_generators"),
+            generator: z
+              .string()
+              .describe(
+                "Generator name from scf_list_document_generators, e.g. 'soa' or 'governance-report' (the Governance Oversight Report for board due-care review; not domain-scoped)",
+              ),
             domain_id: z
               .string()
               .optional()

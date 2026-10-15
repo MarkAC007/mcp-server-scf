@@ -155,6 +155,57 @@ const VOCABULARIES = [
     file: "src/lib/vendor-statuses.ts",
     constName: "VENDOR_STATUSES",
   },
+  // PIG (scf-controls-platform #1120): system boundary record (R4), deficiencies (R8), organisation
+  // compensating controls (R9) and capability tests (R11).
+  {
+    key: "system_criticality",
+    schema: "SystemCreate",
+    property: "criticality",
+    file: "src/lib/system-ratings.ts",
+    constName: "SYSTEM_CRITICALITIES",
+  },
+  {
+    key: "data_classification",
+    schema: "SystemCreate",
+    property: "data_classification",
+    file: "src/lib/system-ratings.ts",
+    constName: "DATA_CLASSIFICATIONS",
+  },
+  {
+    key: "deficiency_priority",
+    schema: "DeficiencyCreate",
+    property: "priority",
+    file: "src/lib/deficiencies.ts",
+    constName: "DEFICIENCY_PRIORITIES",
+  },
+  {
+    key: "deficiency_status",
+    schema: "DeficiencyUpdate",
+    property: "status",
+    file: "src/lib/deficiencies.ts",
+    constName: "DEFICIENCY_STATUSES",
+  },
+  {
+    key: "effectiveness_rating",
+    schema: "CompensatingControlCreate",
+    property: "effectiveness_rating",
+    file: "src/lib/effectiveness-ratings.ts",
+    constName: "EFFECTIVENESS_RATINGS",
+  },
+  {
+    key: "capability_test_type",
+    schema: "CapabilityTestCreate",
+    property: "test_type",
+    file: "src/lib/capability-tests.ts",
+    constName: "CAPABILITY_TEST_TYPES",
+  },
+  {
+    key: "capability_test_result",
+    schema: "CapabilityTestCreate",
+    property: "result",
+    file: "src/lib/capability-tests.ts",
+    constName: "CAPABILITY_TEST_RESULTS",
+  },
 ];
 {
   const fixturePath = join(ROOT, "tests", "fixtures", "platform-vocabularies.json");

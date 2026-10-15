@@ -868,7 +868,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_review_evidence_file",
-    "Approve, reject or request revision on one uploaded file (write — editor role). Returns 410 where per-window review is enabled — use scf_review_window_assessment there.",
+    "Approve, reject or request revision on one uploaded file (write — editor). Rejecting raises a deficiency on each in-scope control it supports. 410 where per-window review is on.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Catalog evidence ID the file belongs to, e.g. E-IAM-01"),
@@ -1043,7 +1043,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_review_window_assessment",
-    "Set the acceptance review of a windowed assessment (write — editor role): approved, rejected, needs_revision, or not_reviewed to revoke. Verdict itself: scf_review_window_assessment_verdict.",
+    "Set a windowed assessment's acceptance review (write — editor): approved, rejected (raises a deficiency per in-scope control), needs_revision, or not_reviewed to revoke.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       ewa_id: z.string().uuid().describe("Window assessment UUID — obtain from scf_list_window_assessments"),
