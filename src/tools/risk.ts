@@ -454,25 +454,6 @@ export function registerRiskTools(server: McpServer) {
   );
 
   server.tool(
-    "scf_withdraw_risk_acceptance",
-    "Withdraw a risk's acceptance (write — admin): clears the approver, rationale and expiry and returns the risk to 'analysed'. 400 if the risk is not accepted.",
-    {
-      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      risk_code: z.string().describe("Risk code of an accepted risk — obtain from scf_list_risks"),
-    },
-    { title: "Withdraw Risk Acceptance", readOnlyHint: false, destructiveHint: true },
-    async ({ org_id, risk_code }) => {
-      try {
-        const client = getClient();
-        const data = await client.delete(`/organizations/${org_id}/risk-assessments/${risk_code}/acceptance`);
-        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
-      } catch (error) {
-        return errorResult(error);
-      }
-    },
-  );
-
-  server.tool(
     "scf_update_custom_risk_control",
     "Set or clear the standard's document on a custom risk's control link (write — editor). A changed document clears an accepted exception's approval.",
     {

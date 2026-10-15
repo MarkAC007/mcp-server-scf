@@ -4,10 +4,10 @@ The records an organisation keeps to show its controls work and that it is exerc
 
 Source: [`src/tools/assurance.ts`](../../src/tools/assurance.ts).
 
-The 20 tools split into four concerns:
+The 19 tools split into four concerns:
 
 1. **Deficiencies** — `scf_list_deficiencies`, `scf_get_deficiency_summary`, `scf_get_deficiency`, `scf_create_deficiency`, `scf_update_deficiency`
-2. **Organisation compensating controls** — `scf_list_org_compensating_controls`, `scf_get_org_compensating_control`, `scf_create_org_compensating_control`, `scf_update_org_compensating_control`, `scf_delete_org_compensating_control`
+2. **Organisation compensating controls** — `scf_list_org_compensating_controls`, `scf_get_org_compensating_control`, `scf_create_org_compensating_control`, `scf_update_org_compensating_control`
 3. **Due care** — `scf_record_control_validation`, `scf_list_control_validations`, `scf_list_posture_snapshots`, `scf_get_posture_snapshot`, `scf_take_posture_snapshot`
 4. **Capability tests** — `scf_list_capability_tests`, `scf_get_capability_test`, `scf_create_capability_test`, `scf_update_capability_test`, `scf_add_capability_test_finding`
 
@@ -149,17 +149,6 @@ Update an organisation compensating control (write — editor). Only passed fiel
 | `effectiveness_rating` | string         | No       | Effectiveness: full, partial, minimal (cannot be cleared)                                           |
 | `risk_reduction_notes` | string \| null | No       | Risk reduction notes, or null to clear                                                              |
 | `risk_code`            | string \| null | No       | Justifying accepted risk, re-checked as on create; null clears it, which a material control refuses |
-
----
-
-## `scf_delete_org_compensating_control`
-
-Withdraw an organisation compensating control (write — editor). The audit log keeps what it said.
-
-| Parameter | Type   | Required | Description                                                                |
-| --------- | ------ | -------- | -------------------------------------------------------------------------- |
-| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations                     |
-| `cc_id`   | string | Yes      | Compensating control UUID — obtain from scf_list_org_compensating_controls |
 
 ---
 

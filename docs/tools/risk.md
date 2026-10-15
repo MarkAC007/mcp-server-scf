@@ -4,10 +4,10 @@
 
 Source: [`src/tools/risk.ts`](../../src/tools/risk.ts).
 
-The 20 tools split into five concerns:
+The 19 tools split into five concerns:
 
 1. **Risk register** — `scf_list_risks`, `scf_get_risk`, `scf_create_risk`, `scf_update_risk_assessment`, `scf_delete_risk_assessment`, `scf_get_risk_matrix`, `scf_get_risk_summary`, `scf_get_risk_profile`
-2. **Risk acceptance** — `scf_accept_risk`, `scf_withdraw_risk_acceptance`
+2. **Risk acceptance** — `scf_accept_risk`
 3. **Custom risk definitions** — `scf_list_custom_risks`, `scf_create_custom_risk`, `scf_update_custom_risk`, `scf_delete_custom_risk`
 4. **Custom risk control mappings and standards exceptions** — `scf_list_custom_risk_controls`, `scf_add_custom_risk_control`, `scf_update_custom_risk_control`, `scf_remove_custom_risk_control`
 5. **Risk ↔ control traceability** — `scf_get_risks_for_control`, `scf_get_controls_for_risk`
@@ -238,17 +238,6 @@ Accept a risk (write — admin): records you as approver, now, the rationale and
 | `risk_code`  | string | Yes      | Risk code — catalog R-XX-N or custom R-ORG-N — obtain from scf_list_risks or scf_list_custom_risks |
 | `rationale`  | string | Yes      | Why the risk is accepted (required, non-blank; stored trimmed). Blank is refused                   |
 | `expires_on` | string | Yes      | Date the acceptance lapses (YYYY-MM-DD); must be after today (400 otherwise)                       |
-
----
-
-## `scf_withdraw_risk_acceptance`
-
-Withdraw a risk's acceptance (write — admin): clears the approver, rationale and expiry and returns the risk to 'analysed'. 400 if the risk is not accepted.
-
-| Parameter   | Type   | Required | Description                                                |
-| ----------- | ------ | -------- | ---------------------------------------------------------- |
-| `org_id`    | string | Yes      | Organization UUID — obtain from scf_list_organizations     |
-| `risk_code` | string | Yes      | Risk code of an accepted risk — obtain from scf_list_risks |
 
 ---
 

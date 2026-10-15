@@ -322,25 +322,6 @@ export function registerAssuranceTools(server: McpServer) {
     },
   );
 
-  server.tool(
-    "scf_delete_org_compensating_control",
-    "Withdraw an organisation compensating control (write — editor). The audit log keeps what it said.",
-    {
-      org_id: OrgId,
-      cc_id: z.string().uuid().describe("Compensating control UUID — obtain from scf_list_org_compensating_controls"),
-    },
-    { title: "Delete Org Compensating Control", readOnlyHint: false, destructiveHint: true },
-    async ({ org_id, cc_id }) => {
-      try {
-        const client = getClient();
-        const data = await client.delete(`/organizations/${org_id}/compensating-controls/${cc_id}`);
-        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
-      } catch (error) {
-        return errorResult(error);
-      }
-    },
-  );
-
   // ---------------------------------------------------------------------------
   // Due care (PIG R10): control validation and posture snapshots
   // ---------------------------------------------------------------------------

@@ -292,11 +292,6 @@ describe("PIG parity tools call the platform routes they document", () => {
     });
   });
 
-  it("scf_withdraw_risk_acceptance DELETEs the acceptance", async () => {
-    await risk.get("scf_withdraw_risk_acceptance")!({ org_id: ORG, risk_code: RISK });
-    expect(calls[0]).toEqual({ method: "DELETE", path: `/organizations/${ORG}/risk-assessments/${RISK}/acceptance` });
-  });
-
   it("scf_add_custom_risk_control sends the optional document_id; scf_update_custom_risk_control PATCHes it", async () => {
     await risk.get("scf_add_custom_risk_control")!({ org_id: ORG, risk_code: ORG_RISK, scf_id: CTRL, document_id: ID });
     await risk.get("scf_update_custom_risk_control")!({
@@ -331,7 +326,6 @@ describe("PIG parity tools call the platform routes they document", () => {
     ["scf_get_deficiency", { deficiency_id: ID }, "GET", `/deficiencies/${ID}`],
     ["scf_list_org_compensating_controls", { risk_code: "R-X" }, "GET", "/compensating-controls"],
     ["scf_get_org_compensating_control", { cc_id: ID }, "GET", `/compensating-controls/${ID}`],
-    ["scf_delete_org_compensating_control", { cc_id: ID }, "DELETE", `/compensating-controls/${ID}`],
     ["scf_list_control_validations", { state: "overdue" }, "GET", "/control-validations"],
     ["scf_list_posture_snapshots", { limit: 12 }, "GET", "/posture-snapshots"],
     ["scf_get_posture_snapshot", { period: "2026-09" }, "GET", "/posture-snapshots/2026-09"],

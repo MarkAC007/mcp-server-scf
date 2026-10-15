@@ -29,7 +29,7 @@ describe("tool registration", () => {
     ["catalog", registerCatalogTools, 8],
     ["scoped-controls", registerScopedControlTools, 15],
     ["evidence", registerEvidenceTools, 41],
-    ["risk", registerRiskTools, 20],
+    ["risk", registerRiskTools, 19],
     ["vendors", registerVendorTools, 23],
     ["organization", registerOrganizationTools, 12],
     ["capabilities", registerCapabilityTools, 19],
@@ -40,7 +40,7 @@ describe("tool registration", () => {
     ["teams", registerTeamTools, 11],
     ["collaboration", registerCollaborationTools, 7],
     ["journey", registerJourneyTools, 4],
-    ["assurance", registerAssuranceTools, 20],
+    ["assurance", registerAssuranceTools, 19],
   ];
 
   for (const [name, register, expected] of cases) {
@@ -75,9 +75,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 226", () => {
+  it("total tool count equals 224", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(226);
+    expect(server.tool).toHaveBeenCalledTimes(224);
   });
 });

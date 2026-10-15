@@ -1,5 +1,5 @@
 {
-  "$comment": "Verdict map for scripts/api-coverage.mjs. Key = METHOD + OpenAPI path. verdict: in | deferred | out. Reasons for out: auth-unreachable, identity-admin, infra-admin, binary-transport, ui-only, deprecated, covered, public. Every deferred row's note names its promotion trigger. Policy: docs/tool-scope.md.",
+  "$comment": "Verdict map for scripts/api-coverage.mjs. Key = METHOD + OpenAPI path. verdict: in | deferred | out. Reasons for out: auth-unreachable, identity-admin, infra-admin, binary-transport, ui-only, deprecated, covered, public, destructive. Every deferred row's note names its promotion trigger. Policy: docs/tool-scope.md.",
   "reasons": {
     "auth-unreachable": "An org-scoped user API key cannot reach it (platform-admin session, consultant relationship, OIDC, HMAC, Stripe).",
     "identity-admin": "Membership, invites, API keys, organisation lifecycle — access decisions a person makes in the UI.",
@@ -8,7 +8,8 @@
     "ui-only": "Exists to serve a web page: preferences, page-load exports, form feedback, computed scores the UI assembles.",
     "deprecated": "The platform marks it a deprecated alias.",
     "covered": "An existing tool already serves the need through another route or parameter.",
-    "public": "Unauthenticated; not organisation work."
+    "public": "Unauthenticated; not organisation work.",
+    "destructive": "Deletes or withdraws a record; removal stays a human decision in the UI."
   },
   "operations": {
     "DELETE /api/admin/integrations/{name}": {
@@ -1353,7 +1354,9 @@
       "verdict": "in"
     },
     "DELETE /api/organizations/{org_id}/risk-assessments/{risk_code}/acceptance": {
-      "verdict": "in"
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Withdraws an approved risk acceptance; a person does this in the UI. scf_accept_risk still records and renews acceptance"
     },
     "PATCH /api/organizations/{org_id}/custom-risks/{risk_code}/controls/{scf_id}": {
       "verdict": "in"
@@ -1386,7 +1389,9 @@
       "verdict": "in"
     },
     "DELETE /api/organizations/{org_id}/compensating-controls/{cc_id}": {
-      "verdict": "in"
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Removes an organisation compensating control; retire it in the UI. scf_update_org_compensating_control covers edits"
     },
     "POST /api/organizations/{org_id}/scoped-controls/{scf_id}/validation": {
       "verdict": "in"
