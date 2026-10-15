@@ -3,24 +3,39 @@ import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
 
+const TreatmentStatus = z.enum(["identified", "analysed", "treating", "treated", "accepted", "monitoring"]);
+
+// PIG R7: the approval state of an accepted risk. Null on every other risk.
+const AcceptanceState = z.enum(["approved", "expired", "unapproved"]);
+
 export function registerRiskTools(server: McpServer) {
   server.tool(
     "scf_list_risks",
-    "List risk assessments in the organization's risk register. Returns each risk's likelihood, impact, treatment status, and linked controls.",
+    "List the whole risk register (ordered by risk code): scores, treatment status and any acceptance (accepted_by, accepted_at, rationale, expiry, acceptance_state). Filter by status, level, category.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      status: z
-        .string()
+      status: TreatmentStatus.optional().describe(
+        "Filter by treatment status: identified, analysed, treating, treated, accepted or monitoring (sent as the platform's treatment_status)",
+      ),
+      acceptance_state: AcceptanceState.optional().describe(
+        "Accepted risks only, by their approval: 'approved' (in force), 'expired' (past acceptance_expires_on) or 'unapproved' (accepted with no approval recorded)",
+      ),
+      risk_level: z
+        .enum(["low", "medium", "high", "critical"])
         .optional()
-        .describe("Filter by treatment status (e.g., 'mitigate', 'accept', 'transfer', 'avoid')"),
-      page: z.number().int().min(1).default(1).describe("1-indexed page number (default 1)"),
-      per_page: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
+        .describe("Filter by inherent risk level, banded by the org's risk profile"),
+      category: z.string().optional().describe("Filter by catalog risk category code, e.g. 'AC' matches R-AC-N"),
     },
     { title: "List Risks", readOnlyHint: true },
-    async ({ org_id, status, page, per_page }) => {
+    async ({ org_id, status, acceptance_state, risk_level, category }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/risk-assessments`, { status, page, per_page });
+        const data = await client.get(`/organizations/${org_id}/risk-assessments`, {
+          treatment_status: status,
+          acceptance_state,
+          risk_level,
+          category,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -30,7 +45,7 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_get_risk",
-    "Get one risk assessment in detail: likelihood, inherent and residual impact scores, treatment plan, owner, and review date.",
+    "Get one risk assessment: inherent and residual scores, treatment plan, owner, review date, and any acceptance (accepted_by, accepted_at, rationale, expires_on, acceptance_state).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       risk_id: z.string().describe("Risk assessment ID — obtain from scf_list_risks"),
@@ -57,10 +72,7 @@ export function registerRiskTools(server: McpServer) {
       likelihood: z.number().int().min(1).max(5).describe("Inherent likelihood on a 1–5 scale"),
       impact: z.number().int().min(1).max(5).describe("Inherent impact on a 1–5 scale"),
       owner: z.string().optional().describe("Name or identifier of the risk owner"),
-      treatment_status: z
-        .enum(["identified", "analysed", "treating", "treated", "accepted", "monitoring"])
-        .optional()
-        .describe("Treatment workflow status (default identified)"),
+      treatment_status: TreatmentStatus.optional().describe("Treatment workflow status (default identified)"),
       control_id: z
         .string()
         .optional()
@@ -213,7 +225,7 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_list_custom_risk_controls",
-    "List controls linked to a custom risk. Returns `catalog_control_ids` plus `scoped_controls` with implementation status — same shape as the built-in controls-for-risk endpoint.",
+    "List controls linked to a custom risk: catalog_control_ids, links (scf_id + document_id of the standard it is an exception against) and scoped_controls with implementation status.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       risk_code: z
@@ -234,19 +246,29 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_add_custom_risk_control",
-    "Link a scoped control to a custom risk (write — editor+ role). The control must already be scoped (in-scope) for this organization.",
+    "Link a control to a custom risk (write — editor+), optionally with the document whose standard it is an exception against. Changing an accepted exception's links clears its approval.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       risk_code: z
         .string()
         .describe("Custom risk code in R-ORG-N format (e.g., 'R-ORG-1') — obtain from scf_list_custom_risks"),
       scf_id: z.string().describe("SCF control ID to link (e.g., 'AST-01') — obtain from scf_list_scoped_controls"),
+      document_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "Organisation document that sets the standard this risk is an exception against — obtain from scf_list_documents (404 if not this org's). A link with a document makes the custom risk a standards exception",
+        ),
     },
     { title: "Add Custom Risk Control", readOnlyHint: false, destructiveHint: false },
-    async ({ org_id, risk_code, scf_id }) => {
+    async ({ org_id, risk_code, scf_id, document_id }) => {
       try {
         const client = getClient();
-        const data = await client.post(`/organizations/${org_id}/custom-risks/${risk_code}/controls`, { scf_id });
+        const data = await client.post(`/organizations/${org_id}/custom-risks/${risk_code}/controls`, {
+          scf_id,
+          document_id,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -256,7 +278,7 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_remove_custom_risk_control",
-    "Unlink a scoped control from a custom risk (write — editor+ role). The control and risk both remain; only the mapping is removed.",
+    "Unlink a control from a custom risk (write — editor+ role). The control and risk both remain; only the mapping is removed. Unlinking clears an accepted exception's approval.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       risk_code: z
@@ -284,7 +306,7 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_update_risk_assessment",
-    "Update a scored risk by its code (write — editor role). Only passed fields change: inherent and residual likelihood/impact 1–5, treatment status and plan, due and review dates, owner, notes.",
+    "Update a scored risk by code (write — editor). Only passed fields change. Setting accepted records no approval (use scf_accept_risk); re-scoring an accepted risk clears its approval.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       risk_code: z.string().describe("Risk code — catalog R-XX-N or custom R-ORG-N"),
@@ -298,10 +320,9 @@ export function registerRiskTools(server: McpServer) {
         .optional()
         .describe("Residual likelihood after treatment, 1–5 scale"),
       residual_impact: z.number().int().min(1).max(5).optional().describe("Residual impact after treatment, 1–5 scale"),
-      treatment_status: z
-        .enum(["identified", "analysed", "treating", "treated", "accepted", "monitoring"])
-        .optional()
-        .describe("Treatment lifecycle state"),
+      treatment_status: TreatmentStatus.optional().describe(
+        "Treatment lifecycle state. 'accepted' set here records no approval — scf_accept_risk does. Below admin, moving an accepted risk with an approval in force off accepted is ignored (it stays accepted); an admin's move clears the acceptance",
+      ),
       treatment_plan: z.string().optional().describe("How the risk is being treated"),
       treatment_due_date: z.string().optional().describe("YYYY-MM-DD"),
       next_review_date: z.string().optional().describe("YYYY-MM-DD"),
@@ -393,6 +414,67 @@ export function registerRiskTools(server: McpServer) {
       try {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/risk-profile`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_accept_risk",
+    "Accept a risk (write — admin): records you as approver, now, the rationale and expiry. Renews an accepted risk. Also accepts a standards exception. A platform key without a user gets 403.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z
+        .string()
+        .describe("Risk code — catalog R-XX-N or custom R-ORG-N — obtain from scf_list_risks or scf_list_custom_risks"),
+      rationale: z
+        .string()
+        .min(1)
+        .describe("Why the risk is accepted (required, non-blank; stored trimmed). Blank is refused"),
+      expires_on: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .describe("Date the acceptance lapses (YYYY-MM-DD); must be after today (400 otherwise)"),
+    },
+    { title: "Accept Risk", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, risk_code, rationale, expires_on }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/risk-assessments/${risk_code}/acceptance`, {
+          rationale,
+          expires_on,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_custom_risk_control",
+    "Set or clear the standard's document on a custom risk's control link (write — editor). A changed document clears an accepted exception's approval.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      risk_code: z.string().describe("Custom risk code in R-ORG-N format — obtain from scf_list_custom_risks"),
+      scf_id: z.string().describe("SCF control ID of an existing link — obtain from scf_list_custom_risk_controls"),
+      document_id: z
+        .string()
+        .uuid()
+        .nullable()
+        .describe(
+          "Organisation document whose standard this risk is an exception against (404 if not this org's), or null to clear. Required: the platform refuses a call without it (422)",
+        ),
+    },
+    { title: "Update Custom Risk Control", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, risk_code, scf_id, document_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.patch(`/organizations/${org_id}/custom-risks/${risk_code}/controls/${scf_id}`, {
+          document_id,
+        });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

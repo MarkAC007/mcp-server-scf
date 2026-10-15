@@ -16,6 +16,7 @@ import { registerCatalogReconciliationTools } from "./tools/catalog-reconciliati
 import { registerTeamTools } from "./tools/teams.js";
 import { registerCollaborationTools } from "./tools/collaboration.js";
 import { registerJourneyTools } from "./tools/journey.js";
+import { registerAssuranceTools } from "./tools/assurance.js";
 
 import { PKG_NAME, PKG_VERSION } from "./lib/version.js";
 
@@ -46,6 +47,7 @@ registerCatalogReconciliationTools(server);
 registerTeamTools(server);
 registerCollaborationTools(server);
 registerJourneyTools(server);
+registerAssuranceTools(server);
 
 // Start server
 async function main() {

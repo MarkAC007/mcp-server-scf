@@ -3,8 +3,18 @@ import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
 import { errorResult } from "../lib/errors.js";
 import { SYSTEM_TYPES, SYSTEM_TYPES_PROSE } from "../lib/system-types.js";
+import {
+  DATA_CLASSIFICATIONS,
+  DATA_CLASSIFICATIONS_PROSE,
+  SYSTEM_CRITICALITIES,
+  SYSTEM_CRITICALITIES_PROSE,
+} from "../lib/system-ratings.js";
 
 const SystemType = z.enum(SYSTEM_TYPES);
+const SystemCriticality = z.enum(SYSTEM_CRITICALITIES);
+const DataClassification = z.enum(DATA_CLASSIFICATIONS);
+// PIG R4: hours are non-negative and finite (the platform refuses NaN and infinity).
+const Hours = z.number().min(0).finite();
 
 const CapabilityStatus = z.enum(["potential", "configured", "active"]);
 
@@ -51,7 +61,7 @@ export function registerCapabilityTools(server: McpServer) {
 
   server.tool(
     "scf_list_systems",
-    "List the organization's infrastructure systems — the tools and platforms that implement security capabilities. Optionally filter by linked vendor.",
+    "List the organization's systems with boundary and recovery record (in_scope, criticality, RTO/RPO hours, data classification, hosting). Filter by linked vendor or boundary decision.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       vendor_id: z
@@ -59,12 +69,16 @@ export function registerCapabilityTools(server: McpServer) {
         .uuid()
         .optional()
         .describe("Filter to systems structurally linked to this vendor UUID — obtain from scf_list_vendors"),
+      in_scope: z
+        .enum(["true", "false", "undecided"])
+        .optional()
+        .describe("Filter by assessment boundary: 'true' (inside), 'false' (outside) or 'undecided' (not recorded)"),
     },
     { title: "List Systems", readOnlyHint: true },
-    async ({ org_id, vendor_id }) => {
+    async ({ org_id, vendor_id, in_scope }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/systems`, { vendor_id });
+        const data = await client.get(`/organizations/${org_id}/systems`, { vendor_id, in_scope });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -96,6 +110,23 @@ export function registerCapabilityTools(server: McpServer) {
         .optional()
         .describe("System-catalog template ID to link — obtain from scf_list_system_catalog"),
       category: z.string().optional().describe("Free-text category (e.g., 'SIEM', 'Endpoint', 'Identity')"),
+      in_scope: z
+        .boolean()
+        .optional()
+        .describe("Inside the assessment boundary (true) or outside (false); omit when not decided"),
+      criticality: SystemCriticality.optional().describe(
+        `Business criticality — one of: ${SYSTEM_CRITICALITIES_PROSE}`,
+      ),
+      rto_hours: Hours.optional().describe("Recovery time objective, in hours (≥ 0)"),
+      rpo_hours: Hours.optional().describe("Recovery point objective, in hours (≥ 0)"),
+      data_classification: DataClassification.optional().describe(
+        `Highest classification of data held — one of: ${DATA_CLASSIFICATIONS_PROSE}`,
+      ),
+      hosting_location: z
+        .string()
+        .max(255)
+        .optional()
+        .describe("Where the system runs, e.g. a cloud region or data centre"),
     },
     { title: "Create System", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
@@ -111,7 +142,7 @@ export function registerCapabilityTools(server: McpServer) {
 
   server.tool(
     "scf_update_system",
-    "Update an existing system record (write — editor+ role). All fields are optional; only provided fields are applied.",
+    "Update a system record (write — editor+ role), including its boundary and recovery record. All fields are optional; only provided fields are applied.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().describe("System UUID to update — obtain from scf_list_systems"),
@@ -131,6 +162,20 @@ export function registerCapabilityTools(server: McpServer) {
         .optional()
         .describe("New system-catalog template ID link — obtain from scf_list_system_catalog"),
       category: z.string().optional().describe("New free-text category"),
+      in_scope: z
+        .boolean()
+        .nullable()
+        .optional()
+        .describe("Assessment boundary: true (inside), false (outside), or null to mark it undecided"),
+      criticality: SystemCriticality.nullable()
+        .optional()
+        .describe(`Business criticality — one of: ${SYSTEM_CRITICALITIES_PROSE}; null clears`),
+      rto_hours: Hours.nullable().optional().describe("Recovery time objective in hours (≥ 0); null clears"),
+      rpo_hours: Hours.nullable().optional().describe("Recovery point objective in hours (≥ 0); null clears"),
+      data_classification: DataClassification.nullable()
+        .optional()
+        .describe(`Highest classification of data held — one of: ${DATA_CLASSIFICATIONS_PROSE}; null clears`),
+      hosting_location: z.string().max(255).nullable().optional().describe("Where the system runs; null clears"),
     },
     { title: "Update System", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, system_id, ...fields }) => {

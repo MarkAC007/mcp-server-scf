@@ -25,10 +25,18 @@ const AccountableOwnerType = z.enum(["internal", "external_contractor"]);
 // hands the control back to the framework rollup.
 const ScopeOverrideAction = z.enum(["include", "exclude", "inherit"]);
 
+// Obligation basis (PIG R2): mcr = mandatory compliance requirement, dsr =
+// discretionary security requirement. The list filter adds 'unclassified'.
+const ObligationBasis = z.enum(["mcr", "dsr"]);
+const ObligationType = z.enum(["statutory", "regulatory", "contractual", "discretionary"]);
+
+const MATERIAL_RULE =
+  "A material control (catalogue weighting 10, or set material by an admin) can only leave scope through scf_set_scope_override by an admin (other paths 409), and only an admin may mark it not_applicable (403 otherwise).";
+
 export function registerScopedControlTools(server: McpServer) {
   server.tool(
     "scf_list_scoped_controls",
-    "List controls scoped to the organization with implementation status. Filter by scope status, domain, framework, CSF function, weighting, or free-text search. Paginated.",
+    "List controls scoped to the organization with status, basis, target maturity, materiality, procedure and last validation. Filter by scope, domain, framework, team, basis, material. Paginated.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scope_status: ScopeStatus.optional().describe(
@@ -62,6 +70,26 @@ export function registerScopedControlTools(server: McpServer) {
       accountable_owner_type: AccountableOwnerType.optional().describe(
         "Filter by the accountable team's primary owner: 'internal' or 'external_contractor'",
       ),
+      basis: z
+        .enum(["mcr", "dsr", "unclassified"])
+        .optional()
+        .describe(
+          "Filter by obligation basis: 'mcr', 'dsr', or 'unclassified' (no classified framework and no override). Each row carries obligation_basis, basis_source (override | framework) and basis_override_reason",
+        ),
+      material: z
+        .boolean()
+        .optional()
+        .describe(
+          "Filter by materiality: true for material controls (catalogue weighting 10, or an admin override), false for the rest. Rows carry material, material_source (control | weighting) and material_reason",
+        ),
+      sort: z
+        .enum(["scf_id", "weighting"])
+        .default("scf_id")
+        .describe(
+          "Order: 'scf_id' (default), or 'weighting' — material controls first, then catalogue weighting highest first, then scf_id." +
+            " Rows also carry target_maturity, target_source (control | domain), target_maturity_reason, procedure_document_id, procedure_document_status," +
+            " last_validated_at, last_validated_by and last_validation_note",
+        ),
       limit: z.number().int().min(1).max(200).default(50).describe("Page size (1–200, default 50)"),
       offset: z.number().int().min(0).default(0).describe("Pagination offset — number of results to skip (default 0)"),
     },
@@ -78,6 +106,9 @@ export function registerScopedControlTools(server: McpServer) {
       my_teams,
       function_id,
       accountable_owner_type,
+      basis,
+      material,
+      sort,
       limit,
       offset,
     }) => {
@@ -94,6 +125,9 @@ export function registerScopedControlTools(server: McpServer) {
           my_teams,
           function_id,
           accountable_owner_type,
+          basis,
+          material,
+          sort,
           limit,
           offset,
         });
@@ -106,7 +140,7 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_get_scoped_control",
-    "Get one scoped control in detail: owner, implementation notes, evidence links, and audit history. Identify by scf_id, not by UUID.",
+    "Get one scoped control: owner, notes, scope/basis/target/material overrides with reason, set_at and set_by, procedure_document_id, last validation. Identify by scf_id, not UUID.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scf_id: z
@@ -127,14 +161,16 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_update_scoped_control",
-    "Update a scoped control's implementation fields (write — editor+ role). Identify by scf_id, not UUID. Only provided fields are applied.",
+    "Update a scoped control's implementation fields (write — editor+). Identify by scf_id. Only provided fields apply. Material controls: admin for not_applicable. at_risk raises a deficiency.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scf_id: z
         .string()
         .describe("SCF control identifier in DOMAIN-NN format (e.g., 'AST-01', 'GOV-02') — NOT the UUID"),
       implementation_status: ImplementationStatus.optional().describe(
-        "New implementation status (lowercase): not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, or deferred",
+        "New implementation status (lowercase): not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, or deferred. " +
+          "Moving to at_risk raises a deficiency (see scf_list_deficiencies). " +
+          MATERIAL_RULE,
       ),
       priority: z.string().optional().describe("Implementation priority: 'high', 'medium', or 'low'"),
       maturity_level: MaturityLevel.optional().describe(
@@ -205,16 +241,22 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_batch_update_controls",
-    "Batch-update up to 500 scoped controls in one transaction (write — editor+ role). Each operation identifies its target by scf_id; status values are lowercase.",
+    "Batch-update up to 500 scoped controls in one transaction (write — editor+). Each operation targets an scf_id. Material/MCR controls: no deselect (409); at_risk raises a deficiency.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       operations: z
         .array(
           z.object({
             scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format (required, e.g., 'AST-01')"),
-            selected: z.boolean().optional().describe("Toggle in-scope membership"),
+            selected: z
+              .boolean()
+              .optional()
+              .describe(
+                "Toggle in-scope membership. Deselecting an MCR-basis or material control is refused (409) — use scf_set_scope_override",
+              ),
             implementation_status: ImplementationStatus.optional().describe(
-              "Implementation status (lowercase): not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred",
+              "Implementation status (lowercase): not_started, in_progress, implemented, ready_for_review, monitored, not_applicable, at_risk, deferred. " +
+                "at_risk raises a deficiency; not_applicable on a material control needs an admin (403)",
             ),
             selection_reason: z
               .string()
@@ -249,14 +291,19 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_bulk_unscope_framework",
-    "Remove from scope every control mapped only to the given frameworks (destructive write — editor role). Controls shared with another in-scope framework are kept; notes and status survive.",
+    "Unscope every control mapped only to these frameworks (destructive write — editor). Shared controls are kept. An MCR framework, or one taking out a material control, needs an admin and a reason.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       frameworks: z
         .array(z.string())
         .min(1)
         .describe("Framework slugs to remove, e.g. ['iso_27017_2015'] — obtain from scf_list_frameworks"),
-      removal_reason: z.string().optional().describe("Why these controls leave scope — recorded in the audit trail"),
+      removal_reason: z
+        .string()
+        .optional()
+        .describe(
+          "Why these controls leave scope — recorded in the audit trail. Required (400 without it), with an admin key (403 otherwise), when a framework carries an MCR obligation or its removal would take a material control out of scope",
+        ),
     },
     { title: "Bulk Unscope Framework", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, frameworks, removal_reason }) => {
@@ -275,7 +322,7 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_get_framework_scope_summary",
-    "Get framework coverage and selection state in one view (read — viewer role): which frameworks are selected and how their controls sit against the scope. Read side of scoping; changing it is elsewhere.",
+    "Get framework coverage and selection state (read — viewer): each framework's coverage, basis, obligation_type and obligation_source, and basis_counts (in-scope controls by mcr/dsr/unclassified).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
     },
@@ -293,7 +340,7 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_preview_framework_scope_change",
-    "Preview what adding or removing frameworks would do to the scope WITHOUT applying it (read — viewer role). Returns the controls that would enter or leave, so the blast radius is known beforehand.",
+    "Preview adding or removing frameworks WITHOUT applying it (read — viewer): controls entering or leaving scope, orphaned evidence, and on remove basis_downgrades (controls whose basis weakens).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       operation: z
@@ -318,7 +365,7 @@ export function registerScopedControlTools(server: McpServer) {
 
   server.tool(
     "scf_set_scope_override",
-    "Force one control in or out of scope whatever its frameworks imply (write — editor+). 'include'/'exclude' pin it; 'inherit' clears the override back to the framework rollup. Scope only, not status.",
+    "Force one control in or out of scope (write — editor+). 'include'/'exclude' pin it; 'inherit' clears it. Excluding an MCR or material control needs an admin key and a reason (editors 403).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
@@ -329,7 +376,9 @@ export function registerScopedControlTools(server: McpServer) {
         .string()
         .max(2000)
         .optional()
-        .describe("Why this control is being overridden — recorded in the audit trail (max 2000 characters)"),
+        .describe(
+          "Why this control is being overridden — recorded in the audit trail (max 2000 characters). Required for 'exclude'. The admin making an MCR or material exclusion is recorded as its approver; there is no approver parameter",
+        ),
     },
     { title: "Set Scope Override", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, scf_id, action, reason }) => {
@@ -338,6 +387,174 @@ export function registerScopedControlTools(server: McpServer) {
         const data = await client.put(`/organizations/${org_id}/scoped-controls/${scf_id}/scope-override`, {
           action,
           reason,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ===========================================================================
+  // Obligation basis, target maturity, materiality, procedure (PIG R2, R5, R6)
+  // ===========================================================================
+
+  server.tool(
+    "scf_set_framework_basis",
+    "Record why a scoped framework is in scope (write — ADMIN role): basis mcr|dsr, obligation_type and obligation_source. Replaces all three; null clears. Only an active (scoped) framework, else 404.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      framework_id: z
+        .string()
+        .min(1)
+        .describe("Framework slug of a framework the org has scoped — obtain from scf_get_framework_scope_summary"),
+      basis: ObligationBasis.nullable().describe(
+        "'mcr' (mandatory compliance requirement) or 'dsr' (discretionary security requirement); null leaves it unclassified. Reclassifying MCR to DSR changes which exclusions need an approver, hence admin-only",
+      ),
+      obligation_type: ObligationType.nullable()
+        .optional()
+        .describe(
+          "Where the obligation comes from: statutory, regulatory, contractual or discretionary; omitted or null clears it",
+        ),
+      obligation_source: z
+        .string()
+        .max(2000)
+        .nullable()
+        .optional()
+        .describe("The law, regulation or contract behind it (max 2000 characters); omitted, null or blank clears it"),
+    },
+    { title: "Set Framework Basis", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, framework_id, basis, obligation_type, obligation_source }) => {
+      try {
+        const client = getClient();
+        // The platform replaces all three fields, so send each explicitly: an omitted one is a clear.
+        const data = await client.put(`/organizations/${org_id}/framework-scoping/${framework_id}/basis`, {
+          basis,
+          obligation_type: obligation_type ?? null,
+          obligation_source: obligation_source ?? null,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_set_control_basis_override",
+    "Override one control's derived obligation basis (write — ADMIN role): mcr or dsr with a reason, or null to clear and derive it from its frameworks again. 404 if the control has no scope record.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
+      basis: ObligationBasis.nullable().describe(
+        "'mcr' or 'dsr' to override; null clears the override (and its reason) so the basis is derived from the org's classified frameworks again",
+      ),
+      reason: z
+        .string()
+        .max(2000)
+        .optional()
+        .describe("Why the derived basis is wrong for this control (max 2000 characters) — required when basis is set"),
+    },
+    { title: "Set Control Basis Override", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, scf_id, basis, reason }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/scoped-controls/${scf_id}/basis-override`, {
+          basis,
+          reason,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_set_target_maturity",
+    "Override one control's target maturity (write — ADMIN role): a level L0–L5 with a reason, or null to inherit its domain's target again (domain targets: scf_update_org_settings).",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
+      level: MaturityLevel.nullable().describe(
+        "Target CMM level L0–L5 for this control; null clears the override (and its reason) and the control inherits its domain target",
+      ),
+      reason: z
+        .string()
+        .max(2000)
+        .optional()
+        .describe("Why this control departs from its domain target (max 2000 characters) — required when level is set"),
+    },
+    { title: "Set Target Maturity", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, scf_id, level, reason }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/scoped-controls/${scf_id}/target-maturity`, {
+          level,
+          reason,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_set_control_materiality",
+    "Set whether one control is material (write — ADMIN's own key; a platform key gets 403): true/false with a reason, or null for the catalogue default (material at weighting 10).",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
+      material: z
+        .boolean()
+        .nullable()
+        .describe(
+          "true or false overrides the catalogue default; null clears the override. The admin is recorded as the approver: deciding a control is not material lets it be excluded or marked not_applicable without one",
+        ),
+      reason: z
+        .string()
+        .max(2000)
+        .optional()
+        .describe(
+          "Why (max 2000 characters). Required when material is true or false, and when a null clear makes a control weighted below 10 not material (400 otherwise)",
+        ),
+    },
+    { title: "Set Control Materiality", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, scf_id, material, reason }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/scoped-controls/${scf_id}/materiality`, {
+          material,
+          reason,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_set_control_procedure",
+    "Link one control to its signed-off procedure document, or null to unlink (write — editor+). The document must be this org's procedure, approved or published when linked (400 otherwise).",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      scf_id: z.string().describe("SCF control identifier in DOMAIN-NN format — obtain from scf_list_scoped_controls"),
+      document_id: z
+        .string()
+        .uuid()
+        .nullable()
+        .describe(
+          "Procedure document UUID — obtain from scf_list_documents; null unlinks. A later edit sends the document back to review; the link stays and scf_list_scoped_controls shows procedure_document_status",
+        ),
+    },
+    { title: "Set Control Procedure", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, scf_id, document_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.put(`/organizations/${org_id}/scoped-controls/${scf_id}/procedure-document`, {
+          document_id,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
