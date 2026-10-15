@@ -111,11 +111,14 @@ Each operation accepts:
 
 Remove from scope every control mapped only to the given frameworks (destructive write — editor role). Controls shared with another in-scope framework are kept; notes and status survive.
 
-| Parameter        | Type     | Required | Description                                                                         |
-| ---------------- | -------- | -------- | ----------------------------------------------------------------------------------- |
-| `org_id`         | string   | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                          |
-| `frameworks`     | string[] | Yes      | Framework slugs to remove (e.g., `iso_27017_2015`) — get from `scf_list_frameworks` |
-| `removal_reason` | string   | No       | Why these controls leave scope — recorded in the audit trail                        |
+Tracked evidence that no in-scope control still requires after the change is reported back as `orphaned_evidence` (with `open_tasks_affected`). `orphan_evidence_action` decides what happens to it. Preview the exact effect first with `scf_preview_framework_scope_change`, which returns the same two fields.
+
+| Parameter                | Type     | Required | Description                                                                                                                                                              |
+| ------------------------ | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`                 | string   | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                                                                                               |
+| `frameworks`             | string[] | Yes      | Framework slugs to remove (e.g., `iso_27017_2015`) — get from `scf_list_frameworks`                                                                                      |
+| `removal_reason`         | string   | No       | Why these controls leave scope — recorded in the audit trail                                                                                                             |
+| `orphan_evidence_action` | string   | No       | `keep` (default) leaves orphaned evidence tracked with its tasks open; `untrack` sets `is_tracked=false` and closes its open tasks as won't do. Files are never deleted. |
 
 ---
 
