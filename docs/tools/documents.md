@@ -25,6 +25,13 @@ The 15 tools split into five concerns:
 
 Source: [`src/tools/documents.ts`](../../src/tools/documents.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_document_read` (load `documents`): `list` = `scf_list_documents`, `get` = `scf_get_document`, `export` = `scf_export_document`, `preview` = `scf_preview_document`, `history` = `scf_get_document_history`, `section_generated` = `scf_get_document_section_generated`, `generation_status` = `scf_get_document_generation_status`, `settings` = `scf_get_document_settings`, `domains` = `scf_list_document_domains`, `generators` = `scf_list_document_generators`
+> - `scf_document_write` (load `documents`): `generate` = `scf_generate_documents`, `transition` = `scf_transition_document`, `update_section` = `scf_update_document_section`, `resolve_section` = `scf_resolve_document_section`, `update_settings` = `scf_update_document_settings`
+
 ---
 
 ## `scf_list_document_generators`

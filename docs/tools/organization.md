@@ -4,6 +4,15 @@ Current user profile, organization management, membership lookups, organisation 
 
 Source: [`src/tools/organization.ts`](../../src/tools/organization.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_org_read` (core): `list` = `scf_list_organizations`, `get` = `scf_get_organization`, `settings` = `scf_get_org_settings`, `members` = `scf_list_members`, `audit_log` = `scf_get_audit_log`, `change_cursor` = `scf_get_change_cursor`, `work_queue` = `scf_get_org_work_queue`
+> - `scf_update_org_settings` — unchanged (core)
+> - `scf_user_read` (core): `me` = `scf_get_current_user`, `work_queue` = `scf_get_work_queue`, `notifications` = `scf_get_notifications`
+> - `scf_mark_notifications_read` — unchanged (core)
+
 ---
 
 ## `scf_get_current_user`

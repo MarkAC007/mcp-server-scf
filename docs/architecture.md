@@ -18,7 +18,7 @@ mcp-server-scf  (Node.js ≥18, ESM, single long-lived process)
 SCF Controls Platform API  (your self-hosted instance — SCF_API_URL)
 ```
 
-Because stdio is the transport, **anything written to `stdout` corrupts the protocol frame**. All logging in this server goes to `stderr` via `console.error` — including the startup banner ([`src/index.ts:44`](../src/index.ts:44)). When adding new tools, never introduce `console.log` or raw `process.stdout.write` calls.
+Because stdio is the transport, **anything written to `stdout` corrupts the protocol frame**. All logging in this server goes to `stderr` via `console.error` — including the startup banner in [`src/index.ts`](../src/index.ts). When adding new tools, never introduce `console.log` or raw `process.stdout.write` calls.
 
 ---
 
@@ -26,10 +26,17 @@ Because stdio is the transport, **anything written to `stdout` corrupts the prot
 
 ```
 src/
-├── index.ts              Entry point. Constructs McpServer, wires
-│                         StdioServerTransport, calls each register*
-│                         function to attach tools, starts the loop.
-├── tools/
+├── index.ts              Entry point: createServer() + StdioServerTransport.
+├── server.ts             createServer(): runs every register* function against a
+│                         ToolCollector, folds the result by the plan, registers it.
+├── consolidation/
+│   ├── plan.json         Which original tool is which method of which exposed tool;
+│   │                     groups and the core set loaded at startup.
+│   ├── consolidate.ts    ToolCollector + buildExposedTools: merged schemas and dispatch.
+│   └── registry.ts       Registers the exposed tools, disables non-core groups,
+│                         adds scf_load_tools (enable + list_changed).
+├── tools/                One register* function per domain; each server.tool() call
+│                         is one platform operation and becomes a method.
 │   ├── catalog.ts        8 tools — read-only SCF reference data
 │   ├── scoped-controls.ts 15 tools — per-org implementation tracking, basis, materiality
 │   ├── evidence.ts       42 tools — CRUD, batch, tasks, files, health, AI
@@ -58,7 +65,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **225 tools across 15 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
+Total: **225 operations across 15 domain files**, exposed as **42 tools** (41 from [`src/consolidation/plan.json`](../src/consolidation/plan.json) plus `scf_load_tools`); 26 are listed at startup and the rest load on demand. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 
@@ -66,7 +73,7 @@ Total: **225 tools across 15 domain files**. The per-domain docs live under [`do
 
 Every tool follows the same shape:
 
-1. **Tool invocation** — the MCP client sends a `tools/call` request with validated arguments (Zod schema enforces types, ranges, and required fields before the handler runs).
+1. **Tool invocation** — the MCP client sends a `tools/call` request for an exposed tool such as `scf_vendor_read` with a `method`; the merged Zod schema validates the shape, then the dispatcher in [`src/consolidation/consolidate.ts`](../src/consolidation/consolidate.ts) re-validates the arguments against that method's original schema (its own defaults, ranges and required fields) and calls the original handler.
 2. **Client construction** — the handler calls `getClient()` ([`src/lib/api-client.ts:104`](../src/lib/api-client.ts:104)), a lazy singleton that reads `SCF_API_KEY` and `SCF_API_URL` from the environment the first time it's called.
 3. **HTTP request** — `client.get|post|patch|delete(path, ...)` issues a `fetch` to `${baseUrl}/api${path}` with `Authorization: Bearer ${apiKey}`. Mutation methods always send `Content-Type: application/json` and a JSON body (at least `{}`) to satisfy FastAPI's Pydantic body-parameter requirement.
 4. **Response handling** — on `2xx`, the JSON body is returned as the tool result. On any non-2xx, `ScfApiError` is thrown with the parsed `detail`/`error`/`message` field and the HTTP status code.

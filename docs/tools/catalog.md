@@ -4,6 +4,12 @@ Read-only access to the full SCF reference catalog — 1,451 controls, 354+ comp
 
 Source: [`src/tools/catalog.ts`](../../src/tools/catalog.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_catalog_read` (core): `list_controls` = `scf_list_controls`, `get_control` = `scf_get_control`, `list_domains` = `scf_list_domains`, `get_domain` = `scf_get_domain`, `list_frameworks` = `scf_list_frameworks`, `list_assessment_objectives` = `scf_list_assessment_objectives`, `list_evidence` = `scf_list_evidence_catalog`, `get_evidence` = `scf_get_catalog_evidence`
+
 ---
 
 ## `scf_list_controls`

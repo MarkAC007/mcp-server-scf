@@ -52,13 +52,17 @@ jobs:
 
       - name: Verify README tool count matches source
         run: |
-          ACTUAL=$(grep -c "server.tool(" src/tools/*.ts | awk -F: '{sum += $2} END {print sum}')
+          # The surface a client sees is src/consolidation/plan.json (exposed tools + scf_load_tools);
+          # the per-route tools in src/tools/*.ts are its methods.
+          ACTUAL=$(node -e 'const p=require("./src/consolidation/plan.json"); console.log(Object.keys(p.tools).length + 1)')
+          METHODS=$(grep -c "server.tool(" src/tools/*.ts | awk -F: '{sum += $2} END {print sum}')
           README_COUNT=$(grep -oE '\*\*[0-9]+ tools\*\*' README.md | head -n1 | grep -oE '[0-9]+')
-          if [ "$ACTUAL" != "$README_COUNT" ]; then
-            echo "::error::Tool count drift — README claims $README_COUNT tools, src/tools/ has $ACTUAL. Update README.md and the domain table."
+          README_METHODS=$(grep -oE '[0-9]+ (platform )?operations' README.md | head -n1 | grep -oE '[0-9]+')
+          if [ "$ACTUAL" != "$README_COUNT" ] || [ "$METHODS" != "$README_METHODS" ]; then
+            echo "::error::Tool count drift — README claims $README_COUNT tools / $README_METHODS operations, the plan exposes $ACTUAL tools over $METHODS operations. Update README.md and the domain table."
             exit 1
           fi
-          echo "Tool count OK: $ACTUAL"
+          echo "Tool count OK: $ACTUAL tools over $METHODS operations"
 
       # Fails on any high/critical advisory unless it is listed with a reason
       # and an unexpired date in .github/audit-exceptions.json; an expired

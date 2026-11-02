@@ -4,6 +4,14 @@ KSI-aligned capability themes (11 NIST 800-53-derived security capability areas)
 
 Source: [`src/tools/capabilities.ts`](../../src/tools/capabilities.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_system_read` (core): `list` = `scf_list_systems`, `get` = `scf_get_system`, `catalog_templates` = `scf_list_system_catalog`, `catalog_template` = `scf_get_system_catalog_template`, `capabilities` = `scf_list_system_capabilities`, `recipes` = `scf_get_system_recipes`, `recipe_status` = `scf_get_recipe_generation_status`, `evidence_capabilities` = `scf_list_capabilities`, `systems_for_evidence` = `scf_get_systems_for_evidence`
+> - `scf_system_write` (core): `create` = `scf_create_system`, `update` = `scf_update_system`, `create_capability` = `scf_create_system_capability`, `update_capability` = `scf_update_system_capability`, `generate_recipes` = `scf_generate_system_recipes`
+> - `scf_capability_theme_read` (core): `list` = `scf_list_capability_themes`, `get` = `scf_get_capability_theme`, `scorecard` = `scf_get_capability_theme_scorecard`, `evidence_posture` = `scf_get_capability_theme_evidence_posture`, `controls` = `scf_list_capability_theme_controls`
+
 ---
 
 ## `scf_list_capability_themes`

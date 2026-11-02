@@ -4,6 +4,19 @@ Track evidence artifacts that demonstrate control implementation, run AI-powered
 
 Source: [`src/tools/evidence.ts`](../../src/tools/evidence.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_evidence_read` (core): `list` = `scf_list_evidence`, `get` = `scf_get_evidence`, `requiring_controls` = `scf_get_evidence_requiring_controls`, `gaps` = `scf_list_evidence_gaps`, `health` = `scf_get_evidence_health`, `upcoming` = `scf_get_upcoming_evidence`, `frequency_health` = `scf_get_frequency_health`, `maturity_summary` = `scf_get_evidence_maturity`, `item_maturity` = `scf_get_evidence_item_maturity`, `upgrade_recommendations` = `scf_get_evidence_upgrade_recommendations`, `suggestions` = `scf_get_evidence_suggestions`
+> - `scf_evidence_write` (core): `create` = `scf_create_evidence`, `update` = `scf_update_evidence`, `batch_update` = `scf_batch_update_evidence`
+> - `scf_evidence_file_read` (core): `list` = `scf_list_evidence_files`, `get` = `scf_get_evidence_file`, `validation` = `scf_get_evidence_validation`, `validation_summary` = `scf_get_evidence_validation_summary`
+> - `scf_evidence_file_write` (core): `review` = `scf_review_evidence_file`, `revalidate` = `scf_revalidate_evidence_file`, `delete` = `scf_delete_evidence_file`
+> - `scf_list_evidence_tasks` — unchanged (core)
+> - `scf_evidence_task_write` (core): `create` = `scf_create_evidence_task`, `update` = `scf_update_evidence_task`, `complete` = `scf_complete_evidence_task`
+> - `scf_assessment_read` (core): `file_assessment` = `scf_get_evidence_assessment`, `file_summary` = `scf_get_evidence_assessment_summary`, `review_queue` = `scf_get_assessment_review_queue`, `list_windows` = `scf_list_window_assessments`, `window` = `scf_get_window_assessment`, `window_versions` = `scf_get_window_assessment_versions`, `window_summary` = `scf_get_window_assessment_summary`, `control_composite` = `scf_get_control_assessment_composite`, `list_control_composites` = `scf_list_control_assessment_composites`
+> - `scf_assessment_write` (core): `assess_file` = `scf_trigger_evidence_assessment`, `assess_files_bulk` = `scf_bulk_assess_evidence`, `review_file_verdict` = `scf_review_evidence_assessment`, `assess_window` = `scf_trigger_window_assessment`, `assess_windows_bulk` = `scf_bulk_assess_windows`, `refresh_stale_windows` = `scf_refresh_stale_window_assessments`, `review_window` = `scf_review_window_assessment`, `review_window_verdict` = `scf_review_window_assessment_verdict`
+
 The 42 tools in this domain split into eight concerns:
 
 1. **CRUD & scope** — `scf_list_evidence`, `scf_get_evidence`, `scf_get_evidence_requiring_controls`, `scf_create_evidence`, `scf_update_evidence`, `scf_batch_update_evidence`, `scf_get_evidence_maturity`

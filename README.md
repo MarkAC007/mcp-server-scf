@@ -46,29 +46,28 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**225 tools** across 15 domains — click through for full parameter tables and example prompts:
+**42 tools** over **225 platform operations**, in 16 groups. Each tool is one noun and direction — `scf_vendor_read`, `scf_vendor_write` — and its `method` argument picks the operation; the `method` description explains each one. Read tools are `readOnlyHint: true`, so a client can allow them all at once.
 
-| Domain                                                         | Tools | Description                                                                                                                                                                                                                      |
-| -------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Catalog](docs/tools/catalog.md)                               | 8     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives, domains and evidence definitions                                                                                                                            |
-| [Control Scoping](docs/tools/scoped-controls.md)               | 15    | Track implementation status across an 8-state workflow; bulk scope and unscope by framework; framework coverage, scope-change preview and per-control overrides; obligation basis, materiality, target maturity, procedure links |
-| [Evidence](docs/tools/evidence.md)                             | 42    | Evidence tracking (single + batch), tasks, file review, health, validation, AI assessments and review queues                                                                                                                     |
-| [Risk Management](docs/tools/risk.md)                          | 19    | 5x5 risk matrix, risk register, scoring updates, approved risk acceptance, custom risks and standards exceptions, control↔risk traceability, risk profile                                                                        |
-| [Vendor Risk (TPRM)](docs/tools/vendors.md)                    | 23    | Vendor registry, AI research and assessments, certifications, action items, compensating controls                                                                                                                                |
-| [Organization](docs/tools/organization.md)                     | 12    | Users, orgs, organisation profile and maturity targets, audit trail, change cursor, work queues, notifications                                                                                                                   |
-| [Capabilities](docs/tools/capabilities.md)                     | 19    | KSI themes, scorecards, evidence posture, systems inventory, system evidence capabilities, catalog + AI recipes                                                                                                                  |
-| [Webhooks](docs/tools/webhooks.md)                             | 6     | Webhook endpoints, delivery logs, secret rotation                                                                                                                                                                                |
-| [Documents](docs/tools/documents.md)                           | 15    | ISMS document generation, section editing, merge resolution, lifecycle transitions, export                                                                                                                                       |
-| [Audit Engagements](docs/tools/engagements.md)                 | 16    | Engagement workspaces, frozen scope, framework-native presentation, auditor access, structured queries                                                                                                                           |
-| [Catalog Reconciliation](docs/tools/catalog-reconciliation.md) | 9     | Preview, decide, apply and roll back an SCF catalog version upgrade for your org                                                                                                                                                 |
-| [Teams](docs/tools/teams.md)                                   | 11    | Business functions, teams and rosters, team accountability for controls and evidence (single + batch)                                                                                                                            |
-| [Collaboration](docs/tools/collaboration.md)                   | 7     | User assignments to controls, evidence and tasks; comment threads                                                                                                                                                                |
-| [Guided Journey](docs/tools/journey.md)                        | 4     | The staged path an organisation walks, journey templates, import, and named stage attestation                                                                                                                                    |
-| [Assurance](docs/tools/assurance.md)                           | 19    | Control deficiencies, organisation compensating controls, control validation, monthly posture snapshots, capability tests                                                                                                        |
+Only the **core** groups are in the tool list at startup (26 tools, about 27k tokens of schema instead of 71k). Call `scf_load_tools` with the groups you need — or `all` — and the rest appear; the server sends `notifications/tools/list_changed`. A client that ignores that notification can set `SCF_LOAD_ALL_TOOLS=true` to get everything up front. Per-group docs list every method with its parameters; [`docs/migration-consolidation.md`](docs/migration-consolidation.md) maps each pre-v4 tool name to its tool and method.
 
-Which platform operations became tools, which are deferred, and which stay out on purpose is recorded in [docs/tool-scope.md](docs/tool-scope.md).
-
----
+| Group                                                          | Loaded    | Operations | Tools                                                                                                                                                |
+| -------------------------------------------------------------- | --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [catalog](docs/tools/catalog.md)                               | core      | 8          | `scf_catalog_read`                                                                                                                                   |
+| [controls](docs/tools/scoped-controls.md)                      | core      | 15         | `scf_control_read`, `scf_control_write`                                                                                                              |
+| [evidence](docs/tools/evidence.md)                             | core      | 25         | `scf_evidence_read`, `scf_evidence_write`, `scf_evidence_file_read`, `scf_evidence_file_write`, `scf_list_evidence_tasks`, `scf_evidence_task_write` |
+| [assessments](docs/tools/evidence.md)                          | core      | 17         | `scf_assessment_read`, `scf_assessment_write`                                                                                                        |
+| [risk](docs/tools/risk.md)                                     | core      | 19         | `scf_risk_read`, `scf_risk_write`, `scf_custom_risk_read`, `scf_custom_risk_write`                                                                   |
+| [vendors](docs/tools/vendors.md)                               | core      | 23         | `scf_vendor_read`, `scf_vendor_write`, `scf_vendor_record_write`                                                                                     |
+| [systems](docs/tools/capabilities.md)                          | core      | 19         | `scf_system_read`, `scf_system_write`, `scf_capability_theme_read`                                                                                   |
+| [organization](docs/tools/organization.md)                     | core      | 12         | `scf_org_read`, `scf_update_org_settings`, `scf_user_read`, `scf_mark_notifications_read`                                                            |
+| [teams](docs/tools/teams.md)                                   | on demand | 11         | `scf_team_read`, `scf_team_write`                                                                                                                    |
+| [collaboration](docs/tools/collaboration.md)                   | on demand | 7          | `scf_collaboration_read`, `scf_collaboration_write`                                                                                                  |
+| [documents](docs/tools/documents.md)                           | on demand | 15         | `scf_document_read`, `scf_document_write`                                                                                                            |
+| [engagements](docs/tools/engagements.md)                       | on demand | 16         | `scf_engagement_read`, `scf_engagement_write`                                                                                                        |
+| [assurance](docs/tools/assurance.md)                           | on demand | 19         | `scf_assurance_read`, `scf_assurance_write`                                                                                                          |
+| [catalog-reconciliation](docs/tools/catalog-reconciliation.md) | on demand | 9          | `scf_catalog_reconciliation_read`, `scf_catalog_reconciliation_write`                                                                                |
+| [webhooks](docs/tools/webhooks.md)                             | on demand | 6          | `scf_webhook_read`, `scf_webhook_write`                                                                                                              |
+| [journey](docs/tools/journey.md)                               | on demand | 4          | `scf_journey_read`, `scf_journey_write`                                                                                                              |
 
 ## Try it with MCP Inspector
 
@@ -78,7 +77,7 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see all 224 tools, grouped by domain, with their Zod schemas rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see the 26 core tools (set `SCF_LOAD_ALL_TOOLS=true` for all 42), each with a `method` picker and its Zod schema rendered as a live form.
 
 Live tool calls need your instance's URL and an API key — export `SCF_API_URL` and `SCF_API_KEY` in the same shell before launching Inspector, or set them under the "Environment Variables" tab inside the Inspector UI. Without them, you can still browse schemas and descriptions; tool calls return a configuration error.
 
@@ -116,7 +115,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
 2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
-4. Claude Desktop restarts the server and all 225 tools are available.
+4. Claude Desktop restarts the server and the core tools are available; ask for more with `scf_load_tools`.
 
 To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 
@@ -176,6 +175,8 @@ export SCF_API_URL="http://localhost:8000"
 | `SCF_API_URL` | Yes      | —       | Base URL of your self-hosted platform (e.g. `http://localhost:8000`). The former hosted default is decommissioned. |
 
 ---
+
+`SCF_LOAD_ALL_TOOLS=true` lists every tool at startup instead of the core groups — for a client that does not act on `notifications/tools/list_changed` after `scf_load_tools`.
 
 ## Example Prompts
 

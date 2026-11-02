@@ -4,6 +4,13 @@ Teams are the organization's accountability layer. Each team aligns to one or mo
 
 Source: [`src/tools/teams.ts`](../../src/tools/teams.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_team_read` (load `teams`): `list` = `scf_list_teams`, `get` = `scf_get_team`, `functions` = `scf_list_functions`, `assignments` = `scf_list_team_assignments`
+> - `scf_team_write` (load `teams`): `create` = `scf_create_team`, `update` = `scf_update_team`, `add_member` = `scf_add_team_member`, `remove_member` = `scf_remove_team_member`, `create_assignment` = `scf_create_team_assignment`, `batch_create_assignments` = `scf_batch_create_team_assignments`, `delete_assignment` = `scf_delete_team_assignment`
+
 The 11 tools split into three concerns:
 
 1. **Functions and teams** — `scf_list_functions`, `scf_list_teams`, `scf_get_team`, `scf_create_team`, `scf_update_team`

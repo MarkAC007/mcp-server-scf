@@ -4,6 +4,15 @@
 
 Source: [`src/tools/risk.ts`](../../src/tools/risk.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_risk_read` (core): `list` = `scf_list_risks`, `get` = `scf_get_risk`, `matrix` = `scf_get_risk_matrix`, `summary` = `scf_get_risk_summary`, `profile` = `scf_get_risk_profile`, `for_control` = `scf_get_risks_for_control`, `controls_for_risk` = `scf_get_controls_for_risk`
+> - `scf_risk_write` (core): `create` = `scf_create_risk`, `update` = `scf_update_risk_assessment`, `delete` = `scf_delete_risk_assessment`, `accept` = `scf_accept_risk`
+> - `scf_custom_risk_read` (core): `list` = `scf_list_custom_risks`, `controls` = `scf_list_custom_risk_controls`
+> - `scf_custom_risk_write` (core): `create` = `scf_create_custom_risk`, `update` = `scf_update_custom_risk`, `delete` = `scf_delete_custom_risk`, `add_control` = `scf_add_custom_risk_control`, `update_control` = `scf_update_custom_risk_control`, `remove_control` = `scf_remove_custom_risk_control`
+
 The 19 tools split into five concerns:
 
 1. **Risk register** — `scf_list_risks`, `scf_get_risk`, `scf_create_risk`, `scf_update_risk_assessment`, `scf_delete_risk_assessment`, `scf_get_risk_matrix`, `scf_get_risk_summary`, `scf_get_risk_profile`
