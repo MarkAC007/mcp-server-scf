@@ -16,7 +16,7 @@
 
 import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { realpathSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createServer, collectExposedTools } from "./server.js";
@@ -139,13 +139,16 @@ function describeBody(body: unknown): string {
 /**
  * Keys the platform has just rejected are answered 401 here for a short while,
  * so a caller hammering the relay with bad keys does not become a stream of
- * upstream auth lookups. Keyed by hash; the key value is never stored.
+ * upstream auth lookups. The memo is keyed by an HMAC under a secret that
+ * exists only for this process; the key value itself is never stored and
+ * the fingerprint is useless outside this process.
  */
 const REJECT_TTL_MS = 60_000;
 const rejected = new Map<string, number>();
+const fingerprintSecret = randomBytes(32);
 
 function rejectKeyHash(apiKey: string): string {
-  return createHash("sha256").update(apiKey).digest("hex");
+  return createHmac("sha256", fingerprintSecret).update(apiKey).digest("hex");
 }
 
 function recentlyRejected(hash: string, now = Date.now()): boolean {
