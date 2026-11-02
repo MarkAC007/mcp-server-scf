@@ -4,9 +4,22 @@ Track evidence artifacts that demonstrate control implementation, run AI-powered
 
 Source: [`src/tools/evidence.ts`](../../src/tools/evidence.ts).
 
-The 41 tools in this domain split into eight concerns:
+<!-- consolidated-surface -->
 
-1. **CRUD** — `scf_list_evidence`, `scf_get_evidence`, `scf_create_evidence`, `scf_update_evidence`, `scf_batch_update_evidence`, `scf_get_evidence_maturity`
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_evidence_read` (core): `list` = `scf_list_evidence`, `get` = `scf_get_evidence`, `requiring_controls` = `scf_get_evidence_requiring_controls`, `gaps` = `scf_list_evidence_gaps`, `health` = `scf_get_evidence_health`, `upcoming` = `scf_get_upcoming_evidence`, `frequency_health` = `scf_get_frequency_health`, `maturity_summary` = `scf_get_evidence_maturity`, `item_maturity` = `scf_get_evidence_item_maturity`, `upgrade_recommendations` = `scf_get_evidence_upgrade_recommendations`, `suggestions` = `scf_get_evidence_suggestions`
+> - `scf_evidence_write` (core): `create` = `scf_create_evidence`, `update` = `scf_update_evidence`, `batch_update` = `scf_batch_update_evidence`
+> - `scf_evidence_file_read` (core): `list` = `scf_list_evidence_files`, `get` = `scf_get_evidence_file`, `validation` = `scf_get_evidence_validation`, `validation_summary` = `scf_get_evidence_validation_summary`
+> - `scf_evidence_file_write` (core): `review` = `scf_review_evidence_file`, `revalidate` = `scf_revalidate_evidence_file`, `delete` = `scf_delete_evidence_file`
+> - `scf_list_evidence_tasks` — unchanged (core)
+> - `scf_evidence_task_write` (core): `create` = `scf_create_evidence_task`, `update` = `scf_update_evidence_task`, `complete` = `scf_complete_evidence_task`
+> - `scf_assessment_read` (core): `file_assessment` = `scf_get_evidence_assessment`, `file_summary` = `scf_get_evidence_assessment_summary`, `review_queue` = `scf_get_assessment_review_queue`, `list_windows` = `scf_list_window_assessments`, `window` = `scf_get_window_assessment`, `window_versions` = `scf_get_window_assessment_versions`, `window_summary` = `scf_get_window_assessment_summary`, `control_composite` = `scf_get_control_assessment_composite`, `list_control_composites` = `scf_list_control_assessment_composites`
+> - `scf_assessment_write` (core): `assess_file` = `scf_trigger_evidence_assessment`, `assess_files_bulk` = `scf_bulk_assess_evidence`, `review_file_verdict` = `scf_review_evidence_assessment`, `assess_window` = `scf_trigger_window_assessment`, `assess_windows_bulk` = `scf_bulk_assess_windows`, `refresh_stale_windows` = `scf_refresh_stale_window_assessments`, `review_window` = `scf_review_window_assessment`, `review_window_verdict` = `scf_review_window_assessment_verdict`
+
+The 42 tools in this domain split into eight concerns:
+
+1. **CRUD & scope** — `scf_list_evidence`, `scf_get_evidence`, `scf_get_evidence_requiring_controls`, `scf_create_evidence`, `scf_update_evidence`, `scf_batch_update_evidence`, `scf_get_evidence_maturity`
 2. **Tasks** — `scf_list_evidence_tasks`, `scf_create_evidence_task`, `scf_update_evidence_task`, `scf_complete_evidence_task`
 3. **Files** — `scf_list_evidence_files`, `scf_get_evidence_file`, `scf_review_evidence_file`, `scf_delete_evidence_file`
 4. **Validation** — `scf_get_evidence_validation`, `scf_revalidate_evidence_file`, `scf_get_evidence_validation_summary`
@@ -72,7 +85,7 @@ Get evidence collection health for the organization: per-item freshness status (
 
 ## `scf_list_evidence`
 
-List evidence items tracked against an organization's controls. Returns each item's tracking status, maturity level, and linked controls. Optionally filter by system.
+List the organization's evidence tracking records: tracking status, maturity level, owner, system, file count and `required_by_scope` (whether any in-scope control requires the item). The list names no controls — for the in-scope controls that require one item, call `scf_get_evidence_requiring_controls`. Optionally filter by system or team.
 
 | Parameter                | Type    | Required | Description                                                                                                                                                                                                                                |
 | ------------------------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -310,9 +323,37 @@ Get aggregate windowed-assessment metrics for the organization dashboard: total 
 
 ---
 
+## `scf_get_evidence_requiring_controls`
+
+Which of the organization's **in-scope** controls require one evidence item (read — viewer role). Works for untracked evidence: the requirement is a property of scope, not of the tracking row.
+
+The SCF catalogue maps an evidence item to controls globally (`control_mappings`); that list says nothing about the organization. The web app's evidence page used to show it as "the controls this artifact is mapped to" next to a "required by" count computed from scope, and the two disagreed whenever only some mapped controls were in scope (`E-AST-09`: four mapped, one required). This tool makes the in-scope view primary and the catalogue mapping labelled context.
+
+| Parameter     | Type   | Required | Description                                                                                          |
+| ------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------- |
+| `org_id`      | string | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                           |
+| `evidence_id` | string | Yes      | Catalog evidence ID (e.g., `E-AST-09`) — get from `scf_list_evidence` or `scf_list_evidence_catalog` |
+
+Response:
+
+| Field                           | Meaning                                                                                                                                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `required_by_in_scope_controls` | **Primary.** Each in-scope control that requires the item: `scf_id`, `control_name`, `implementation_status`, `maturity_level`, `scope_override`. `scf_id` order.                  |
+| `required_by_scope`             | `true` when that list is non-empty.                                                                                                                                                |
+| `catalog_control_mappings`      | **Context.** The SCF catalogue's global mapping for the item — not the organization's scope.                                                                                       |
+| `catalog_mappings_not_in_scope` | The catalogue entries no in-scope control turns into a requirement.                                                                                                                |
+| `scope_rule`                    | How membership is decided (below), stated on the wire so a reader does not have to infer it.                                                                                       |
+| `source`                        | `platform` when the platform served the join (`GET …/evidence/{evidence_id}/requiring-controls`); `mcp-composition` when this server composed it on a platform without that route. |
+
+The rule is the platform's own (`services.scoping_service.in_scope_evidence_requests`, which the evidence-gaps view and the task generator also use): a control requires the evidence when its scoped-control row is `selected`, whatever its implementation status — so a `not_applicable` or `deferred` control is listed **with that status** rather than silently dropped. On a platform that predates the route, the server reads `scf_get_catalog_evidence` and the in-scope `scoped-controls-paginated` listing for each mapped domain and applies the same rule.
+
+Note: the platform's AI assessments (`scf_trigger_evidence_assessment`, `scf_trigger_window_assessment`) are still built from the catalogue's mapped controls, so their findings can name controls the organization has not scoped. Read verdicts next to this tool's output.
+
+---
+
 ## `scf_get_evidence`
 
-Get one evidence tracking record (read — viewer role): tracked flag, collection method, owner, assignee, frequency, system, maturity level and its catalog deprecation badge.
+Get one evidence tracking record (read — viewer role): tracked flag, collection method, owner, assignee, frequency, system, maturity level and its catalog deprecation badge — plus the scope view from `scf_get_evidence_requiring_controls` merged in: `required_by_in_scope_controls` (primary), `catalog_control_mappings` and `catalog_mappings_not_in_scope` (labelled context), `scope_rule` and `in_scope_controls_source`. If that lookup fails the tracking record is still returned, with `in_scope_controls_error`. 404 when the item is not tracked; the requiring-controls tool works for untracked items too.
 
 | Parameter     | Type   | Required | Description                                                                   |
 | ------------- | ------ | -------- | ----------------------------------------------------------------------------- |

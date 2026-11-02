@@ -26,6 +26,13 @@ The 9 tools split into three concerns:
 
 Source: [`src/tools/catalog-reconciliation.ts`](../../src/tools/catalog-reconciliation.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_catalog_reconciliation_read` (load `catalog-reconciliation`): `status` = `scf_get_catalog_reconciliation_status`, `changelog` = `scf_get_catalog_changelog`, `list_runs` = `scf_list_reconciliation_runs`, `run` = `scf_get_reconciliation_run`
+> - `scf_catalog_reconciliation_write` (load `catalog-reconciliation`): `preview` = `scf_preview_catalog_reconciliation`, `set_actions` = `scf_set_reconciliation_actions`, `apply` = `scf_apply_catalog_reconciliation`, `cancel` = `scf_cancel_catalog_reconciliation`, `rollback` = `scf_rollback_catalog_reconciliation`
+
 ---
 
 ## `scf_get_catalog_reconciliation_status`

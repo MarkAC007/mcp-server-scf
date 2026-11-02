@@ -9,6 +9,13 @@ Two properties are worth knowing before calling any of these:
 
 Source: [`src/tools/journey.ts`](../../src/tools/journey.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_journey_read` (load `journey`): `get` = `scf_get_journey`, `templates` = `scf_list_journey_templates`
+> - `scf_journey_write` (load `journey`): `import` = `scf_import_journey`, `attest_stage` = `scf_attest_journey_stage`
+
 The 4 tools split into two concerns:
 
 1. **Reading the path** — `scf_get_journey`, `scf_list_journey_templates`

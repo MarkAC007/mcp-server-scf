@@ -4,6 +4,13 @@ Per-user assignments and comment threads on controls, evidence items and tasks. 
 
 Source: [`src/tools/collaboration.ts`](../../src/tools/collaboration.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_collaboration_read` (load `collaboration`): `assignments` = `scf_list_assignments`, `comments` = `scf_list_comments`
+> - `scf_collaboration_write` (load `collaboration`): `create_assignment` = `scf_create_assignment`, `delete_assignment` = `scf_delete_assignment`, `create_comment` = `scf_create_comment`, `update_comment` = `scf_update_comment`, `delete_comment` = `scf_delete_comment`
+
 The 7 tools split into two concerns:
 
 1. **Assignments** — `scf_list_assignments`, `scf_create_assignment`, `scf_delete_assignment`

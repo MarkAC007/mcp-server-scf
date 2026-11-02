@@ -493,6 +493,11 @@
     "GET /api/organizations/{org_id}/evidence-gaps": {
       "verdict": "in"
     },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/requiring-controls": {
+      "verdict": "in",
+      "tools": ["scf_evidence_read"],
+      "note": "Path built in src/lib/evidence-scope.ts (methods requiring_controls and get); composed from the catalogue and scoped-controls-paginated on a platform without the route"
+    },
     "GET /api/organizations/{org_id}/evidence-health": {
       "verdict": "in"
     },

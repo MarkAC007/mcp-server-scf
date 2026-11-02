@@ -4,6 +4,13 @@ Manage HMAC-authenticated webhook endpoints for evidence inbox ingestion. Extern
 
 Source: [`src/tools/webhooks.ts`](../../src/tools/webhooks.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_webhook_read` (load `webhooks`): `list` = `scf_list_webhooks`, `get` = `scf_get_webhook`, `deliveries` = `scf_list_webhook_deliveries`
+> - `scf_webhook_write` (load `webhooks`): `create` = `scf_create_webhook`, `rotate_secret` = `scf_rotate_webhook_secret`, `delete` = `scf_delete_webhook`
+
 The 6 tools split into three concerns:
 
 1. **Endpoint CRUD** — `scf_create_webhook`, `scf_list_webhooks`, `scf_get_webhook`, `scf_delete_webhook`

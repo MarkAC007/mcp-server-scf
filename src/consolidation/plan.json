@@ -1,0 +1,524 @@
+{
+  "$comment": "Consolidation plan: each exposed tool is one noun-and-direction (read or write) whose `method` selects one of the original single-route tools in src/tools/*.ts. Every original tool must appear exactly once (tests/consolidation.test.ts enforces it). A tool with one method is exposed under the original name and shape. `core_groups` are enabled at startup; the rest load on demand through scf_load_tools.",
+  "core_groups": ["catalog", "controls", "evidence", "assessments", "risk", "vendors", "systems", "organization"],
+  "groups": {
+    "catalog": "SCF reference catalog: controls, domains, frameworks, assessment objectives, evidence definitions (no org)",
+    "controls": "The organization's control scope: scoping, implementation status, maturity, basis, materiality, procedures",
+    "evidence": "Evidence tracking records, files, validation, tasks, collection health and maturity guidance",
+    "assessments": "AI evidence assessments: per-file and windowed verdicts, review queues, control composites",
+    "risk": "Risk register, custom risks, risk matrix and treatment",
+    "vendors": "Third-party risk: vendors, research, assessments, certifications, compensating controls, action items",
+    "systems": "Systems inventory and evidence capabilities, capability themes (KSI) scorecards",
+    "organization": "Organizations, members, settings, audit log, work queues, notifications, current user",
+    "teams": "Business functions, teams, rosters and team accountability for controls and evidence",
+    "collaboration": "User assignments and comment threads on controls, evidence and tasks",
+    "documents": "ISMS document generation, sections, lifecycle transitions and export",
+    "engagements": "Audit engagements: scope, auditors, queries and responses",
+    "assurance": "Deficiencies, organization compensating controls, control validations, posture snapshots, capability tests",
+    "catalog-reconciliation": "Per-organization SCF catalog upgrade reconciliation runs",
+    "webhooks": "Webhook endpoints, secrets and delivery logs",
+    "journey": "The guided implementation journey: stages, templates, attestation"
+  },
+  "tools": {
+    "scf_catalog_read": {
+      "group": "catalog",
+      "title": "SCF Catalog",
+      "description": "Read the SCF reference catalog (no org): controls, one control with its objectives and evidence, domains, frameworks, assessment objectives, evidence definitions. Pick with method.",
+      "methods": {
+        "list_controls": "scf_list_controls",
+        "get_control": "scf_get_control",
+        "list_domains": "scf_list_domains",
+        "get_domain": "scf_get_domain",
+        "list_frameworks": "scf_list_frameworks",
+        "list_assessment_objectives": "scf_list_assessment_objectives",
+        "list_evidence": "scf_list_evidence_catalog",
+        "get_evidence": "scf_get_catalog_evidence"
+      }
+    },
+    "scf_control_read": {
+      "group": "controls",
+      "title": "Scoped Controls (read)",
+      "description": "Read the organization's control scope: list scoped controls with filters, one control in full, scoping stats, framework scope summary, or preview a framework scope change. Pick with method.",
+      "methods": {
+        "list": "scf_list_scoped_controls",
+        "get": "scf_get_scoped_control",
+        "stats": "scf_get_scoping_stats",
+        "framework_scope": "scf_get_framework_scope_summary",
+        "preview_framework_change": "scf_preview_framework_scope_change"
+      }
+    },
+    "scf_control_write": {
+      "group": "controls",
+      "title": "Scoped Controls (write)",
+      "description": "Change the organization's control scope (editor+; some methods admin): update or batch-update controls, scope or unscope a framework, set scope, basis, maturity, materiality or procedure overrides.",
+      "methods": {
+        "update": "scf_update_scoped_control",
+        "batch_update": "scf_batch_update_controls",
+        "scope_framework": "scf_scope_framework",
+        "unscope_framework": "scf_bulk_unscope_framework",
+        "set_scope_override": "scf_set_scope_override",
+        "set_basis_override": "scf_set_control_basis_override",
+        "set_framework_basis": "scf_set_framework_basis",
+        "set_target_maturity": "scf_set_target_maturity",
+        "set_materiality": "scf_set_control_materiality",
+        "set_procedure": "scf_set_control_procedure"
+      }
+    },
+    "scf_evidence_read": {
+      "group": "evidence",
+      "title": "Evidence (read)",
+      "description": "Read evidence tracking: list records, one record with its in-scope requiring controls, requiring controls alone, gaps, health, upcoming, frequency health, maturity and upgrade guidance, suggestions.",
+      "methods": {
+        "list": "scf_list_evidence",
+        "get": "scf_get_evidence",
+        "requiring_controls": "scf_get_evidence_requiring_controls",
+        "gaps": "scf_list_evidence_gaps",
+        "health": "scf_get_evidence_health",
+        "upcoming": "scf_get_upcoming_evidence",
+        "frequency_health": "scf_get_frequency_health",
+        "maturity_summary": "scf_get_evidence_maturity",
+        "item_maturity": "scf_get_evidence_item_maturity",
+        "upgrade_recommendations": "scf_get_evidence_upgrade_recommendations",
+        "suggestions": "scf_get_evidence_suggestions"
+      }
+    },
+    "scf_evidence_write": {
+      "group": "evidence",
+      "title": "Evidence (write)",
+      "description": "Create or update evidence tracking records (editor+): create one from a catalog id, upsert one record's tracking fields, or batch-upsert up to 500 in one transaction. Pick with method.",
+      "methods": {
+        "create": "scf_create_evidence",
+        "update": "scf_update_evidence",
+        "batch_update": "scf_batch_update_evidence"
+      }
+    },
+    "scf_evidence_file_read": {
+      "group": "evidence",
+      "title": "Evidence Files (read)",
+      "description": "Read an evidence item's files: list them, one file with its download URL, one file's validation result, or the organization's validation summary. Pick with method.",
+      "methods": {
+        "list": "scf_list_evidence_files",
+        "get": "scf_get_evidence_file",
+        "validation": "scf_get_evidence_validation",
+        "validation_summary": "scf_get_evidence_validation_summary"
+      }
+    },
+    "scf_evidence_file_write": {
+      "group": "evidence",
+      "title": "Evidence Files (write)",
+      "description": "Act on an uploaded evidence file (editor+): approve, reject or request revision; re-run validation; or soft-delete it (destructive). Pick with method.",
+      "methods": {
+        "review": "scf_review_evidence_file",
+        "revalidate": "scf_revalidate_evidence_file",
+        "delete": "scf_delete_evidence_file"
+      }
+    },
+    "scf_list_evidence_tasks": {
+      "group": "evidence",
+      "methods": { "list": "scf_list_evidence_tasks" }
+    },
+    "scf_evidence_task_write": {
+      "group": "evidence",
+      "title": "Evidence Tasks (write)",
+      "description": "Manage evidence collection tasks (editor+): create one against a tracking record, update its fields, or mark it completed with notes. Pick with method.",
+      "methods": {
+        "create": "scf_create_evidence_task",
+        "update": "scf_update_evidence_task",
+        "complete": "scf_complete_evidence_task"
+      }
+    },
+    "scf_assessment_read": {
+      "group": "assessments",
+      "title": "AI Assessments (read)",
+      "description": "Read AI evidence assessments: a file's verdict, the file summary, review queues, window assessments (list, one, versions, summary), and control composites. Pick with method.",
+      "methods": {
+        "file_assessment": "scf_get_evidence_assessment",
+        "file_summary": "scf_get_evidence_assessment_summary",
+        "review_queue": "scf_get_assessment_review_queue",
+        "list_windows": "scf_list_window_assessments",
+        "window": "scf_get_window_assessment",
+        "window_versions": "scf_get_window_assessment_versions",
+        "window_summary": "scf_get_window_assessment_summary",
+        "control_composite": "scf_get_control_assessment_composite",
+        "list_control_composites": "scf_list_control_assessment_composites"
+      }
+    },
+    "scf_assessment_write": {
+      "group": "assessments",
+      "title": "AI Assessments (write)",
+      "description": "Run and review AI evidence assessments (editor+, async): assess a file or many, assess a window or many, refresh stale windows, confirm or override verdicts, set window acceptance.",
+      "methods": {
+        "assess_file": "scf_trigger_evidence_assessment",
+        "assess_files_bulk": "scf_bulk_assess_evidence",
+        "review_file_verdict": "scf_review_evidence_assessment",
+        "assess_window": "scf_trigger_window_assessment",
+        "assess_windows_bulk": "scf_bulk_assess_windows",
+        "refresh_stale_windows": "scf_refresh_stale_window_assessments",
+        "review_window": "scf_review_window_assessment",
+        "review_window_verdict": "scf_review_window_assessment_verdict"
+      }
+    },
+    "scf_risk_read": {
+      "group": "risk",
+      "title": "Risks (read)",
+      "description": "Read the risk register: list risks, one risk, the 5x5 matrix, summary, profile, risks for a control, or controls for a risk. Pick with method.",
+      "methods": {
+        "list": "scf_list_risks",
+        "get": "scf_get_risk",
+        "matrix": "scf_get_risk_matrix",
+        "summary": "scf_get_risk_summary",
+        "profile": "scf_get_risk_profile",
+        "for_control": "scf_get_risks_for_control",
+        "controls_for_risk": "scf_get_controls_for_risk"
+      }
+    },
+    "scf_risk_write": {
+      "group": "risk",
+      "title": "Risks (write)",
+      "description": "Change the risk register (editor+; accept is admin): create a risk assessment, update one, delete one (destructive), or record or renew a risk acceptance. Pick with method.",
+      "methods": {
+        "create": "scf_create_risk",
+        "update": "scf_update_risk_assessment",
+        "delete": "scf_delete_risk_assessment",
+        "accept": "scf_accept_risk"
+      }
+    },
+    "scf_custom_risk_read": {
+      "group": "risk",
+      "title": "Custom Risks (read)",
+      "description": "Read organization-defined custom risks: list them, or list the controls linked to one. Pick with method.",
+      "methods": {
+        "list": "scf_list_custom_risks",
+        "controls": "scf_list_custom_risk_controls"
+      }
+    },
+    "scf_custom_risk_write": {
+      "group": "risk",
+      "title": "Custom Risks (write)",
+      "description": "Manage custom risks (editor+): create, update or delete a risk (destructive); add, update or remove a linked control. Pick with method.",
+      "methods": {
+        "create": "scf_create_custom_risk",
+        "update": "scf_update_custom_risk",
+        "delete": "scf_delete_custom_risk",
+        "add_control": "scf_add_custom_risk_control",
+        "update_control": "scf_update_custom_risk_control",
+        "remove_control": "scf_remove_custom_risk_control"
+      }
+    },
+    "scf_vendor_read": {
+      "group": "vendors",
+      "title": "Vendors (read)",
+      "description": "Read third-party risk data: list vendors, one vendor, its research, assessments (list, one, latest, status), certifications, compensating controls, action items. Pick with method.",
+      "methods": {
+        "list": "scf_list_vendors",
+        "get": "scf_get_vendor",
+        "research": "scf_get_vendor_research",
+        "list_assessments": "scf_list_vendor_assessments",
+        "assessment": "scf_get_vendor_assessment",
+        "latest_assessment": "scf_get_latest_vendor_assessment",
+        "assessment_status": "scf_get_vendor_assessment_status",
+        "certifications": "scf_list_vendor_certifications",
+        "compensating_controls": "scf_list_compensating_controls",
+        "action_items": "scf_list_vendor_action_items"
+      }
+    },
+    "scf_vendor_write": {
+      "group": "vendors",
+      "title": "Vendors (write)",
+      "description": "Manage vendors (editor+): create or update a vendor, trigger AI research, or trigger a DPSIA assessment (async). Pick with method.",
+      "methods": {
+        "create": "scf_create_vendor",
+        "update": "scf_update_vendor",
+        "research": "scf_trigger_vendor_research",
+        "assess": "scf_trigger_vendor_assessment"
+      }
+    },
+    "scf_vendor_record_write": {
+      "group": "vendors",
+      "title": "Vendor Records (write)",
+      "description": "Manage a vendor's sub-records (editor+): create, update or delete a certification, a compensating control, or an action item. Deletes are destructive. Pick with method.",
+      "methods": {
+        "create_certification": "scf_create_vendor_certification",
+        "update_certification": "scf_update_vendor_certification",
+        "delete_certification": "scf_delete_vendor_certification",
+        "create_compensating_control": "scf_create_compensating_control",
+        "update_compensating_control": "scf_update_compensating_control",
+        "delete_compensating_control": "scf_delete_compensating_control",
+        "create_action_item": "scf_create_vendor_action_item",
+        "update_action_item": "scf_update_vendor_action_item",
+        "delete_action_item": "scf_delete_vendor_action_item"
+      }
+    },
+    "scf_system_read": {
+      "group": "systems",
+      "title": "Systems (read)",
+      "description": "Read the systems inventory: list systems, one system, catalog templates, a system's capabilities and recipes, recipe status, org evidence capabilities, systems for an evidence type.",
+      "methods": {
+        "list": "scf_list_systems",
+        "get": "scf_get_system",
+        "catalog_templates": "scf_list_system_catalog",
+        "catalog_template": "scf_get_system_catalog_template",
+        "capabilities": "scf_list_system_capabilities",
+        "recipes": "scf_get_system_recipes",
+        "recipe_status": "scf_get_recipe_generation_status",
+        "evidence_capabilities": "scf_list_capabilities",
+        "systems_for_evidence": "scf_get_systems_for_evidence"
+      }
+    },
+    "scf_system_write": {
+      "group": "systems",
+      "title": "Systems (write)",
+      "description": "Manage the systems inventory (editor+): create or update a system, declare or update an evidence capability, or generate collection recipes (async). Pick with method.",
+      "methods": {
+        "create": "scf_create_system",
+        "update": "scf_update_system",
+        "create_capability": "scf_create_system_capability",
+        "update_capability": "scf_update_system_capability",
+        "generate_recipes": "scf_generate_system_recipes"
+      }
+    },
+    "scf_capability_theme_read": {
+      "group": "systems",
+      "title": "Capability Themes (read)",
+      "description": "Read capability themes (KSIs): list themes, one theme, the multi-axis scorecard, per-theme evidence posture, or the controls mapped to a theme. Pick with method.",
+      "methods": {
+        "list": "scf_list_capability_themes",
+        "get": "scf_get_capability_theme",
+        "scorecard": "scf_get_capability_theme_scorecard",
+        "evidence_posture": "scf_get_capability_theme_evidence_posture",
+        "controls": "scf_list_capability_theme_controls"
+      }
+    },
+    "scf_org_read": {
+      "group": "organization",
+      "title": "Organization (read)",
+      "description": "Read organization data: list organizations, one organization, its settings, members, audit log, change cursor, or the organization work queue. Pick with method.",
+      "methods": {
+        "list": "scf_list_organizations",
+        "get": "scf_get_organization",
+        "settings": "scf_get_org_settings",
+        "members": "scf_list_members",
+        "audit_log": "scf_get_audit_log",
+        "change_cursor": "scf_get_change_cursor",
+        "work_queue": "scf_get_org_work_queue"
+      }
+    },
+    "scf_update_org_settings": {
+      "group": "organization",
+      "methods": { "update": "scf_update_org_settings" }
+    },
+    "scf_user_read": {
+      "group": "organization",
+      "title": "Current User (read)",
+      "description": "Read the caller's own view: the current user (the API key's identity), their work queue, or their notifications. Pick with method.",
+      "methods": {
+        "me": "scf_get_current_user",
+        "work_queue": "scf_get_work_queue",
+        "notifications": "scf_get_notifications"
+      }
+    },
+    "scf_mark_notifications_read": {
+      "group": "organization",
+      "methods": { "mark_read": "scf_mark_notifications_read" }
+    },
+    "scf_team_read": {
+      "group": "teams",
+      "title": "Teams (read)",
+      "description": "Read teams: list teams, one team with its roster, business functions, or team assignments to controls and evidence. Pick with method.",
+      "methods": {
+        "list": "scf_list_teams",
+        "get": "scf_get_team",
+        "functions": "scf_list_functions",
+        "assignments": "scf_list_team_assignments"
+      }
+    },
+    "scf_team_write": {
+      "group": "teams",
+      "title": "Teams (write)",
+      "description": "Manage teams (editor+): create or update a team, add or remove a member, create one or many team assignments, or delete one (destructive). Pick with method.",
+      "methods": {
+        "create": "scf_create_team",
+        "update": "scf_update_team",
+        "add_member": "scf_add_team_member",
+        "remove_member": "scf_remove_team_member",
+        "create_assignment": "scf_create_team_assignment",
+        "batch_create_assignments": "scf_batch_create_team_assignments",
+        "delete_assignment": "scf_delete_team_assignment"
+      }
+    },
+    "scf_collaboration_read": {
+      "group": "collaboration",
+      "title": "Collaboration (read)",
+      "description": "Read collaboration data: user assignments to controls, evidence and tasks, or comment threads on an entity. Pick with method.",
+      "methods": {
+        "assignments": "scf_list_assignments",
+        "comments": "scf_list_comments"
+      }
+    },
+    "scf_collaboration_write": {
+      "group": "collaboration",
+      "title": "Collaboration (write)",
+      "description": "Change collaboration data (editor+): create or delete a user assignment; create, update or delete a comment. Deletes are destructive. Pick with method.",
+      "methods": {
+        "create_assignment": "scf_create_assignment",
+        "delete_assignment": "scf_delete_assignment",
+        "create_comment": "scf_create_comment",
+        "update_comment": "scf_update_comment",
+        "delete_comment": "scf_delete_comment"
+      }
+    },
+    "scf_document_read": {
+      "group": "documents",
+      "title": "ISMS Documents (read)",
+      "description": "Read ISMS documents: list, one document, export, preview, history, a generated section, generation status, settings, available domains, generators. Pick with method.",
+      "methods": {
+        "list": "scf_list_documents",
+        "get": "scf_get_document",
+        "export": "scf_export_document",
+        "preview": "scf_preview_document",
+        "history": "scf_get_document_history",
+        "section_generated": "scf_get_document_section_generated",
+        "generation_status": "scf_get_document_generation_status",
+        "settings": "scf_get_document_settings",
+        "domains": "scf_list_document_domains",
+        "generators": "scf_list_document_generators"
+      }
+    },
+    "scf_document_write": {
+      "group": "documents",
+      "title": "ISMS Documents (write)",
+      "description": "Change ISMS documents (editor+): generate documents (async), transition lifecycle state, update or resolve a section, or update generation settings. Pick with method.",
+      "methods": {
+        "generate": "scf_generate_documents",
+        "transition": "scf_transition_document",
+        "update_section": "scf_update_document_section",
+        "resolve_section": "scf_resolve_document_section",
+        "update_settings": "scf_update_document_settings"
+      }
+    },
+    "scf_engagement_read": {
+      "group": "engagements",
+      "title": "Audit Engagements (read)",
+      "description": "Read audit engagements: list, one engagement, the caller's engagements, scope, presentation, auditors, queries, one query. Pick with method.",
+      "methods": {
+        "list": "scf_list_engagements",
+        "get": "scf_get_engagement",
+        "mine": "scf_list_my_engagements",
+        "scope": "scf_get_engagement_scope",
+        "presentation": "scf_get_engagement_presentation",
+        "auditors": "scf_list_engagement_auditors",
+        "queries": "scf_list_engagement_queries",
+        "query": "scf_get_engagement_query"
+      }
+    },
+    "scf_engagement_write": {
+      "group": "engagements",
+      "title": "Audit Engagements (write)",
+      "description": "Change audit engagements (editor+): create, update or delete one (destructive); add or remove an auditor; raise a query, set its status, or respond to it. Pick with method.",
+      "methods": {
+        "create": "scf_create_engagement",
+        "update": "scf_update_engagement",
+        "delete": "scf_delete_engagement",
+        "add_auditor": "scf_add_engagement_auditor",
+        "remove_auditor": "scf_remove_engagement_auditor",
+        "create_query": "scf_create_engagement_query",
+        "update_query_status": "scf_update_engagement_query_status",
+        "respond_to_query": "scf_respond_to_engagement_query"
+      }
+    },
+    "scf_assurance_read": {
+      "group": "assurance",
+      "title": "Assurance (read)",
+      "description": "Read assurance records: deficiencies (list, one, summary), organization compensating controls, control validations, posture snapshots, capability tests. Pick with method.",
+      "methods": {
+        "list_deficiencies": "scf_list_deficiencies",
+        "deficiency": "scf_get_deficiency",
+        "deficiency_summary": "scf_get_deficiency_summary",
+        "list_compensating_controls": "scf_list_org_compensating_controls",
+        "compensating_control": "scf_get_org_compensating_control",
+        "control_validations": "scf_list_control_validations",
+        "list_posture_snapshots": "scf_list_posture_snapshots",
+        "posture_snapshot": "scf_get_posture_snapshot",
+        "list_capability_tests": "scf_list_capability_tests",
+        "capability_test": "scf_get_capability_test"
+      }
+    },
+    "scf_assurance_write": {
+      "group": "assurance",
+      "title": "Assurance (write)",
+      "description": "Record assurance (editor+): create or update a deficiency or compensating control, record a control validation, take a posture snapshot, create or update a capability test, add a finding.",
+      "methods": {
+        "create_deficiency": "scf_create_deficiency",
+        "update_deficiency": "scf_update_deficiency",
+        "create_compensating_control": "scf_create_org_compensating_control",
+        "update_compensating_control": "scf_update_org_compensating_control",
+        "record_control_validation": "scf_record_control_validation",
+        "take_posture_snapshot": "scf_take_posture_snapshot",
+        "create_capability_test": "scf_create_capability_test",
+        "update_capability_test": "scf_update_capability_test",
+        "add_capability_test_finding": "scf_add_capability_test_finding"
+      }
+    },
+    "scf_catalog_reconciliation_read": {
+      "group": "catalog-reconciliation",
+      "title": "Catalog Reconciliation (read)",
+      "description": "Read SCF catalog reconciliation for an organization: status, the catalog changelog, reconciliation runs, or one run. Pick with method.",
+      "methods": {
+        "status": "scf_get_catalog_reconciliation_status",
+        "changelog": "scf_get_catalog_changelog",
+        "list_runs": "scf_list_reconciliation_runs",
+        "run": "scf_get_reconciliation_run"
+      }
+    },
+    "scf_catalog_reconciliation_write": {
+      "group": "catalog-reconciliation",
+      "title": "Catalog Reconciliation (write)",
+      "description": "Drive a catalog reconciliation (admin): preview a run, set per-change actions, apply, cancel, or roll back a run. Pick with method.",
+      "methods": {
+        "preview": "scf_preview_catalog_reconciliation",
+        "set_actions": "scf_set_reconciliation_actions",
+        "apply": "scf_apply_catalog_reconciliation",
+        "cancel": "scf_cancel_catalog_reconciliation",
+        "rollback": "scf_rollback_catalog_reconciliation"
+      }
+    },
+    "scf_webhook_read": {
+      "group": "webhooks",
+      "title": "Webhooks (read)",
+      "description": "Read webhook endpoints: list them, one endpoint, or its delivery log. Pick with method.",
+      "methods": {
+        "list": "scf_list_webhooks",
+        "get": "scf_get_webhook",
+        "deliveries": "scf_list_webhook_deliveries"
+      }
+    },
+    "scf_webhook_write": {
+      "group": "webhooks",
+      "title": "Webhooks (write)",
+      "description": "Manage webhook endpoints (admin): create one, rotate its signing secret, or delete it (destructive). Pick with method.",
+      "methods": {
+        "create": "scf_create_webhook",
+        "rotate_secret": "scf_rotate_webhook_secret",
+        "delete": "scf_delete_webhook"
+      }
+    },
+    "scf_journey_read": {
+      "group": "journey",
+      "title": "Journey (read)",
+      "description": "Read the guided implementation journey: the staged path with preconditions evaluated, or the available templates. Pick with method.",
+      "methods": {
+        "get": "scf_get_journey",
+        "templates": "scf_list_journey_templates"
+      }
+    },
+    "scf_journey_write": {
+      "group": "journey",
+      "title": "Journey (write)",
+      "description": "Change the journey (editor+): import or replace it from a template or artefact, or attest that a stage is complete. Pick with method.",
+      "methods": {
+        "import": "scf_import_journey",
+        "attest_stage": "scf_attest_journey_stage"
+      }
+    }
+  }
+}

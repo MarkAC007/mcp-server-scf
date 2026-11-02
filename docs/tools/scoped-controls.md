@@ -6,6 +6,13 @@ The SCRMS programme fields (scf-controls-platform #1120) live here too: each sco
 
 Source: [`src/tools/scoped-controls.ts`](../../src/tools/scoped-controls.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_control_read` (core): `list` = `scf_list_scoped_controls`, `get` = `scf_get_scoped_control`, `stats` = `scf_get_scoping_stats`, `framework_scope` = `scf_get_framework_scope_summary`, `preview_framework_change` = `scf_preview_framework_scope_change`
+> - `scf_control_write` (core): `update` = `scf_update_scoped_control`, `batch_update` = `scf_batch_update_controls`, `scope_framework` = `scf_scope_framework`, `unscope_framework` = `scf_bulk_unscope_framework`, `set_scope_override` = `scf_set_scope_override`, `set_basis_override` = `scf_set_control_basis_override`, `set_framework_basis` = `scf_set_framework_basis`, `set_target_maturity` = `scf_set_target_maturity`, `set_materiality` = `scf_set_control_materiality`, `set_procedure` = `scf_set_control_procedure`
+
 ---
 
 ## `scf_list_scoped_controls`

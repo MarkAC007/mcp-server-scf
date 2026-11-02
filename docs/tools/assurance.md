@@ -4,6 +4,13 @@ The records an organisation keeps to show its controls work and that it is exerc
 
 Source: [`src/tools/assurance.ts`](../../src/tools/assurance.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_assurance_read` (load `assurance`): `list_deficiencies` = `scf_list_deficiencies`, `deficiency` = `scf_get_deficiency`, `deficiency_summary` = `scf_get_deficiency_summary`, `list_compensating_controls` = `scf_list_org_compensating_controls`, `compensating_control` = `scf_get_org_compensating_control`, `control_validations` = `scf_list_control_validations`, `list_posture_snapshots` = `scf_list_posture_snapshots`, `posture_snapshot` = `scf_get_posture_snapshot`, `list_capability_tests` = `scf_list_capability_tests`, `capability_test` = `scf_get_capability_test`
+> - `scf_assurance_write` (load `assurance`): `create_deficiency` = `scf_create_deficiency`, `update_deficiency` = `scf_update_deficiency`, `create_compensating_control` = `scf_create_org_compensating_control`, `update_compensating_control` = `scf_update_org_compensating_control`, `record_control_validation` = `scf_record_control_validation`, `take_posture_snapshot` = `scf_take_posture_snapshot`, `create_capability_test` = `scf_create_capability_test`, `update_capability_test` = `scf_update_capability_test`, `add_capability_test_finding` = `scf_add_capability_test_finding`
+
 The 19 tools split into four concerns:
 
 1. **Deficiencies** — `scf_list_deficiencies`, `scf_get_deficiency_summary`, `scf_get_deficiency`, `scf_create_deficiency`, `scf_update_deficiency`

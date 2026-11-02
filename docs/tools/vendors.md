@@ -4,6 +4,14 @@ Third-party risk management with AI-powered security research (HIBP/NVD lookups,
 
 Source: [`src/tools/vendors.ts`](../../src/tools/vendors.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_vendor_read` (core): `list` = `scf_list_vendors`, `get` = `scf_get_vendor`, `research` = `scf_get_vendor_research`, `list_assessments` = `scf_list_vendor_assessments`, `assessment` = `scf_get_vendor_assessment`, `latest_assessment` = `scf_get_latest_vendor_assessment`, `assessment_status` = `scf_get_vendor_assessment_status`, `certifications` = `scf_list_vendor_certifications`, `compensating_controls` = `scf_list_compensating_controls`, `action_items` = `scf_list_vendor_action_items`
+> - `scf_vendor_write` (core): `create` = `scf_create_vendor`, `update` = `scf_update_vendor`, `research` = `scf_trigger_vendor_research`, `assess` = `scf_trigger_vendor_assessment`
+> - `scf_vendor_record_write` (core): `create_certification` = `scf_create_vendor_certification`, `update_certification` = `scf_update_vendor_certification`, `delete_certification` = `scf_delete_vendor_certification`, `create_compensating_control` = `scf_create_compensating_control`, `update_compensating_control` = `scf_update_compensating_control`, `delete_compensating_control` = `scf_delete_compensating_control`, `create_action_item` = `scf_create_vendor_action_item`, `update_action_item` = `scf_update_vendor_action_item`, `delete_action_item` = `scf_delete_vendor_action_item`
+
 The 23 tools split into four concerns:
 
 1. **Vendor registry** — `scf_list_vendors`, `scf_get_vendor`, `scf_create_vendor`, `scf_update_vendor`

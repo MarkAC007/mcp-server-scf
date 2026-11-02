@@ -115,7 +115,7 @@ export function registerCatalogTools(server: McpServer) {
 
   server.tool(
     "scf_list_evidence_catalog",
-    "List evidence items from the SCF reference catalog — the 272 standard evidence types that can be collected to demonstrate control implementation. Supports free-text search and pagination.",
+    "List the SCF reference catalog's 272 evidence types (read, no org). control_mappings is the catalogue-wide mapping, not scope — see scf_get_evidence_requiring_controls. Free-text search, pagination.",
     {
       search: z.string().optional().describe("Free-text filter applied to evidence title and description"),
       limit: z.number().int().min(1).max(100).default(25).describe("Page size (1–100, default 25)"),
@@ -193,7 +193,7 @@ export function registerCatalogTools(server: McpServer) {
 
   server.tool(
     "scf_get_catalog_evidence",
-    "Get one catalog evidence entry with the controls it maps to (read, no org). The reference definition, not an organization's tracking record — see scf_get_evidence for that.",
+    "Get one catalog evidence entry (read, no org): title, description, area of focus, control_mappings — the catalogue-wide mapping, not scope. In-scope requirers: scf_get_evidence_requiring_controls.",
     {
       evidence_id: z.string().describe("Catalog evidence ID, e.g. E-IAM-01 — obtain from scf_list_evidence_catalog"),
     },

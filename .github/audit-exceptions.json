@@ -1,8 +1,8 @@
 [
   {
-    "advisory": "GHSA-86w9-cpqp-85rv",
-    "package": "node-forge",
-    "reason": "No patched node-forge release exists (every version <=1.4.0 is in the vulnerable range). Reached only through devDependency @anthropic-ai/mcpb@2.1.2, the latest release, which uses node-forge to sign .mcpb bundles; the flaw is in RSA PKCS#1 v1.5 signature *verification*, which this repository never performs. Not shipped in the published package or the .mcpb bundle. Re-check for a node-forge or @anthropic-ai/mcpb fix before this expires; extend only with a fresh date and reason.",
-    "expires": "2026-11-07"
+    "advisory": "GHSA-mrhx-c7xc-m3w5",
+    "package": "zod",
+    "reason": "Reached only through devDependency @anthropic-ai/mcpb@2.1.2 (the latest release), which pins its own nested zod@3.x copy under node_modules/@anthropic-ai/mcpb/node_modules/zod; npm audit offers no fix because no mcpb release depends on a patched zod. The flaw is memory exhaustion while validating oversized constrained collections; the nested copy only validates the local manifest.json when scripts/build-mcpb.sh packs the .mcpb bundle, and is not shipped in the published package or the bundle. The server itself resolves zod@4.6.7, which is patched. Re-check for an @anthropic-ai/mcpb release on zod 4 before this expires; extend only with a fresh date and reason.",
+    "expires": "2026-12-02"
   }
 ]

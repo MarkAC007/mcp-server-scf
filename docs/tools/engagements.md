@@ -19,6 +19,13 @@ The 16 tools split into four concerns:
 
 Source: [`src/tools/engagements.ts`](../../src/tools/engagements.ts).
 
+<!-- consolidated-surface -->
+
+> **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
+>
+> - `scf_engagement_read` (load `engagements`): `list` = `scf_list_engagements`, `get` = `scf_get_engagement`, `mine` = `scf_list_my_engagements`, `scope` = `scf_get_engagement_scope`, `presentation` = `scf_get_engagement_presentation`, `auditors` = `scf_list_engagement_auditors`, `queries` = `scf_list_engagement_queries`, `query` = `scf_get_engagement_query`
+> - `scf_engagement_write` (load `engagements`): `create` = `scf_create_engagement`, `update` = `scf_update_engagement`, `delete` = `scf_delete_engagement`, `add_auditor` = `scf_add_engagement_auditor`, `remove_auditor` = `scf_remove_engagement_auditor`, `create_query` = `scf_create_engagement_query`, `update_query_status` = `scf_update_engagement_query_status`, `respond_to_query` = `scf_respond_to_engagement_query`
+
 ---
 
 ## `scf_list_engagements`

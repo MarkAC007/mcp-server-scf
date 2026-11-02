@@ -28,7 +28,7 @@ describe("tool registration", () => {
   const cases: Array<[string, (s: McpServer) => void, number]> = [
     ["catalog", registerCatalogTools, 8],
     ["scoped-controls", registerScopedControlTools, 15],
-    ["evidence", registerEvidenceTools, 41],
+    ["evidence", registerEvidenceTools, 42],
     ["risk", registerRiskTools, 19],
     ["vendors", registerVendorTools, 23],
     ["organization", registerOrganizationTools, 12],
@@ -75,9 +75,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 224", () => {
+  it("total tool count equals 225", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(224);
+    expect(server.tool).toHaveBeenCalledTimes(225);
   });
 });
