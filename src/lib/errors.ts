@@ -11,7 +11,8 @@ export class ScfApiError extends Error {
 
 export function formatError(error: unknown): string {
   if (error instanceof ScfApiError) {
-    if (error.statusCode === 401) return "Authentication failed. Check your SCF_API_KEY.";
+    if (error.statusCode === 401)
+      return "Authentication failed. Check your SCF API key (SCF_API_KEY on stdio, the Authorization header on HTTP).";
     if (error.statusCode === 403)
       return (
         `Access denied by the platform: ${error.message}. ` +

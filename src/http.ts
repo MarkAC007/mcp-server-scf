@@ -74,6 +74,13 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): HttpConfig 
   const apiUrl = env.SCF_API_URL;
   if (!apiUrl) throw new Error("SCF_API_URL is required (fixed server-side; callers never set it)");
   if (!/^https?:\/\/[^\s/]+/i.test(apiUrl)) throw new Error("SCF_API_URL must be an http(s) URL");
+  const requestTimeoutMs = positiveInt(env.MCP_REQUEST_TIMEOUT_MS, 120_000, "MCP_REQUEST_TIMEOUT_MS");
+  const apiTimeoutMs = positiveInt(env.SCF_API_TIMEOUT_MS, 90_000, "SCF_API_TIMEOUT_MS");
+  if (apiTimeoutMs >= requestTimeoutMs) {
+    throw new Error(
+      `SCF_API_TIMEOUT_MS (${apiTimeoutMs}) must be below MCP_REQUEST_TIMEOUT_MS (${requestTimeoutMs}), or a slow upstream call is cut off with no error`,
+    );
+  }
   return {
     port: positiveInt(env.PORT, 3000, "PORT"),
     host: env.MCP_HTTP_HOST ?? "127.0.0.1",
@@ -81,8 +88,8 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): HttpConfig 
     allowedHosts: csv(env.MCP_ALLOWED_HOSTS),
     allowedOrigins: csv(env.MCP_ALLOWED_ORIGINS),
     maxBodyBytes: positiveInt(env.MCP_MAX_BODY_BYTES, 1_048_576, "MCP_MAX_BODY_BYTES"),
-    requestTimeoutMs: positiveInt(env.MCP_REQUEST_TIMEOUT_MS, 120_000, "MCP_REQUEST_TIMEOUT_MS"),
-    apiTimeoutMs: positiveInt(env.SCF_API_TIMEOUT_MS, 90_000, "SCF_API_TIMEOUT_MS"),
+    requestTimeoutMs,
+    apiTimeoutMs,
     loadAll: env[LOAD_ALL_ENV] === undefined ? true : loadAllFromEnv(env),
     jsonResponse: /^(1|true|yes)$/i.test((env.MCP_JSON_RESPONSE ?? "").trim()),
   };
@@ -109,17 +116,45 @@ class PayloadTooLarge extends Error {
   readonly status = 413;
 }
 
-async function readJsonBody(req: IncomingMessage, limit: number): Promise<unknown> {
+function readJsonBody(req: IncomingMessage, limit: number): Promise<unknown> {
   const declared = Number(req.headers["content-length"] ?? 0);
-  if (declared > limit) throw new PayloadTooLarge("payload too large");
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const chunk of req) {
-    size += (chunk as Buffer).length;
-    if (size > limit) throw new PayloadTooLarge("payload too large");
-    chunks.push(chunk as Buffer);
+  if (declared > limit) {
+    req.resume(); // drain so the 413 is delivered, not lost behind a reset
+    return Promise.reject(new PayloadTooLarge("payload too large"));
   }
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let settled = false;
+    const onData = (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > limit) {
+        // Stop collecting but keep draining: destroying the stream here would
+        // reset the socket before the 413 reaches the client.
+        settled = true;
+        req.off("data", onData);
+        req.resume();
+        reject(new PayloadTooLarge("payload too large"));
+        return;
+      }
+      chunks.push(chunk);
+    };
+    req.on("data", onData);
+    req.once("end", () => {
+      if (settled) return;
+      settled = true;
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.once("error", (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    });
+  });
 }
 
 type RpcMessage = { method?: unknown; params?: { name?: unknown } };
@@ -137,13 +172,13 @@ function describeBody(body: unknown): string {
 }
 
 /**
- * Keys the platform has just rejected are answered 401 here for a short while,
+ * Keys the platform has just rejected are answered 401 here for 15 s,
  * so a caller hammering the relay with bad keys does not become a stream of
  * upstream auth lookups. The memo is keyed by an HMAC under a secret that
  * exists only for this process; the key value itself is never stored and
  * the fingerprint is useless outside this process.
  */
-const REJECT_TTL_MS = 60_000;
+const REJECT_TTL_MS = 15_000;
 const rejected = new Map<string, number>();
 const fingerprintSecret = randomBytes(32);
 
@@ -184,11 +219,12 @@ export function createMcpHttpServer(config: HttpConfig) {
     let detail = "";
     // Access log: method, path, status, duration, JSON-RPC method and key prefix only.
     // req.headers is never logged — it carries the Authorization value.
-    res.on("finish", () =>
+    res.on("close", () => {
+      const status = res.writableFinished ? String(res.statusCode) : `aborted(${res.statusCode})`;
       console.error(
-        `[mcp-server-scf] ${req.method} ${url.pathname} ${res.statusCode} ${Date.now() - started}ms${detail ? ` ${detail}` : ""}`,
-      ),
-    );
+        `[mcp-server-scf] ${req.method} ${url.pathname} ${status} ${Date.now() - started}ms${detail ? ` ${detail}` : ""}`,
+      );
+    });
     res.setTimeout(config.requestTimeoutMs, () => res.destroy());
 
     if (req.method === "GET" && url.pathname === "/healthz") {
@@ -259,8 +295,7 @@ export function createMcpHttpServer(config: HttpConfig) {
       enableJsonResponse: config.jsonResponse,
     });
     res.on("close", () => {
-      void transport.close();
-      void mcp.close();
+      void mcp.close(); // closes its transport too
     });
     try {
       await runWithClient(client, async () => {
@@ -304,9 +339,11 @@ function isMain(): boolean {
 }
 
 if (isMain()) {
-  startHttpServer(configFromEnv())
+  const config = configFromEnv();
+  startHttpServer(config)
     .then(({ server, port }) => {
-      console.error(`SCF MCP Server (streamable-http) listening on ${port}/mcp, upstream ${configFromEnv().apiUrl}`);
+      console.error(`SCF MCP Server (streamable-http) listening on ${port}/mcp, upstream ${config.apiUrl}`);
+      server.on("error", (error) => console.error("[mcp-server-scf] server error:", error.message));
       const stop = () => {
         server.close(() => process.exit(0));
         setTimeout(() => process.exit(0), 5_000).unref();

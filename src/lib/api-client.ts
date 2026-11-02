@@ -50,12 +50,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Every tool interpolates caller-supplied ids into the request path. Refuse
- * anything that could change the route shape (`..`, `?`, `#`, encoded `/` or
- * `.`) and require the org segment to be a UUID, so a bad id fails here with
+ * anything that could change the route shape (`..`, `?`, `#`, `\\`, which the URL
+ * parser turns into `/`, or an encoded `/`, `.` or `\\`) and require the org segment to be a UUID, so a bad id fails here with
  * a 400 instead of reaching an unexpected platform route.
  */
 function assertSafePath(path: string): void {
-  if (!path.startsWith("/") || /[?#\s]|%2f|%2e|\.\./i.test(path)) {
+  if (!path.startsWith("/") || /[?#\s\\]|%2f|%2e|%5c|\.\./i.test(path)) {
     throw new ScfApiError("Refusing to call an unsafe API path", 400);
   }
   const org = path.match(/^\/organizations\/([^/]+)/);

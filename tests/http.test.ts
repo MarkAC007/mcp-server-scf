@@ -44,8 +44,10 @@ function baseConfig(overrides: Partial<HttpConfig> = {}): HttpConfig {
     host: "127.0.0.1",
     apiUrl: platformUrl,
     allowedHosts: [],
+    allowedOrigins: [],
     maxBodyBytes: 1_048_576,
     requestTimeoutMs: 120_000,
+    apiTimeoutMs: 5_000,
     loadAll: true,
     jsonResponse: true,
     ...overrides,
@@ -163,6 +165,39 @@ afterAll(async () => {
 });
 
 describe("HTTP transport: plain routes and guards", () => {
+  it("(f2) refuses an Origin that is not allow-listed with 403, and accepts a listed one past the Origin check", async () => {
+    const port = await startMcp({ allowedOrigins: ["https://app.example"] });
+    const bad = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: "POST",
+      headers: { Origin: "https://evil.example", Authorization: "Bearer scf_testkey_AAAAAAAA" },
+      body: "{}",
+    });
+    expect(bad.status).toBe(403);
+    const ok = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: "POST",
+      headers: { Origin: "https://app.example" },
+      body: "{}",
+    });
+    expect(ok.status).toBe(401); // past the Origin guard, stopped by the missing bearer
+  });
+
+  it("(e2) a chunked body that grows past the cap still gets a 413 response (socket not reset)", async () => {
+    const port = await startMcp({ maxBodyBytes: 1024 });
+    const res = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: "POST",
+      headers: { Authorization: "Bearer scf_testkey_AAAAAAAA", "Content-Type": "application/json" },
+      body: new ReadableStream({
+        start(controller) {
+          for (let i = 0; i < 8; i++) controller.enqueue(new TextEncoder().encode("x".repeat(512)));
+          controller.close();
+        },
+      }),
+      // @ts-expect-error -- Node fetch requires duplex for streaming bodies
+      duplex: "half",
+    });
+    expect(res.status).toBe(413);
+  });
+
   it("(a) GET /healthz is 200 without auth and reports the streamable-http transport", async () => {
     const res = await raw(mcpPort, { method: "GET", path: "/healthz" });
     expect(res.status).toBe(200);
