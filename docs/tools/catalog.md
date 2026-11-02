@@ -48,7 +48,7 @@ _No parameters._
 
 ## `scf_list_evidence_catalog`
 
-List evidence items from the SCF reference catalog — the 272 standard evidence types that can be collected to demonstrate control implementation. Supports free-text search and pagination.
+List the SCF reference catalog's 272 evidence types (read, no org). Each entry's `control_mappings` is the catalogue-wide SCF mapping and says nothing about an organization's scope — for the in-scope controls that require an item, call `scf_get_evidence_requiring_controls`. Free-text search and pagination.
 
 | Parameter | Type   | Required | Description                                                  |
 | --------- | ------ | -------- | ------------------------------------------------------------ |
@@ -84,7 +84,7 @@ Get one SCF domain with its controls (read, no org). Deprecated controls are exc
 
 ## `scf_get_catalog_evidence`
 
-Get one catalog evidence entry with the controls it maps to (read, no org). The reference definition, not an organization's tracking record — see scf_get_evidence for that.
+Get one catalog evidence entry (read, no org): title, description, area of focus and `control_mappings` — the catalogue-wide SCF mapping, not scope. For the organization's in-scope controls that require it use `scf_get_evidence_requiring_controls`; for its tracking record use `scf_get_evidence`.
 
 | Parameter     | Type   | Required | Description                                                |
 | ------------- | ------ | -------- | ---------------------------------------------------------- |

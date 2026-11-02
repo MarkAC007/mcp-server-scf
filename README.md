@@ -46,13 +46,13 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**224 tools** across 15 domains — click through for full parameter tables and example prompts:
+**225 tools** across 15 domains — click through for full parameter tables and example prompts:
 
 | Domain                                                         | Tools | Description                                                                                                                                                                                                                      |
 | -------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Catalog](docs/tools/catalog.md)                               | 8     | Browse 1,451 controls, 354+ frameworks, 5,736 assessment objectives, domains and evidence definitions                                                                                                                            |
 | [Control Scoping](docs/tools/scoped-controls.md)               | 15    | Track implementation status across an 8-state workflow; bulk scope and unscope by framework; framework coverage, scope-change preview and per-control overrides; obligation basis, materiality, target maturity, procedure links |
-| [Evidence](docs/tools/evidence.md)                             | 41    | Evidence tracking (single + batch), tasks, file review, health, validation, AI assessments and review queues                                                                                                                     |
+| [Evidence](docs/tools/evidence.md)                             | 42    | Evidence tracking (single + batch), tasks, file review, health, validation, AI assessments and review queues                                                                                                                     |
 | [Risk Management](docs/tools/risk.md)                          | 19    | 5x5 risk matrix, risk register, scoring updates, approved risk acceptance, custom risks and standards exceptions, control↔risk traceability, risk profile                                                                        |
 | [Vendor Risk (TPRM)](docs/tools/vendors.md)                    | 23    | Vendor registry, AI research and assessments, certifications, action items, compensating controls                                                                                                                                |
 | [Organization](docs/tools/organization.md)                     | 12    | Users, orgs, organisation profile and maturity targets, audit trail, change cursor, work queues, notifications                                                                                                                   |
@@ -116,7 +116,7 @@ For Claude Desktop ≥ 0.11.0, the easiest install is a signed `.mcpb` bundle �
 1. Download `mcp-server-scf-<version>.mcpb` from the [latest GitHub release](https://github.com/MarkAC007/mcp-server-scf/releases/latest).
 2. Double-click the file (or drag it onto Claude Desktop → **Settings → Extensions**).
 3. When prompted, paste your `scf_…` API key. It's stored in your OS keychain, not in a config file.
-4. Claude Desktop restarts the server and all 224 tools are available.
+4. Claude Desktop restarts the server and all 225 tools are available.
 
 To uninstall or update the API key later: **Settings → Extensions → SCF Controls Platform → Configure**.
 

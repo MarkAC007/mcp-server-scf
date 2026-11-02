@@ -32,7 +32,7 @@ src/
 ├── tools/
 │   ├── catalog.ts        8 tools — read-only SCF reference data
 │   ├── scoped-controls.ts 15 tools — per-org implementation tracking, basis, materiality
-│   ├── evidence.ts       41 tools — CRUD, batch, tasks, files, health, AI
+│   ├── evidence.ts       42 tools — CRUD, batch, tasks, files, health, AI
 │   │                     assessments (per-file + windowed)
 │   ├── risk.ts           19 tools — risk register, scoring, acceptance, custom risks
 │   ├── vendors.ts        23 tools — TPRM, AI research, certifications,
@@ -58,7 +58,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **224 tools across 15 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
+Total: **225 tools across 15 domain files**. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 

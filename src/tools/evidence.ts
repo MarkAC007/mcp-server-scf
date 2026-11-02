@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getClient } from "../lib/api-client.js";
-import { errorResult } from "../lib/errors.js";
+import { errorResult, formatError } from "../lib/errors.js";
+import { fetchEvidenceRequiringControls } from "../lib/evidence-scope.js";
 
 /**
  * Body of both verdict-review tools (per-file and window). The platform's AOOverrideRequestItem is one
@@ -28,10 +29,13 @@ const verdictReviewFields = {
     ),
 };
 
+/** A JSON object as the platform returns it; kept flat so scripts/api-coverage.mjs's call scanner sees the route. */
+type JsonObject = Record<string, unknown>;
+
 export function registerEvidenceTools(server: McpServer) {
   server.tool(
     "scf_list_evidence",
-    "List evidence items tracked against an organization's controls. Returns each item's tracking status, maturity level, and linked controls. Optionally filter by system.",
+    "List the organization's evidence tracking records: tracking status, maturity, owner, system, file count, required_by_scope. Names no controls — use scf_get_evidence_requiring_controls for those.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       system_id: z.string().uuid().optional().describe("System UUID to filter by — obtain from scf_list_systems"),
@@ -381,7 +385,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_trigger_evidence_assessment",
-    "Queue an AI assessment of a single evidence file (write — editor+ role, async). Returns a pending record; poll scf_get_evidence_assessment until status is sufficient/partial/insufficient.",
+    "Queue an AI assessment of one evidence file (write — editor+, async); poll scf_get_evidence_assessment. Judged against the catalogue's mapped controls, which may include controls not in scope.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
@@ -408,7 +412,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence_assessment",
-    "Get the AI assessment for an evidence file: status, relevance score (0–100), structured findings, summary, and audit metadata (model, tokens, cost). Poll after scf_trigger_evidence_assessment.",
+    "Get the AI assessment for an evidence file: status, relevance score (0–100), findings, summary, audit metadata (model, tokens, cost). Findings name catalogue-mapped controls, not only in-scope ones.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Evidence ID (e.g., 'ERL-IAM-001') — obtain from scf_list_evidence"),
@@ -513,7 +517,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_trigger_window_assessment",
-    "Queue a windowed AI assessment that scores every file in the evidence item's frequency window as one portfolio (write — editor+ role, async). Returns 422 if tracking or frequency is missing.",
+    "Queue a windowed AI assessment of every file in the item's frequency window as one portfolio (write — editor+, async). 422 without tracking/frequency. Judged against catalogue-mapped controls.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z
@@ -699,7 +703,7 @@ export function registerEvidenceTools(server: McpServer) {
 
   server.tool(
     "scf_get_evidence",
-    "Get one evidence tracking record (read — viewer role): tracked flag, collection method, owner, assignee, frequency, system, maturity level and its catalog deprecation badge.",
+    "Get one evidence tracking record (read) plus required_by_in_scope_controls (the org's in-scope controls that require it) and, as labelled context, catalog_control_mappings. 404 if untracked.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       evidence_id: z.string().describe("Catalog evidence ID, e.g. E-IAM-01 — obtain from scf_list_evidence_catalog"),
@@ -708,7 +712,51 @@ export function registerEvidenceTools(server: McpServer) {
     async ({ org_id, evidence_id }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/evidence-tracking/${evidence_id}`);
+        const tracking = await client.get<JsonObject>(`/organizations/${org_id}/evidence-tracking/${evidence_id}`);
+        // The tracking row says only whether scope requires the item (required_by_scope);
+        // the in-scope controls themselves are the primary view, so attach them. A failure
+        // here must not hide the tracking record the caller asked for.
+        let scope: JsonObject;
+        try {
+          const {
+            required_by_in_scope_controls,
+            catalog_control_mappings,
+            catalog_mappings_not_in_scope,
+            scope_rule,
+            source,
+          } = await fetchEvidenceRequiringControls(client, org_id, evidence_id);
+          scope = {
+            required_by_in_scope_controls,
+            catalog_control_mappings,
+            catalog_mappings_not_in_scope,
+            scope_rule,
+            in_scope_controls_source: source,
+          };
+        } catch (scopeError) {
+          scope = { in_scope_controls_error: formatError(scopeError) };
+        }
+        const data = { ...tracking, ...scope };
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_evidence_requiring_controls",
+    "Which in-scope controls require one evidence item (read; works untracked). Primary: required_by_in_scope_controls with status and maturity. Context: catalog_control_mappings and what is not in scope.",
+    {
+      org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
+      evidence_id: z
+        .string()
+        .describe("Catalog evidence ID, e.g. E-AST-09 — obtain from scf_list_evidence or scf_list_evidence_catalog"),
+    },
+    { title: "Get Evidence Requiring Controls", readOnlyHint: true },
+    async ({ org_id, evidence_id }) => {
+      try {
+        const client = getClient();
+        const data = await fetchEvidenceRequiringControls(client, org_id, evidence_id);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
