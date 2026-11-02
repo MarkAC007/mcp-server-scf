@@ -42,7 +42,14 @@ export function collectExposedTools() {
   return buildExposedTools(collector.tools, plan as Plan);
 }
 
-export function createServer(options: { loadAll: boolean } = { loadAll: loadAllFromEnv() }): McpServer {
+/**
+ * @param exposed  A surface from collectExposedTools(). The HTTP transport builds one
+ *                 McpServer per request, so it collects once per process and passes it in.
+ */
+export function createServer(
+  options: { loadAll: boolean } = { loadAll: loadAllFromEnv() },
+  exposed = collectExposedTools(),
+): McpServer {
   const server = new McpServer(
     {
       name: PKG_NAME,
@@ -54,6 +61,6 @@ export function createServer(options: { loadAll: boolean } = { loadAll: loadAllF
       },
     },
   );
-  registerExposedTools(server, collectExposedTools(), plan as Plan, options);
+  registerExposedTools(server, exposed, plan as Plan, options);
   return server;
 }

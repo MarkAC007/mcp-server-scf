@@ -204,7 +204,7 @@ describe("array query parameters", () => {
       }),
     );
     const client = new ScfApiClient({ baseUrl: "http://api.test", apiKey: "scf_test" });
-    await client.get("/organizations/x/team-assignments", {
+    await client.get("/organizations/11111111-2222-4333-8444-555555555555/team-assignments", {
       type: "control",
       item_ids: ["a", "b"],
       team_id: undefined,

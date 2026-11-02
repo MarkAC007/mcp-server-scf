@@ -178,6 +178,8 @@ export SCF_API_URL="http://localhost:8000"
 
 `SCF_LOAD_ALL_TOOLS=true` lists every tool at startup instead of the core groups — for a client that does not act on `notifications/tools/list_changed` after `scf_load_tools`.
 
+**Remote (Streamable HTTP):** `mcp-server-scf-http` serves the same tools by URL for a hosted, multi-user deployment. No server-side key: each caller sends their own `Authorization: Bearer scf_…`, forwarded to the one platform in `SCF_API_URL`. Connect with `claude mcp add --transport http scf https://<host>/mcp --header "Authorization: Bearer scf_…"`. Details and a hardened Compose example in [docs/authentication.md](docs/authentication.md#remote-streamable-http--bring-your-own-key).
+
 ## Example Prompts
 
 Once connected, try asking your AI assistant:
