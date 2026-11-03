@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { ScfApiError } from "./errors.js";
 import { PKG_NAME, PKG_VERSION } from "./version.js";
 
@@ -32,6 +33,8 @@ const AUDIT_HEADERS: Record<string, string> = {
 export interface ApiClientConfig {
   baseUrl: string;
   apiKey: string;
+  /** Abort an upstream call after this many milliseconds. Unset = no client-side timeout (stdio default). */
+  timeoutMs?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -43,15 +46,46 @@ export interface PaginatedResponse<T> {
 }
 
 const ORG_PATH_PATTERN = /^(\/organizations\/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/|$)/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Every tool interpolates caller-supplied ids into the request path. Refuse
+ * anything that could change the route shape (`..`, `?`, `#`, `\\`, which the URL
+ * parser turns into `/`, or an encoded `/`, `.` or `\\`) and require the org segment to be a UUID, so a bad id fails here with
+ * a 400 instead of reaching an unexpected platform route.
+ */
+function assertSafePath(path: string): void {
+  if (!path.startsWith("/") || /[?#\s\\]|%2f|%2e|%5c|\.\./i.test(path)) {
+    throw new ScfApiError("Refusing to call an unsafe API path", 400);
+  }
+  const org = path.match(/^\/organizations\/([^/]+)/);
+  if (org && !UUID.test(org[1])) {
+    throw new ScfApiError(`org_id must be a UUID, got ${JSON.stringify(org[1])}`, 400);
+  }
+}
 
 export class ScfApiClient {
   private baseUrl: string;
   private apiKey: string;
+  private timeoutMs: number | undefined;
   private soleOrgId: string | null = null;
 
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.apiKey = config.apiKey;
+    this.timeoutMs = config.timeoutMs && config.timeoutMs > 0 ? config.timeoutMs : undefined;
+  }
+
+  private async fetchUpstream(url: string, init: RequestInit): Promise<Response> {
+    const signal = this.timeoutMs ? AbortSignal.timeout(this.timeoutMs) : undefined;
+    try {
+      return await fetch(url, { ...init, signal });
+    } catch (error) {
+      if (error instanceof Error && error.name === "TimeoutError") {
+        throw new ScfApiError(`SCF platform did not answer within ${this.timeoutMs}ms`, 504);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -82,6 +116,7 @@ export class ScfApiClient {
     },
     noOrgRetry = false,
   ): Promise<T> {
+    assertSafePath(path);
     const url = new URL(`${this.baseUrl}/api${path}`);
 
     appendParams(url, options?.params);
@@ -100,7 +135,7 @@ export class ScfApiClient {
       headers["Content-Type"] = "application/json";
     }
 
-    const response = await fetch(url.toString(), {
+    const response = await this.fetchUpstream(url.toString(), {
       method,
       headers,
       body: isMutation ? JSON.stringify(options?.body ?? {}) : undefined,
@@ -166,10 +201,11 @@ export class ScfApiClient {
    * verbatim so the tool can hand it to the model as-is.
    */
   private async requestText(path: string, params?: QueryParams): Promise<{ content_type: string; body: string }> {
+    assertSafePath(path);
     const url = new URL(`${this.baseUrl}/api${path}`);
     appendParams(url, params);
 
-    const response = await fetch(url.toString(), {
+    const response = await this.fetchUpstream(url.toString(), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
@@ -227,7 +263,22 @@ export class ScfApiClient {
 
 let _client: ScfApiClient | null = null;
 
+/**
+ * Per-request client for the HTTP transport. Every tool handler runs inside
+ * runWithClient(...), so the getClient() call sites in src/tools/* pick up the
+ * caller's own key untouched. Stdio never enters a store and falls through to
+ * the env singleton exactly as before.
+ */
+const requestClient = new AsyncLocalStorage<ScfApiClient>();
+
+export function runWithClient<T>(client: ScfApiClient, fn: () => Promise<T>): Promise<T> {
+  return requestClient.run(client, fn);
+}
+
 export function getClient(): ScfApiClient {
+  const scoped = requestClient.getStore();
+  if (scoped) return scoped;
+
   if (!_client) {
     const apiKey = process.env.SCF_API_KEY;
     const baseUrl = process.env.SCF_API_URL;

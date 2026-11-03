@@ -1,0 +1,73 @@
+# Example: hosted Streamable HTTP transport for mcp-server-scf.
+#
+# Bring-your-own-key: callers send their own platform API key as
+# `Authorization: Bearer scf_…` on every request; the server forwards it to the
+# one platform in SCF_API_URL. No key is configured server-side.
+#
+# This example exposes the server only through a Cloudflare Tunnel: no host
+# ports, its own bridge network, hardened containers. Replace every <placeholder>.
+# Egress from the bridge to private ranges should be blocked at the host
+# firewall (DOCKER-USER chain) so the relay can reach only the public platform.
+
+name: mcp-scf
+
+services:
+  mcp:
+    image: mcp-server-scf:<tag> # build: npm run build && docker build -t mcp-server-scf:<tag> .
+    command: ["build/http.js"]
+    environment:
+      SCF_API_URL: https://<your-platform-hostname>
+      MCP_HTTP_HOST: 0.0.0.0
+      PORT: "8080"
+      MCP_ALLOWED_HOSTS: <mcp-public-hostname>
+      SCF_API_TIMEOUT_MS: "90000"
+      MCP_MAX_BODY_BYTES: "1048576"
+    user: node
+    read_only: true
+    tmpfs: ["/tmp:size=16m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 256
+    dns: [1.1.1.1, 9.9.9.9]
+    networks: [scf-mcp]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8080/healthz').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:<pinned-version>
+    command:
+      ["tunnel", "--no-autoupdate", "--metrics", "127.0.0.1:20241", "--config", "/etc/cloudflared/config.yml", "run"]
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro # config.yml + <tunnel-id>.json, mode 0600, never committed
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    cpus: 0.5
+    dns: [1.1.1.1, 9.9.9.9]
+    networks: [scf-mcp]
+    depends_on:
+      mcp:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  scf-mcp:
+    name: scf-mcp
+    driver_opts:
+      com.docker.network.bridge.name: br-scf-mcp
+    ipam:
+      config:
+        - subnet: <unused /24, e.g. 10.213.0.0/24>

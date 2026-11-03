@@ -5,16 +5,19 @@
   "description": "MCP server for the SCF Controls Platform — security compliance controls, frameworks, evidence, and risk management for AI agents",
   "type": "module",
   "bin": {
-    "mcp-server-scf": "./build/index.js"
+    "mcp-server-scf": "./build/index.js",
+    "mcp-server-scf-http": "./build/http.js"
   },
   "files": [
     "build"
   ],
   "scripts": {
-    "build": "tsc && chmod 755 build/index.js",
+    "build": "tsc && chmod 755 build/index.js build/http.js",
     "build:mcpb": "bash scripts/build-mcpb.sh",
     "dev": "tsx watch src/index.ts",
+    "dev:http": "tsx watch src/http.ts",
     "start": "node build/index.js",
+    "start:http": "node build/http.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \".\"",
