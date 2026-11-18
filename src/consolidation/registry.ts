@@ -61,7 +61,7 @@ export function registerExposedTools(
   };
   server.tool(
     LOAD_TOOLS_NAME,
-    "Load more SCF tool groups into this session (teams, collaboration, documents, engagements, assurance, catalog-reconciliation, webhooks, journey, or all). Returns the tools now available.",
+    "Load more SCF tool groups into this session (teams, collaboration, documents, engagements, assurance, catalog-reconciliation, webhooks, journey, objectives, or all). Returns the tools now available.",
     shape,
     { title: "Load Tools", readOnlyHint: true },
     async ({ groups }) => {
