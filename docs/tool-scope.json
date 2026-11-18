@@ -1427,6 +1427,46 @@
     },
     "POST /api/organizations/{org_id}/capability-tests/{test_id}/findings": {
       "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/security-objectives": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/security-objectives": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/security-objectives/{objective_id}": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/security-objectives/{objective_id}": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/security-objectives/{objective_id}/metric": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/security-objectives/{objective_id}/confirm": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/security-objectives/{objective_id}/evaluation": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/isms-metrics/measures": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/isms-metrics/{objective_id}": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/isms-metrics/{objective_id}/results": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/isms-metrics": {
+      "verdict": "out",
+      "reason": "covered",
+      "note": "Same builder as the register: scf_list_security_objectives returns the same readings (unarchived)"
+    },
+    "POST /api/organizations/{org_id}/isms-metrics/wording": {
+      "verdict": "out",
+      "reason": "ui-only",
+      "note": "Form feedback: the generated wording for a metric being edited; writes nothing"
     }
   }
 }

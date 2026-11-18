@@ -16,6 +16,7 @@ import { registerTeamTools } from "../src/tools/teams.js";
 import { registerCollaborationTools } from "../src/tools/collaboration.js";
 import { registerJourneyTools } from "../src/tools/journey.js";
 import { registerAssuranceTools } from "../src/tools/assurance.js";
+import { registerObjectiveTools } from "../src/tools/objectives.js";
 
 function makeMockServer() {
   const tool = vi.fn();
@@ -41,6 +42,7 @@ describe("tool registration", () => {
     ["collaboration", registerCollaborationTools, 7],
     ["journey", registerJourneyTools, 4],
     ["assurance", registerAssuranceTools, 19],
+    ["objectives", registerObjectiveTools, 10],
   ];
 
   for (const [name, register, expected] of cases) {
@@ -75,9 +77,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 225", () => {
+  it("total tool count equals 235", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(225);
+    expect(server.tool).toHaveBeenCalledTimes(235);
   });
 });

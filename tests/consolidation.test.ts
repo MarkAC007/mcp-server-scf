@@ -71,9 +71,9 @@ describe("the plan and the code agree", () => {
   it("places every original tool exactly once and exposes the planned surface", () => {
     const exposed = collectExposedTools();
     const originals = new Set(exposed.flatMap((t) => Object.values(t.methods)));
-    expect(originals.size).toBe(225);
+    expect(originals.size).toBe(235);
     expect(exposed.map((t) => t.name).sort()).toEqual(Object.keys(PLAN.tools).sort());
-    expect(exposed).toHaveLength(41);
+    expect(exposed).toHaveLength(43);
   });
 
   it("every exposed tool is scf_-prefixed with a description of at most 200 characters", () => {
@@ -274,6 +274,34 @@ describe("progressive disclosure over a real MCP connection", () => {
 
     await client.callTool({ name: "scf_team_read", arguments: { method: "list", org_id: ORG } });
     expect(calls[0].path).toBe(`/organizations/${ORG}/teams`);
+  });
+
+  it("scf_load_tools with objectives enables the objective read and write tools with their methods", async () => {
+    const { client } = await connect(false);
+    const before = (await client.listTools()).tools.map((t) => t.name);
+    expect(before).not.toContain("scf_objective_read");
+    const res = await client.callTool({ name: LOAD_TOOLS_NAME, arguments: { groups: ["objectives"] } });
+    const body = JSON.parse((res.content as Array<{ text: string }>)[0].text);
+    expect(body.loaded_groups).toEqual(["objectives"]);
+    expect(body.tools.map((t: { name: string }) => t.name)).toEqual(["scf_objective_read", "scf_objective_write"]);
+    expect(body.tools[0].methods).toEqual(["list", "get", "metric", "measures"]);
+    expect(body.tools[1].methods).toEqual([
+      "create",
+      "update",
+      "set_metric",
+      "confirm",
+      "log_value",
+      "record_evaluation",
+    ]);
+    const tools = (await client.listTools()).tools;
+    const read = tools.find((t) => t.name === "scf_objective_read")!;
+    const write = tools.find((t) => t.name === "scf_objective_write")!;
+    expect(read.annotations).toMatchObject({ readOnlyHint: true });
+    expect(write.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false });
+    expect(Object.keys(write.inputSchema.properties ?? {})).not.toContain("archived");
+
+    await client.callTool({ name: "scf_objective_read", arguments: { method: "list", org_id: ORG } });
+    expect(calls[0]).toMatchObject({ method: "GET", path: `/organizations/${ORG}/security-objectives` });
   });
 
   it("groups: all loads everything, and loading twice is harmless", async () => {
