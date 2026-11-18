@@ -204,7 +204,7 @@ describe("array query parameters", () => {
       }),
     );
     const client = new ScfApiClient({ baseUrl: "http://api.test", apiKey: "scf_test" });
-    await client.get("/organizations/x/team-assignments", {
+    await client.get("/organizations/11111111-2222-4333-8444-555555555555/team-assignments", {
       type: "control",
       item_ids: ["a", "b"],
       team_id: undefined,
@@ -215,5 +215,28 @@ describe("array query parameters", () => {
     expect(url.searchParams.get("type")).toBe("control");
     expect(url.searchParams.get("accountable_only")).toBe("false");
     expect(url.searchParams.has("team_id")).toBe(false);
+  });
+});
+
+describe("path guard", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("refuses unsafe segments before any request leaves the process", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new ScfApiClient({ baseUrl: "http://api.test", apiKey: "scf_test" });
+    const org = "11111111-2222-4333-8444-555555555555";
+    for (const path of [
+      "/organizations/not-a-uuid/risks",
+      `/organizations/${org}/evidence/abc\\review/files`,
+      `/organizations/${org}/evidence/../admin`,
+      `/organizations/${org}/x?y=1`,
+      `/organizations/${org}/x#frag`,
+      `/organizations/${org}/a%2Fb`,
+      `/organizations/${org}/a%5Cb`,
+    ]) {
+      await expect(client.get(path)).rejects.toMatchObject({ statusCode: 400 });
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

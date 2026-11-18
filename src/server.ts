@@ -14,6 +14,7 @@ import { registerTeamTools } from "./tools/teams.js";
 import { registerCollaborationTools } from "./tools/collaboration.js";
 import { registerJourneyTools } from "./tools/journey.js";
 import { registerAssuranceTools } from "./tools/assurance.js";
+import { registerObjectiveTools } from "./tools/objectives.js";
 import { ToolCollector, buildExposedTools, type Plan } from "./consolidation/consolidate.js";
 import { registerExposedTools, loadAllFromEnv } from "./consolidation/registry.js";
 import plan from "./consolidation/plan.json" with { type: "json" };
@@ -39,10 +40,18 @@ export function collectExposedTools() {
   registerCollaborationTools(asServer);
   registerJourneyTools(asServer);
   registerAssuranceTools(asServer);
+  registerObjectiveTools(asServer);
   return buildExposedTools(collector.tools, plan as Plan);
 }
 
-export function createServer(options: { loadAll: boolean } = { loadAll: loadAllFromEnv() }): McpServer {
+/**
+ * @param exposed  A surface from collectExposedTools(). The HTTP transport builds one
+ *                 McpServer per request, so it collects once per process and passes it in.
+ */
+export function createServer(
+  options: { loadAll: boolean } = { loadAll: loadAllFromEnv() },
+  exposed = collectExposedTools(),
+): McpServer {
   const server = new McpServer(
     {
       name: PKG_NAME,
@@ -54,6 +63,6 @@ export function createServer(options: { loadAll: boolean } = { loadAll: loadAllF
       },
     },
   );
-  registerExposedTools(server, collectExposedTools(), plan as Plan, options);
+  registerExposedTools(server, exposed, plan as Plan, options);
   return server;
 }

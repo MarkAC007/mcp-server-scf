@@ -101,6 +101,45 @@ The `-e SCF_API_KEY` flag (without a value) passes the variable through from the
 
 ---
 
+## Remote (Streamable HTTP) — bring your own key
+
+`mcp-server-scf-http` (`build/http.js`) serves the same tool surface over MCP Streamable HTTP for clients that connect by URL. It is **multi-user by design**: there is no server-side key. Each caller sends their own platform API key on every request as `Authorization: Bearer scf_…`, and the server forwards it to the one platform the operator configured in `SCF_API_URL`. Nothing a caller sends can change that destination.
+
+### Connecting (Claude Code)
+
+```bash
+claude mcp add --transport http scf https://<mcp-hostname>/mcp \
+  --header "Authorization: Bearer scf_your_api_key_here"
+```
+
+Generate the key in the platform under **Settings → API Keys**; it identifies you, so every tool call runs with your own memberships and roles. A missing or malformed header returns `401` with `WWW-Authenticate: Bearer`; a key the platform rejects returns `401` at `initialize`, so a revoked key fails at connect time rather than on the first tool call.
+
+### Running the server
+
+```bash
+SCF_API_URL=https://scf.your-domain.example MCP_HTTP_HOST=0.0.0.0 PORT=8080 \
+MCP_ALLOWED_HOSTS=mcp.your-domain.example node build/http.js
+```
+
+| Variable                 | Default              | Meaning                                                                                                                    |
+| ------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `SCF_API_URL`            | required             | The platform every request is forwarded to. Fixed per deployment.                                                          |
+| `SCF_API_KEY`            | must be unset        | The HTTP transport refuses to start if a server-side key is present.                                                       |
+| `PORT` / `MCP_HTTP_HOST` | `3000` / `127.0.0.1` | Listen address. Bind `0.0.0.0` inside a container.                                                                         |
+| `MCP_ALLOWED_HOSTS`      | any                  | Comma-separated `Host` allow-list; other hosts get `421`. Set it to the public hostname.                                   |
+| `MCP_ALLOWED_ORIGINS`    | none                 | Browser `Origin` allow-list; a request with an unlisted `Origin` gets `403`.                                               |
+| `MCP_MAX_BODY_BYTES`     | `1048576`            | Larger request bodies get `413`.                                                                                           |
+| `MCP_REQUEST_TIMEOUT_MS` | `120000`             | Socket inactivity timeout per request.                                                                                     |
+| `SCF_API_TIMEOUT_MS`     | `90000`              | Upstream fetch timeout.                                                                                                    |
+| `SCF_LOAD_ALL_TOOLS`     | `true` on HTTP       | The server is stateless (one `McpServer` per request), so `scf_load_tools` state would not persist; all groups are listed. |
+| `MCP_JSON_RESPONSE`      | `false`              | `true` answers with plain JSON instead of SSE. SSE carries keep-alives, which proxies with idle limits need.               |
+
+Routes: `POST /mcp` (MCP), `GET /healthz` (no auth, never calls the platform). `GET`/`DELETE /mcp` return `405`; everything else `404`. The access log records method, path, status, duration, the JSON-RPC method, the tool name and the first 8 characters of the key, never the header.
+
+A hardened Docker Compose example (own network, no host ports, Cloudflare Tunnel) is in [`deploy/compose.http.example.yml`](../deploy/compose.http.example.yml).
+
+---
+
 ## Platform URL
 
 There is no default URL. The former hosted instance (`uk.scfcontrolsplatform.app`) has been **decommissioned** — the platform is self-hosted only, so `SCF_API_URL` is **required** and must point at the base URL of your own deployment (e.g. `http://localhost:8000` for a local Docker Compose stack, or wherever you expose it). The server refuses to start a request without it and tells you exactly this.

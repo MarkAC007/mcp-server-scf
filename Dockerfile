@@ -10,5 +10,12 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 COPY build/ ./build/
+# Files copied from a checkout with restrictive modes (0600) must stay readable
+# when the container runs as the unprivileged `node` user.
+RUN chmod -R a+rX /app
 
-ENTRYPOINT ["node", "build/index.js"]
+# Default: stdio transport (unchanged). For the hosted Streamable HTTP transport
+# run the image with `build/http.js` as the command, e.g.
+#   docker run -e SCF_API_URL=https://scf.example -e MCP_HTTP_HOST=0.0.0.0 <image> build/http.js
+ENTRYPOINT ["node"]
+CMD ["build/index.js"]

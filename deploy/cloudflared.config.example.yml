@@ -1,0 +1,8 @@
+# cloudflared config for the mcp service (locally managed tunnel).
+tunnel: <tunnel-id>
+credentials-file: /etc/cloudflared/<tunnel-id>.json
+ingress:
+  - hostname: <mcp-public-hostname>
+    path: ^/mcp$
+    service: http://mcp:8080
+  - service: http_status:404

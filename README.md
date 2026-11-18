@@ -46,7 +46,7 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**42 tools** over **225 platform operations**, in 16 groups. Each tool is one noun and direction — `scf_vendor_read`, `scf_vendor_write` — and its `method` argument picks the operation; the `method` description explains each one. Read tools are `readOnlyHint: true`, so a client can allow them all at once.
+**44 tools** over **235 platform operations**, in 17 groups. Each tool is one noun and direction — `scf_vendor_read`, `scf_vendor_write` — and its `method` argument picks the operation; the `method` description explains each one. Read tools are `readOnlyHint: true`, so a client can allow them all at once.
 
 Only the **core** groups are in the tool list at startup (26 tools, about 27k tokens of schema instead of 71k). Call `scf_load_tools` with the groups you need — or `all` — and the rest appear; the server sends `notifications/tools/list_changed`. A client that ignores that notification can set `SCF_LOAD_ALL_TOOLS=true` to get everything up front. Per-group docs list every method with its parameters; [`docs/migration-consolidation.md`](docs/migration-consolidation.md) maps each pre-v4 tool name to its tool and method.
 
@@ -68,6 +68,7 @@ Only the **core** groups are in the tool list at startup (26 tools, about 27k to
 | [catalog-reconciliation](docs/tools/catalog-reconciliation.md) | on demand | 9          | `scf_catalog_reconciliation_read`, `scf_catalog_reconciliation_write`                                                                                |
 | [webhooks](docs/tools/webhooks.md)                             | on demand | 6          | `scf_webhook_read`, `scf_webhook_write`                                                                                                              |
 | [journey](docs/tools/journey.md)                               | on demand | 4          | `scf_journey_read`, `scf_journey_write`                                                                                                              |
+| [objectives](docs/tools/objectives.md)                         | on demand | 10         | `scf_objective_read`, `scf_objective_write`                                                                                                          |
 
 ## Try it with MCP Inspector
 
@@ -77,7 +78,7 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see the 26 core tools (set `SCF_LOAD_ALL_TOOLS=true` for all 42), each with a `method` picker and its Zod schema rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see the 26 core tools (set `SCF_LOAD_ALL_TOOLS=true` for all 44), each with a `method` picker and its Zod schema rendered as a live form.
 
 Live tool calls need your instance's URL and an API key — export `SCF_API_URL` and `SCF_API_KEY` in the same shell before launching Inspector, or set them under the "Environment Variables" tab inside the Inspector UI. Without them, you can still browse schemas and descriptions; tool calls return a configuration error.
 
@@ -177,6 +178,8 @@ export SCF_API_URL="http://localhost:8000"
 ---
 
 `SCF_LOAD_ALL_TOOLS=true` lists every tool at startup instead of the core groups — for a client that does not act on `notifications/tools/list_changed` after `scf_load_tools`.
+
+**Remote (Streamable HTTP):** `mcp-server-scf-http` serves the same tools by URL for a hosted, multi-user deployment. No server-side key: each caller sends their own `Authorization: Bearer scf_…`, forwarded to the one platform in `SCF_API_URL`. Connect with `claude mcp add --transport http scf https://<host>/mcp --header "Authorization: Bearer scf_…"`. Details and a hardened Compose example in [docs/authentication.md](docs/authentication.md#remote-streamable-http--bring-your-own-key).
 
 ## Example Prompts
 
