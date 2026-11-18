@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dependency updates no longer release as a minor version.** Dependabot adds the repository's `minor` label to its own pull requests when a dependency moves by a minor version, and `auto-release.yml` read that label as "bump this package's minor version" (v4.3.0, v4.4.0 and v4.5.0 were each a dependency update). Labels on a Dependabot pull request no longer choose the bump; its `deps:` / `ci:` title does, which is a patch. Labels on other pull requests work as before.
+
 ### Security
 - **Release gates.** `auto-release.yml` no longer tags or publishes until two gates pass. `scripts/release-checks-gate.mjs` requires every required check (`build (20)`, `build (22)`, `Secret Detection`, `Registry Signature Verification`, `CodeQL Analysis`, `SAST Scan`) to have concluded `success` on the merge commit being released: `skipped` is refused, an unfinished check is waited for and refused after 20 minutes, an unreadable result is refused. `scripts/audit-gate.mjs` then runs again on the tree about to be published, so a high or critical advisory without a reasoned, unexpired exception stops the release. The tag push moves after both gates and after the build and type check, so a refused release leaves no tag behind. Release jobs now run one at a time (`concurrency: auto-release`), because the wait would otherwise let two releases started close together pick the same version. `audit-nightly.yml` runs the same audit on `main` every night. See [CONTRIBUTING.md](CONTRIBUTING.md#release-gates).
 
