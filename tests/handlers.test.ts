@@ -39,6 +39,9 @@ import { registerScopedControlTools } from "../src/tools/scoped-controls.js";
 import { registerRiskTools } from "../src/tools/risk.js";
 import { registerAssuranceTools } from "../src/tools/assurance.js";
 import { registerCapabilityTools } from "../src/tools/capabilities.js";
+import { registerObjectiveTools } from "../src/tools/objectives.js";
+import { readFileSync } from "node:fs";
+import { collectExposedTools } from "../src/server.js";
 
 type Handler = (args: Record<string, unknown>) => Promise<{ isError?: boolean; content: Array<{ text: string }> }>;
 
@@ -469,5 +472,165 @@ describe("PIG parity tools call the platform routes they document", () => {
       path: `/organizations/${ORG}/systems/${ID}`,
       body: { in_scope: null, rto_hours: 4 },
     });
+  });
+});
+
+describe("security objectives and ISMS metrics call the routes they document, and never delete", () => {
+  const OBJ = `/organizations/${ORG}/security-objectives`;
+  const MET = `/organizations/${ORG}/isms-metrics`;
+  const h = () => handlersOf(registerObjectiveTools);
+
+  it("the read tools call the register, one objective, one metric's detail and the measure library", async () => {
+    const t = h();
+    await t.get("scf_list_security_objectives")!({ org_id: ORG, include_archived: false });
+    await t.get("scf_get_security_objective")!({ org_id: ORG, objective_id: ID });
+    await t.get("scf_get_isms_metric")!({ org_id: ORG, objective_id: ID, breakdown_limit: 25 });
+    await t.get("scf_list_isms_measures")!({ org_id: ORG, text: "phishing" });
+    expect(calls).toEqual([
+      { method: "GET", path: OBJ, params: { include_archived: false } },
+      { method: "GET", path: `${OBJ}/${ID}`, params: undefined },
+      { method: "GET", path: `${MET}/${ID}`, params: { breakdown_limit: 25 } },
+      { method: "GET", path: `${MET}/measures`, params: { text: "phishing" } },
+    ]);
+  });
+
+  it("scf_create_security_objective posts the named fields with an optional first metric", async () => {
+    await h().get("scf_create_security_objective")!({
+      org_id: ORG,
+      name: "Phishing click rate under 5%",
+      objective_type: "maintain",
+      iso_clauses: ["6.2", "A.6.3"],
+      metric: { kind: "logged", unit: "percent", direction: "at_most", target_value: 5, frequency: "quarterly" },
+    });
+    expect(calls).toEqual([
+      {
+        method: "POST",
+        path: OBJ,
+        body: {
+          name: "Phishing click rate under 5%",
+          objective_type: "maintain",
+          iso_clauses: ["6.2", "A.6.3"],
+          metric: { kind: "logged", unit: "percent", direction: "at_most", target_value: 5, frequency: "quarterly" },
+        },
+        params: undefined,
+      },
+    ]);
+  });
+
+  it("scf_update_security_objective sends only the fields given, never archived, and refuses an empty change", async () => {
+    const update = h().get("scf_update_security_objective")!;
+    const empty = await update({ org_id: ORG, objective_id: ID });
+    const onlyArchived = await update({ org_id: ORG, objective_id: ID, archived: true });
+    expect(empty.isError).toBe(true);
+    expect(onlyArchived.isError).toBe(true);
+    expect(empty.content[0].text).toMatch(/nothing to change/i);
+    expect(calls).toHaveLength(0);
+
+    await update({ org_id: ORG, objective_id: ID, lifecycle_status: "achieved", due_date: null, archived: true });
+    expect(calls).toEqual([
+      { method: "PATCH", path: `${OBJ}/${ID}`, body: { lifecycle_status: "achieved", due_date: null } },
+    ]);
+    expect(Object.keys(calls[0].body as object)).not.toContain("archived");
+  });
+
+  it("the update schema has no archived field, so the consolidated surface cannot carry one either", async () => {
+    expect(Object.keys(shapeOf(registerObjectiveTools, "scf_update_security_objective"))).not.toContain("archived");
+    const write = collectExposedTools().find((t) => t.name === "scf_objective_write")!;
+    expect(Object.keys(write.shape)).not.toContain("archived");
+    await write.handler({ method: "update", org_id: ORG, objective_id: ID, name: "Renamed", archived: true });
+    expect(calls).toEqual([{ method: "PATCH", path: `${OBJ}/${ID}`, body: { name: "Renamed" } }]);
+  });
+
+  it("scf_set_objective_metric puts the metric spec; scf_confirm_security_objective posts what it is given", async () => {
+    const t = h();
+    await t.get("scf_set_objective_metric")!({
+      org_id: ORG,
+      objective_id: ID,
+      kind: "live",
+      measure_key: "mfa_coverage",
+      params: { scope: "all" },
+      direction: "at_least",
+      target_value: 95,
+      warn_value: 90,
+    });
+    await t.get("scf_confirm_security_objective")!({ org_id: ORG, objective_id: ID });
+    await t.get("scf_confirm_security_objective")!({
+      org_id: ORG,
+      objective_id: ID,
+      owning_team_id: ORG,
+      target_value: 95,
+    });
+    expect(calls).toEqual([
+      {
+        method: "PUT",
+        path: `${OBJ}/${ID}/metric`,
+        body: {
+          kind: "live",
+          measure_key: "mfa_coverage",
+          params: { scope: "all" },
+          direction: "at_least",
+          target_value: 95,
+          warn_value: 90,
+        },
+      },
+      { method: "POST", path: `${OBJ}/${ID}/confirm`, body: {}, params: undefined },
+      {
+        method: "POST",
+        path: `${OBJ}/${ID}/confirm`,
+        body: { owning_team_id: ORG, target_value: 95 },
+        params: undefined,
+      },
+    ]);
+  });
+
+  it("scf_log_isms_metric_value sends period_start only when given", async () => {
+    const log = h().get("scf_log_isms_metric_value")!;
+    await log({ org_id: ORG, objective_id: ID, value: 4.2 });
+    await log({ org_id: ORG, objective_id: ID, value: 3, period_start: "2026-07-01", note: "Q3 campaign" });
+    expect(calls).toEqual([
+      { method: "POST", path: `${MET}/${ID}/results`, body: { value: 4.2 }, params: undefined },
+      {
+        method: "POST",
+        path: `${MET}/${ID}/results`,
+        body: { value: 3, period_start: "2026-07-01", note: "Q3 campaign" },
+        params: undefined,
+      },
+    ]);
+    expect(Object.keys(calls[0].body as object)).not.toContain("period_start");
+  });
+
+  it("scf_record_objective_evaluation posts the note", async () => {
+    await h().get("scf_record_objective_evaluation")!({ org_id: ORG, objective_id: ID, note: "Reviewed at MRM" });
+    expect(calls).toEqual([
+      { method: "POST", path: `${OBJ}/${ID}/evaluation`, body: { note: "Reviewed at MRM" }, params: undefined },
+    ]);
+  });
+
+  it("no objectives tool issues a DELETE, and the module has no client.delete", async () => {
+    const t = h();
+    const deletesBefore = fakeClient.delete.mock.calls.length;
+    expect(t.size).toBe(10);
+    const args: Record<string, Record<string, unknown>> = {
+      scf_list_security_objectives: { include_archived: true },
+      scf_get_security_objective: { objective_id: ID },
+      scf_get_isms_metric: { objective_id: ID, breakdown_limit: 10 },
+      scf_list_isms_measures: {},
+      scf_create_security_objective: { name: "x" },
+      scf_update_security_objective: { objective_id: ID, name: "y", archived: true },
+      scf_set_objective_metric: { objective_id: ID, kind: "milestone" },
+      scf_confirm_security_objective: { objective_id: ID },
+      scf_log_isms_metric_value: { objective_id: ID, value: 1 },
+      scf_record_objective_evaluation: { objective_id: ID, note: "n" },
+    };
+    expect([...t.keys()].sort()).toEqual(Object.keys(args).sort());
+    for (const [name, handler] of t) {
+      const res = await handler({ org_id: ORG, ...args[name] });
+      expect(res.isError, name).toBeFalsy();
+    }
+    expect(calls).toHaveLength(10);
+    expect(fakeClient.delete.mock.calls.length).toBe(deletesBefore);
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+    const src = readFileSync(new URL("../src/tools/objectives.ts", import.meta.url), "utf8");
+    expect(src).not.toMatch(/\.delete\b/);
   });
 });

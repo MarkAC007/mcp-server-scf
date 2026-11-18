@@ -14,6 +14,7 @@ import { registerTeamTools } from "./tools/teams.js";
 import { registerCollaborationTools } from "./tools/collaboration.js";
 import { registerJourneyTools } from "./tools/journey.js";
 import { registerAssuranceTools } from "./tools/assurance.js";
+import { registerObjectiveTools } from "./tools/objectives.js";
 import { ToolCollector, buildExposedTools, type Plan } from "./consolidation/consolidate.js";
 import { registerExposedTools, loadAllFromEnv } from "./consolidation/registry.js";
 import plan from "./consolidation/plan.json" with { type: "json" };
@@ -39,6 +40,7 @@ export function collectExposedTools() {
   registerCollaborationTools(asServer);
   registerJourneyTools(asServer);
   registerAssuranceTools(asServer);
+  registerObjectiveTools(asServer);
   return buildExposedTools(collector.tools, plan as Plan);
 }
 

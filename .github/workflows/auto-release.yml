@@ -18,6 +18,17 @@ jobs:
       github.event.pull_request.merged == true &&
       !startsWith(github.event.pull_request.title, 'chore(release):')
     runs-on: ubuntu-latest
+    # One release at a time, never cancelled mid-run. Each job works out its
+    # version from the tags it sees at checkout, and the tag is now pushed only
+    # after the release gates have waited for CI, so two releases started a
+    # minute apart would otherwise both pick the same version. A queued job
+    # starts when the one ahead of it has finished, and so sees its tag.
+    # GitHub holds one queued job per group: if a third release arrives while
+    # one is queued, the queued one is cancelled. Its commits still ship with
+    # the next release, which builds main's tip.
+    concurrency:
+      group: auto-release
+      cancel-in-progress: false
     environment: npm  # Link to GitHub Environment for OIDC
     permissions:
       contents: write        # push tag + GitHub Release + bump branch
@@ -25,6 +36,7 @@ jobs:
       pull-requests: write   # open the version-bump PR that syncs main
       actions: write         # dispatch ci.yml against the bump branch (workflow_dispatch)
       attestations: write    # SLSA build provenance for the .mcpb release asset
+      checks: read           # release gate: read the check runs on the commit being released
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -105,11 +117,42 @@ jobs:
           echo "Calculated version: v$NEW_VERSION"
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+
+      # ---- Release gate 1 of 2: green checks on the commit being released ----
+      #
+      # Nothing above this step has changed anything outside this runner, and
+      # nothing public happens until this gate and the dependency audit further
+      # down have both passed: the tag push, the npm publish, the MCP Registry
+      # publish and the GitHub Release all come after them.
+      #
+      # The checks a pull request passed ran on its branch, before the merge.
+      # What gets tagged and published is the merge commit on main, and CI
+      # (ci.yml) and the security scans (security.yml) run on it again when it
+      # is pushed. This step waits for those runs and refuses to release unless
+      # every one of them concluded `success`. `skipped` is refused, an
+      # unfinished check is waited for and refused when the wait runs out, and a
+      # result that cannot be read is refused. See scripts/release-checks-gate.mjs.
+      #
+      # REQUIRED_CHECKS is main's required status checks plus Registry Signature
+      # Verification. GITHUB_TOKEN cannot read branch protection, so the list is
+      # written here; tests/release-gates.test.ts fails when a name on it is not
+      # one ci.yml or security.yml produces.
+      #
+      # If this step refuses: fix or re-run the failing check on that commit,
+      # then re-run this job. The newest run of each check decides.
+      - name: Require green CI and security checks at this commit
+        # The gate waits up to 20 minutes by itself; this is the backstop.
+        timeout-minutes: 25
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GATE_REPO: ${{ github.repository }}
+          REQUIRED_CHECKS: "build (20)|build (22)|Secret Detection|Registry Signature Verification|CodeQL Analysis|SAST Scan"
+        run: node scripts/release-checks-gate.mjs
 
       - name: Reconcile version with package.json and npm registry
         id: final_version
@@ -173,18 +216,23 @@ jobs:
             echo "Staged version bump commit locally — will open a PR after the release is recorded (direct push to main is blocked by branch protection)."
           fi
 
-      - name: Create and push tag
-        run: |
-          NEW_VERSION="${{ steps.final_version.outputs.version }}"
-          if git rev-parse "v${NEW_VERSION}" >/dev/null 2>&1; then
-            echo "::warning::Tag v${NEW_VERSION} already exists, skipping tag creation"
-          else
-            git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
-            git push origin "v${NEW_VERSION}"
-          fi
-
       - name: Install dependencies
         run: npm ci
+
+      # ---- Release gate 2 of 2: known vulnerabilities in what is about to ship ----
+      #
+      # The same script and policy as the "Audit dependencies" step in ci.yml,
+      # run again here on the tree that is about to be published. An advisory
+      # can be published after CI passed; this is the last look before the tag.
+      # A high or critical advisory without a reasoned, unexpired entry in
+      # .github/audit-exceptions.json stops the release, as does an expired
+      # entry or an audit that cannot be read. See scripts/audit-gate.mjs.
+      #
+      # If this step refuses: nothing was tagged or published. Upgrade the
+      # dependency (or record a dated exception) in a pull request; merging it
+      # releases this change together with the fix.
+      - name: Audit dependencies (release gate)
+        run: node scripts/audit-gate.mjs
 
       - name: Build
         run: npm run build
@@ -194,6 +242,19 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
+
+      # The tag is the first thing this job makes public. It comes after both
+      # release gates and after the build and type check, so a refused or
+      # broken release leaves no tag behind.
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.final_version.outputs.version }}"
+          if git rev-parse "v${NEW_VERSION}" >/dev/null 2>&1; then
+            echo "::warning::Tag v${NEW_VERSION} already exists, skipping tag creation"
+          else
+            git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+            git push origin "v${NEW_VERSION}"
+          fi
 
       - name: Check if version already on npm
         id: check_published

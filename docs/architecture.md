@@ -58,6 +58,8 @@ src/
 │   ├── journey.ts         4 tools — guided journey, templates, attestation
 │   ├── assurance.ts      19 tools — deficiencies, org compensating controls,
 │   │                     control validation, posture snapshots, capability tests
+│   ├── objectives.ts     10 tools — security objectives (6.2), ISMS metrics (9.1),
+│   │                     logged results, evaluations; no delete
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
     │                     pagination helpers, typed get/post/patch/delete,
@@ -65,7 +67,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **225 operations across 15 domain files**, exposed as **42 tools** (41 from [`src/consolidation/plan.json`](../src/consolidation/plan.json) plus `scf_load_tools`); 26 are listed at startup and the rest load on demand. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
+Total: **235 operations across 16 domain files**, exposed as **44 tools** (43 from [`src/consolidation/plan.json`](../src/consolidation/plan.json) plus `scf_load_tools`); 26 are listed at startup and the rest load on demand. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 
