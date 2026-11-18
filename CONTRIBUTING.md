@@ -93,6 +93,24 @@ Version bumping goes through a PR (respects branch protection). Publishing to np
 - **Version lockstep** — publish fails if the tag doesn't match `package.json`
 - **Duplicate protection** — publish fails if the version already exists on npm
 
+### Release gates
+
+The release job (`.github/workflows/auto-release.yml`) runs two gates before it pushes a tag, publishes to npm or the MCP Registry, or creates a GitHub Release. If either refuses, nothing has been made public.
+
+1. **Green checks on the commit being released** (`scripts/release-checks-gate.mjs`). The checks on a pull request ran on its branch. The release is built from the merge commit on `main`, where CI and the security scans run again. The gate waits for those runs and continues only when every required check (`build (20)`, `build (22)`, `Secret Detection`, `Registry Signature Verification`, `CodeQL Analysis`, `SAST Scan`) concluded `success` on that commit. `skipped` is refused, a check that has not finished within 20 minutes is refused, and a result that cannot be read is refused.
+2. **Dependency audit** (`scripts/audit-gate.mjs`). The same script and policy as the CI "Audit dependencies" step, run again on the tree about to be published. A high or critical advisory stops the release unless it has a reasoned, unexpired entry in `.github/audit-exceptions.json`; an expired entry stops it too.
+
+When a gate refuses:
+
+- **A check failed or did not run on the merge commit:** fix or re-run that check, then re-run the release job. The newest run of each check decides.
+- **An advisory blocks:** upgrade the dependency, or record a dated exception with its reason, in a pull request. Merging it releases the earlier change together with the fix.
+
+The list of required checks is written in `auto-release.yml` (`REQUIRED_CHECKS`), because the workflow token cannot read branch protection. Keep it in step with the required status checks on `main`; `tests/release-gates.test.ts` fails when it names a check no workflow produces, or leaves out a CI build.
+
+Release jobs run one at a time (`concurrency: auto-release` on the job). Each one works out its version from the tags it sees when it starts, and the tag is pushed only after the gates have waited, so two releases running together could pick the same version.
+
+`.github/workflows/audit-nightly.yml` runs the same audit on `main` every night. It blocks nothing; a red run means a new advisory, or an exception that has run out, will stop the next pull request and the next release.
+
 ## Reporting Issues
 
 Open an issue on GitHub with:
