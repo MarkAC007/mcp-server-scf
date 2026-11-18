@@ -17,7 +17,8 @@
     "assurance": "Deficiencies, organization compensating controls, control validations, posture snapshots, capability tests",
     "catalog-reconciliation": "Per-organization SCF catalog upgrade reconciliation runs",
     "webhooks": "Webhook endpoints, secrets and delivery logs",
-    "journey": "The guided implementation journey: stages, templates, attestation"
+    "journey": "The guided implementation journey: stages, templates, attestation",
+    "objectives": "Security objectives (ISO 27001 clause 6.2) and ISMS metrics (clause 9.1): register, targets, logged values, evaluations"
   },
   "tools": {
     "scf_catalog_read": {
@@ -518,6 +519,30 @@
       "methods": {
         "import": "scf_import_journey",
         "attest_stage": "scf_attest_journey_stage"
+      }
+    },
+    "scf_objective_read": {
+      "group": "objectives",
+      "title": "Security Objectives (read)",
+      "description": "Read the security objectives register (the first read adds proposed starters), one objective, one ISMS metric's detail, or the live measure library. Pick with method.",
+      "methods": {
+        "list": "scf_list_security_objectives",
+        "get": "scf_get_security_objective",
+        "metric": "scf_get_isms_metric",
+        "measures": "scf_list_isms_measures"
+      }
+    },
+    "scf_objective_write": {
+      "group": "objectives",
+      "title": "Security Objectives (write)",
+      "description": "Change objectives (editor; confirm and confirmed targets take admin): create, update, set metric, confirm, log a value, record an evaluation. Never archives or deletes.",
+      "methods": {
+        "create": "scf_create_security_objective",
+        "update": "scf_update_security_objective",
+        "set_metric": "scf_set_objective_metric",
+        "confirm": "scf_confirm_security_objective",
+        "log_value": "scf_log_isms_metric_value",
+        "record_evaluation": "scf_record_objective_evaluation"
       }
     }
   }

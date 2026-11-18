@@ -36,6 +36,7 @@ This project implements:
 - **SAST:** Semgrep static analysis on every PR
 - **CodeQL:** GitHub's semantic code analysis (weekly + PRs)
 - **Dependency auditing:** npm audit + Dependabot automated updates
+- **Release gates:** a release is not tagged or published unless CI and the security scans passed on the exact commit being released, and the dependency audit finds no unhandled high or critical advisory (see [CONTRIBUTING.md](CONTRIBUTING.md#release-gates))
 - **Branch protection:** Required PR reviews before merge to main
 - **No credential logging:** API keys are never included in logs or error output
 - **HTTPS only:** All API communication uses TLS

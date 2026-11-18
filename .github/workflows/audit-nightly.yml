@@ -1,0 +1,43 @@
+# Nightly dependency audit of main.
+#
+# The "Audit dependencies" step in ci.yml runs on every pull request, and
+# auto-release.yml runs the same gate before it tags a release. But an advisory
+# does not wait for a pull request: a package that was clean when it was merged
+# can have a high advisory published against it the next day, and an accepted
+# exception in .github/audit-exceptions.json runs out on a date, not on a merge.
+# This run is how either gets noticed on a quiet week.
+#
+# It blocks nothing. A red run is the report: the log names the advisory or the
+# expired exception, and GitHub notifies whoever last changed this schedule. The
+# same finding then fails the next pull request and the next release, which is
+# where it has to be dealt with (upgrade the package, or record a reasoned, dated
+# exception).
+name: Audit Nightly
+
+on:
+  schedule:
+    # 05:30 UTC every day, before the working day starts.
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit the lockfile on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      # `npm audit` reads package-lock.json; nothing is installed.
+      - name: Audit dependencies
+        run: node scripts/audit-gate.mjs
