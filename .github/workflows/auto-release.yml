@@ -70,7 +70,16 @@ jobs:
           # See https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          # Dependabot puts this repository's `minor` label on its own pull
+          # requests whenever the dependency moved by a minor version. That
+          # label describes the dependency, not this package, so labels on a
+          # Dependabot pull request do not choose the bump. The title does,
+          # and `deps:` / `ci:` titles are a patch.
+          if [[ "$PR_AUTHOR" == "dependabot[bot]" ]]; then
+            PR_LABELS=""
+          fi
           # Check labels first
           if [[ "$PR_LABELS" == *"major"* ]] || [[ "$PR_LABELS" == *"breaking"* ]]; then
             echo "bump=major" >> $GITHUB_OUTPUT
