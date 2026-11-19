@@ -16,16 +16,16 @@ Source: [`src/tools/objectives.ts`](../../src/tools/objectives.ts). Request shap
 
 > **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. This group is not in the core set: call `scf_load_tools` with `objectives` first. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
 >
-> - `scf_objective_read` (load `objectives`): `list` = `scf_list_security_objectives`, `get` = `scf_get_security_objective`, `metric` = `scf_get_isms_metric`, `measures` = `scf_list_isms_measures`
+> - `scf_objective_read` (load `objectives`): `list` = `scf_list_security_objectives`, `get` = `scf_get_security_objective`, `metric` = `scf_get_isms_metric`, `measures` = `scf_list_isms_measures`, `measurement_tasks` = `scf_list_isms_measurement_tasks`
 > - `scf_objective_write` (load `objectives`): `create` = `scf_create_security_objective`, `update` = `scf_update_security_objective`, `set_metric` = `scf_set_objective_metric`, `confirm` = `scf_confirm_security_objective`, `log_value` = `scf_log_isms_metric_value`, `record_evaluation` = `scf_record_objective_evaluation`
 
-The 10 tools split into three concerns:
+The 11 tools split into three concerns:
 
 1. **Reading the register** — `scf_list_security_objectives`, `scf_get_security_objective`, `scf_get_isms_metric`, `scf_list_isms_measures`
 2. **Setting objectives up** — `scf_create_security_objective`, `scf_update_security_objective`, `scf_set_objective_metric`, `scf_confirm_security_objective`
-3. **Measuring and evaluating** — `scf_log_isms_metric_value`, `scf_record_objective_evaluation`
+3. **Measuring and evaluating** — `scf_list_isms_measurement_tasks`, `scf_log_isms_metric_value`, `scf_record_objective_evaluation`
 
-A typical flow: `scf_list_isms_measures` to pick a `measure_key`, `scf_create_security_objective` with a `metric`, `scf_confirm_security_objective` (admin), then `scf_log_isms_metric_value` each period for a logged metric and `scf_record_objective_evaluation` at management review.
+A typical flow: `scf_list_isms_measures` to pick a `measure_key`, `scf_create_security_objective` with a `metric`, `scf_confirm_security_objective` (admin), then, each period, `scf_list_isms_measurement_tasks` to see which logged values are due and `scf_log_isms_metric_value` to log them, and `scf_record_objective_evaluation` at management review.
 
 Not wrapped: `GET …/isms-metrics` (the dashboard; the same builder as the register, so `scf_list_security_objectives` returns the same readings) and `POST …/isms-metrics/wording` (form feedback for the web app). Both verdicts are in [`../tool-scope.md`](../tool-scope.md).
 
@@ -158,17 +158,35 @@ Confirm a proposed objective so it becomes active (write — ADMIN). Needs a tea
 
 ---
 
+## `scf_list_isms_measurement_tasks`
+
+This period's measurement tasks (read — viewer): one per logged metric whose value is due, due date first. Derived when read, nothing is stored; log the value with scf_log_isms_metric_value.
+
+| Parameter        | Type    | Required | Description                                                               |
+| ---------------- | ------- | -------- | ------------------------------------------------------------------------- |
+| `org_id`         | string  | Yes      | Organization UUID — obtain from scf_list_organizations                    |
+| `assigned_to_me` | boolean | No       | Only tasks whose reminder goes to the caller (default false)              |
+| `include_done`   | boolean | No       | Also list tasks whose value is already logged this period (default false) |
+
+How many days before the end of the period the owner is reminded is the organization setting `isms_measurement_reminder_days`, set with `scf_update_org_settings` (see [organization.md](organization.md)).
+
+---
+
 ## `scf_log_isms_metric_value`
 
-Log a result for a logged or milestone metric (write — editor; milestone: 1 done, 0 not). Results are never changed or removed: a correction is a new entry for the period.
+Log a result for a logged or milestone metric (write — editor; milestone: 1 done, 0 not), by objective_id or ref (OBJ-09). Results are never changed or removed: a correction is a new entry.
 
-| Parameter      | Type   | Required | Description                                                                                                        |
-| -------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------ |
-| `org_id`       | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                             |
-| `objective_id` | string | Yes      | Security objective UUID — obtain from scf_list_security_objectives (the metric shares the objective's id)          |
-| `value`        | number | Yes      | The measured value in the metric's unit (percent 0–100, count ≥ 0); for a milestone 1 = done, 0 = not done         |
-| `period_start` | string | No       | A date in the period the value covers (moved to that period's start); the current period when omitted (YYYY-MM-DD) |
-| `note`         | string | No       | Where the value came from, or why it corrects an earlier entry                                                     |
+| Parameter      | Type   | Required | Description                                                                                                                                                                                                |
+| -------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`       | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                     |
+| `objective_id` | string | No       | Security objective UUID — obtain from scf_list_security_objectives (the metric shares the objective's id)                                                                                                  |
+| `ref`          | string | No       | The objective's ref, e.g. OBJ-09, instead of objective_id — as scf_list_security_objectives shows it. Meant for collectors: an API key repeating the newest value is answered without writing a new result |
+| `value`        | number | Yes      | The measured value in the metric's unit (percent 0–100, count ≥ 0); for a milestone 1 = done, 0 = not done                                                                                                 |
+| `period_start` | string | No       | A date in the period the value covers (moved to that period's start); the current period when omitted (YYYY-MM-DD)                                                                                         |
+| `note`         | string | No       | Where the value came from, or why it corrects an earlier entry                                                                                                                                             |
+| `collector`    | string | No       | Name of the automated collector that measured the value, e.g. 'jumpcloud-patch-report'. Accepted only from an API key caller                                                                               |
+
+Pass exactly one of `objective_id` or `ref`. The tool refuses a call with both or neither before it reaches the platform. `ref` is `OBJ-` followed by up to six digits. `collector` is up to 80 characters: letters, digits, spaces and `. _ : / -`, starting with a letter or digit.
 
 ---
 

@@ -2,7 +2,7 @@
   "$comment": "Consolidation plan: each exposed tool is one noun-and-direction (read or write) whose `method` selects one of the original single-route tools in src/tools/*.ts. Every original tool must appear exactly once (tests/consolidation.test.ts enforces it). A tool with one method is exposed under the original name and shape. `core_groups` are enabled at startup; the rest load on demand through scf_load_tools.",
   "core_groups": ["catalog", "controls", "evidence", "assessments", "risk", "vendors", "systems", "organization"],
   "groups": {
-    "catalog": "SCF reference catalog: controls, domains, frameworks, assessment objectives, evidence definitions (no org)",
+    "catalog": "SCF reference catalog: controls, domains, frameworks, assessment objectives, evidence definitions, risk and threat catalogs (no org)",
     "controls": "The organization's control scope: scoping, implementation status, maturity, basis, materiality, procedures",
     "evidence": "Evidence tracking records, files, validation, tasks, collection health and maturity guidance",
     "assessments": "AI evidence assessments: per-file and windowed verdicts, review queues, control composites",
@@ -12,19 +12,20 @@
     "organization": "Organizations, members, settings, audit log, work queues, notifications, current user",
     "teams": "Business functions, teams, rosters and team accountability for controls and evidence",
     "collaboration": "User assignments and comment threads on controls, evidence and tasks",
-    "documents": "ISMS document generation, sections, lifecycle transitions and export",
-    "engagements": "Audit engagements: scope, auditors, queries and responses",
+    "documents": "ISMS document generation, sections, lifecycle transitions, export, document structure and the ISMS profile",
+    "engagements": "Audit engagements: scope, auditors, the organization's auditor list, queries and responses",
+    "engagement-reviews": "Engagement evidence review: the review board, cards, status moves, reviewer assignment, comments, dashboard",
     "assurance": "Deficiencies, organization compensating controls, control validations, posture snapshots, capability tests",
     "catalog-reconciliation": "Per-organization SCF catalog upgrade reconciliation runs",
     "webhooks": "Webhook endpoints, secrets and delivery logs",
     "journey": "The guided implementation journey: stages, templates, attestation",
-    "objectives": "Security objectives (ISO 27001 clause 6.2) and ISMS metrics (clause 9.1): register, targets, logged values, evaluations"
+    "objectives": "Security objectives (ISO 27001 clause 6.2) and ISMS metrics (clause 9.1): register, targets, logged values, measurement tasks, evaluations"
   },
   "tools": {
     "scf_catalog_read": {
       "group": "catalog",
       "title": "SCF Catalog",
-      "description": "Read the SCF reference catalog (no org): controls, one control with its objectives and evidence, domains, frameworks, assessment objectives, evidence definitions. Pick with method.",
+      "description": "Read the SCF reference catalog (no org): controls, one control in full, domains, frameworks, assessment objectives, evidence definitions, risk and threat catalogs. Pick with method.",
       "methods": {
         "list_controls": "scf_list_controls",
         "get_control": "scf_get_control",
@@ -33,7 +34,9 @@
         "list_frameworks": "scf_list_frameworks",
         "list_assessment_objectives": "scf_list_assessment_objectives",
         "list_evidence": "scf_list_evidence_catalog",
-        "get_evidence": "scf_get_catalog_evidence"
+        "get_evidence": "scf_get_catalog_evidence",
+        "list_risks": "scf_list_catalog_risks",
+        "list_threats": "scf_list_catalog_threats"
       }
     },
     "scf_control_read": {
@@ -385,22 +388,34 @@
         "generators": "scf_list_document_generators"
       }
     },
+    "scf_document_profile_read": {
+      "group": "documents",
+      "title": "Document Structure and ISMS Profile (read)",
+      "description": "Read how controls map to documents and the ISMS profile behind them: document scopes, the control-to-document map, a profile switch preview, the ISMS profile. Pick with method.",
+      "methods": {
+        "scopes": "scf_list_document_scopes",
+        "map": "scf_get_document_map",
+        "profile_preview": "scf_preview_document_profile",
+        "isms_profile": "scf_get_isms_profile"
+      }
+    },
     "scf_document_write": {
       "group": "documents",
       "title": "ISMS Documents (write)",
-      "description": "Change ISMS documents (editor+): generate documents (async), transition lifecycle state, update or resolve a section, or update generation settings. Pick with method.",
+      "description": "Change ISMS documents (editor+): generate (async), transition lifecycle state, update or resolve a section, update generation settings, or save an ISMS profile section. Pick with method.",
       "methods": {
         "generate": "scf_generate_documents",
         "transition": "scf_transition_document",
         "update_section": "scf_update_document_section",
         "resolve_section": "scf_resolve_document_section",
-        "update_settings": "scf_update_document_settings"
+        "update_settings": "scf_update_document_settings",
+        "update_isms_profile": "scf_update_isms_profile_section"
       }
     },
     "scf_engagement_read": {
       "group": "engagements",
       "title": "Audit Engagements (read)",
-      "description": "Read audit engagements: list, one engagement, the caller's engagements, scope, presentation, auditors, queries, one query. Pick with method.",
+      "description": "Read audit engagements: list, one engagement, the caller's engagements, scope, presentation, auditors, the organization's auditor list, queries, one query. Pick with method.",
       "methods": {
         "list": "scf_list_engagements",
         "get": "scf_get_engagement",
@@ -408,6 +423,7 @@
         "scope": "scf_get_engagement_scope",
         "presentation": "scf_get_engagement_presentation",
         "auditors": "scf_list_engagement_auditors",
+        "org_auditors": "scf_list_org_auditors",
         "queries": "scf_list_engagement_queries",
         "query": "scf_get_engagement_query"
       }
@@ -425,6 +441,30 @@
         "create_query": "scf_create_engagement_query",
         "update_query_status": "scf_update_engagement_query_status",
         "respond_to_query": "scf_respond_to_engagement_query"
+      }
+    },
+    "scf_evidence_review_read": {
+      "group": "engagement-reviews",
+      "title": "Engagement Evidence Review (read)",
+      "description": "Read an engagement's evidence review: the board for a framework, one card, its decision trail, people, the dashboard roll-up, a card's comments or comment counts. Pick with method.",
+      "methods": {
+        "board": "scf_list_evidence_reviews",
+        "card": "scf_get_evidence_review",
+        "events": "scf_list_evidence_review_events",
+        "people": "scf_list_review_people",
+        "dashboard": "scf_get_review_dashboard",
+        "comments": "scf_list_evidence_review_comments",
+        "comment_counts": "scf_count_evidence_review_comments"
+      }
+    },
+    "scf_evidence_review_write": {
+      "group": "engagement-reviews",
+      "title": "Engagement Evidence Review (write)",
+      "description": "Act on an engagement's evidence review: move a card's status (auditor, or the organization when submitting), assign or clear the reviewer, or post a comment. Never deletes. Pick with method.",
+      "methods": {
+        "set_status": "scf_set_evidence_review_status",
+        "assign_reviewer": "scf_assign_evidence_reviewer",
+        "comment": "scf_create_evidence_review_comment"
       }
     },
     "scf_assurance_read": {
@@ -524,12 +564,13 @@
     "scf_objective_read": {
       "group": "objectives",
       "title": "Security Objectives (read)",
-      "description": "Read the security objectives register (the first read adds proposed starters), one objective, one ISMS metric's detail, or the live measure library. Pick with method.",
+      "description": "Read the security objectives register (the first read adds proposed starters), one objective, one ISMS metric's detail, the live measure library, or this period's measurement tasks. Pick with method.",
       "methods": {
         "list": "scf_list_security_objectives",
         "get": "scf_get_security_objective",
         "metric": "scf_get_isms_metric",
-        "measures": "scf_list_isms_measures"
+        "measures": "scf_list_isms_measures",
+        "measurement_tasks": "scf_list_isms_measurement_tasks"
       }
     },
     "scf_objective_write": {

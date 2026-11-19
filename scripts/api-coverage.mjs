@@ -189,7 +189,7 @@ const VOCABULARIES = [
   },
   {
     key: "deficiency_priority",
-    schema: "DeficiencyCreate",
+    schema: "DeficiencyRaise",
     property: "priority",
     file: "src/lib/deficiencies.ts",
     constName: "DEFICIENCY_PRIORITIES",

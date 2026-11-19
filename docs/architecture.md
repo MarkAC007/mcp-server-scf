@@ -37,7 +37,7 @@ src/
 │                         adds scf_load_tools (enable + list_changed).
 ├── tools/                One register* function per domain; each server.tool() call
 │                         is one platform operation and becomes a method.
-│   ├── catalog.ts        8 tools — read-only SCF reference data
+│   ├── catalog.ts        10 tools — read-only SCF reference data, risk and threat catalogs
 │   ├── scoped-controls.ts 15 tools — per-org implementation tracking, basis, materiality
 │   ├── evidence.ts       42 tools — CRUD, batch, tasks, files, health, AI
 │   │                     assessments (per-file + windowed)
@@ -47,10 +47,13 @@ src/
 │   ├── organization.ts  12 tools — user, orgs, settings, audit, change cursor, work queues, notifications
 │   ├── capabilities.ts   19 tools — KSI themes, systems, capabilities, recipes
 │   ├── webhooks.ts       6 tools — webhook endpoints + deliveries
-│   ├── documents.ts      15 tools — ISMS doc generation, section merge
-│   │                     resolution, lifecycle, export
-│   ├── engagements.ts    16 tools — audit engagement workspaces, frozen
+│   ├── documents.ts      20 tools — ISMS doc generation, section merge
+│   │                     resolution, lifecycle, export, document profile, ISMS profile
+│   ├── engagements.ts    17 tools — audit engagement workspaces, frozen
 │   │                     scope, auditor access, structured queries
+│   ├── engagement-reviews.ts
+│   │                     10 tools — engagement evidence review board, status
+│   │                     moves, reviewer assignment, comments; no delete
 │   ├── catalog-reconciliation.ts
 │   │                     9 tools — per-org SCF catalog version upgrades
 │   ├── teams.ts          11 tools — functions, teams, rosters, team assignments
@@ -58,8 +61,8 @@ src/
 │   ├── journey.ts         4 tools — guided journey, templates, attestation
 │   ├── assurance.ts      19 tools — deficiencies, org compensating controls,
 │   │                     control validation, posture snapshots, capability tests
-│   ├── objectives.ts     10 tools — security objectives (6.2), ISMS metrics (9.1),
-│   │                     logged results, evaluations; no delete
+│   ├── objectives.ts     11 tools — security objectives (6.2), ISMS metrics (9.1),
+│   │                     logged results, measurement tasks, evaluations; no delete
 └── lib/
     ├── api-client.ts     ScfApiClient — fetch wrapper with auth,
     │                     pagination helpers, typed get/post/patch/delete,
@@ -67,7 +70,7 @@ src/
     └── errors.ts         ScfApiError + formatError + errorResult.
 ```
 
-Total: **235 operations across 16 domain files**, exposed as **44 tools** (43 from [`src/consolidation/plan.json`](../src/consolidation/plan.json) plus `scf_load_tools`); 26 are listed at startup and the rest load on demand. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
+Total: **254 operations across 17 domain files**, exposed as **47 tools** (46 from [`src/consolidation/plan.json`](../src/consolidation/plan.json) plus `scf_load_tools`); 26 are listed at startup and the rest load on demand. The per-domain docs live under [`docs/tools/`](tools/); the admission policy and the per-endpoint verdict table are in [`tool-scope.md`](tool-scope.md).
 
 ---
 

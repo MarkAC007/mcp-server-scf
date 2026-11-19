@@ -304,14 +304,21 @@ export function registerScopedControlTools(server: McpServer) {
         .describe(
           "Why these controls leave scope — recorded in the audit trail. Required (400 without it), with an admin key (403 otherwise), when a framework carries an MCR obligation or its removal would take a material control out of scope",
         ),
+      orphan_evidence_action: z
+        .enum(["keep", "untrack"])
+        .optional()
+        .describe(
+          "Tracked evidence whose only in-scope requirers are the controls being removed: keep (default) leaves it tracked and reports it; untrack switches tracking off and closes its open tasks as won't-do. Files and history are never touched",
+        ),
     },
     { title: "Bulk Unscope Framework", readOnlyHint: false, destructiveHint: true },
-    async ({ org_id, frameworks, removal_reason }) => {
+    async ({ org_id, frameworks, removal_reason, orphan_evidence_action }) => {
       try {
         const client = getClient();
         const data = await client.post(`/organizations/${org_id}/scoped-controls/bulk-unscope-framework`, {
           frameworks,
           removal_reason,
+          orphan_evidence_action,
         });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {

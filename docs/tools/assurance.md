@@ -20,7 +20,7 @@ The 19 tools split into four concerns:
 
 Reads need the viewer role; every write needs editor. Things worth knowing before calling these:
 
-- **The platform raises deficiencies itself.** Marking a control `at_risk`, an insufficient control composite, rejecting evidence, and capability-test findings each raise one; `source` says which (`control_at_risk`, `composite_insufficient`, `evidence_rejected`, `capability_test`, or null for one raised by hand). A deficiency cannot be deleted: cancel it. Completing one needs a `retest_note`.
+- **The platform raises deficiencies itself.** Marking a control `at_risk`, an insufficient control composite, rejecting evidence, and capability-test findings each raise one; `source` says which (`control_at_risk`, `composite_insufficient`, `evidence_rejected`, `capability_test`, or null for one raised by hand). A deficiency raised by hand from an off-track security objective passes `source: security_objective` with the objective's UUID in `source_ref`. A deficiency cannot be deleted: cancel it. Completing one needs a `retest_note`.
 - **A compensating control on a material control must be justified.** It needs `risk_code`: an accepted risk linked to that control, with an approval in force (409 otherwise). `justified` turns false later if the acceptance lapses, is withdrawn or unlinked, or the control becomes material.
 - **A month has one posture snapshot.** The schedule takes it on the first of the month; `scf_take_posture_snapshot` takes it sooner and is refused (409) once the month has one.
 - **A capability test's result must agree with its findings.** `passed` has none; `passed_with_findings` and `failed` need at least one. Each finding is recorded as a deficiency linked to the test, and is managed as a deficiency from then on.
@@ -66,20 +66,22 @@ Get one deficiency: title, priority, status, owner, due date, control or risk it
 
 ## `scf_create_deficiency`
 
-Raise a deficiency by hand (write — editor) against an in-scope control, an assessed risk, or both. At least one of scf_id or risk_code is required. Starts open.
+Raise a deficiency by hand (write — editor) against an in-scope control, an assessed risk, or both, or from a security objective (source). One of scf_id, risk_code or source is required. Starts open.
 
-| Parameter       | Type   | Required | Description                                                                                                |
-| --------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                     |
-| `title`         | string | Yes      | Short title (1–255 chars, non-blank)                                                                       |
-| `description`   | string | No       | What is deficient                                                                                          |
-| `priority`      | string | No       | Priority: critical, high, medium, low (platform default medium)                                            |
-| `owner_name`    | string | No       | Free-text owner                                                                                            |
-| `owner_user_id` | string | No       | Owner user — must be a member of the organisation (404 otherwise); see scf_list_members                    |
-| `due_date`      | string | No       | Due date (YYYY-MM-DD)                                                                                      |
-| `scf_id`        | string | No       | Control the deficiency is against — must be in scope (422 otherwise); obtain from scf_list_scoped_controls |
-| `risk_code`     | string | No       | Risk the deficiency is against — must be one the organisation has assessed (422 otherwise)                 |
-| `root_cause`    | string | No       | Why the deficiency arose                                                                                   |
+| Parameter       | Type   | Required | Description                                                                                                                                                      |
+| --------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                           |
+| `title`         | string | Yes      | Short title (1–255 chars, non-blank)                                                                                                                             |
+| `description`   | string | No       | What is deficient                                                                                                                                                |
+| `priority`      | string | No       | Priority: critical, high, medium, low (platform default medium)                                                                                                  |
+| `owner_name`    | string | No       | Free-text owner                                                                                                                                                  |
+| `owner_user_id` | string | No       | Owner user — must be a member of the organisation (404 otherwise); see scf_list_members                                                                          |
+| `due_date`      | string | No       | Due date (YYYY-MM-DD)                                                                                                                                            |
+| `scf_id`        | string | No       | Control the deficiency is against — must be in scope (422 otherwise); obtain from scf_list_scoped_controls                                                       |
+| `risk_code`     | string | No       | Risk the deficiency is against — must be one the organisation has assessed (422 otherwise)                                                                       |
+| `root_cause`    | string | No       | Why the deficiency arose                                                                                                                                         |
+| `source`        | string | No       | security_objective when the deficiency is raised from an off-track security objective (needs source_ref; scf_id and risk_code are then optional). Omit otherwise |
+| `source_ref`    | string | No       | With source: the objective's UUID — obtain from scf_list_security_objectives (objectives group). Up to 100 characters                                            |
 
 ---
 

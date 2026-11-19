@@ -9,13 +9,23 @@ reports a **conflict** rather than overwriting the edit, or marks a section
 itself; a document that has drifted from current org inputs is flagged `is_stale` and
 left alone.
 
-The 15 tools split into five concerns:
+The 20 tools split into six concerns:
 
 1. **Discovery** — `scf_list_document_generators`, `scf_list_document_domains`
 2. **Configuration** — `scf_get_document_settings`, `scf_update_document_settings`
 3. **Generation** — `scf_generate_documents`, `scf_get_document_generation_status`
 4. **Reading and editing** — `scf_list_documents`, `scf_get_document`, `scf_update_document_section`, `scf_get_document_section_generated`, `scf_resolve_document_section`
 5. **Lifecycle and output** — `scf_transition_document`, `scf_get_document_history`, `scf_export_document`, `scf_preview_document`
+6. **Document structure and the ISMS profile** — `scf_list_document_scopes`, `scf_get_document_map`, `scf_preview_document_profile`, `scf_get_isms_profile`, `scf_update_isms_profile_section`
+
+> **Document profile:** the organization's document profile decides how controls are
+> grouped into policies, standards and procedures. Switching it with
+> `scf_update_document_settings` (`document_profile`) supersedes documents, so call
+> `scf_preview_document_profile` first to see what it would supersede, create and keep.
+
+> **ISMS profile:** the scope statement, context issues, interested parties, communication
+> plan and audit programme. `scf_update_isms_profile_section` replaces a whole section, so
+> read it with `scf_get_isms_profile`, change it, and send all of it back with its row ids.
 
 > **Licence gate:** generation stays blocked until the SCF content licence is acknowledged
 > via `scf_update_document_settings` with `acknowledge_licence: true`.
@@ -30,7 +40,8 @@ Source: [`src/tools/documents.ts`](../../src/tools/documents.ts).
 > **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
 >
 > - `scf_document_read` (load `documents`): `list` = `scf_list_documents`, `get` = `scf_get_document`, `export` = `scf_export_document`, `preview` = `scf_preview_document`, `history` = `scf_get_document_history`, `section_generated` = `scf_get_document_section_generated`, `generation_status` = `scf_get_document_generation_status`, `settings` = `scf_get_document_settings`, `domains` = `scf_list_document_domains`, `generators` = `scf_list_document_generators`
-> - `scf_document_write` (load `documents`): `generate` = `scf_generate_documents`, `transition` = `scf_transition_document`, `update_section` = `scf_update_document_section`, `resolve_section` = `scf_resolve_document_section`, `update_settings` = `scf_update_document_settings`
+> - `scf_document_profile_read` (load `documents`): `scopes` = `scf_list_document_scopes`, `map` = `scf_get_document_map`, `profile_preview` = `scf_preview_document_profile`, `isms_profile` = `scf_get_isms_profile`
+> - `scf_document_write` (load `documents`): `generate` = `scf_generate_documents`, `transition` = `scf_transition_document`, `update_section` = `scf_update_document_section`, `resolve_section` = `scf_resolve_document_section`, `update_settings` = `scf_update_document_settings`, `update_isms_profile` = `scf_update_isms_profile_section`
 
 ---
 
@@ -56,7 +67,7 @@ List the SCF domains this organization can currently generate documents for (rea
 
 ## `scf_get_document_settings`
 
-Get the organization's document-generation settings (read — viewer role): whether doc-gen is enabled, whether derivative generators are enabled, and the SCF licence acknowledgement state.
+Get the organization's document-generation settings (read — viewer role): doc-gen and derivative switches, SCF licence acknowledgement state, the current document_profile and the profiles on offer.
 
 | Parameter | Type   | Required | Description                                            |
 | --------- | ------ | -------- | ------------------------------------------------------ |
@@ -68,12 +79,13 @@ Get the organization's document-generation settings (read — viewer role): whet
 
 Enable or configure document generation (write — admin role). Generation stays blocked until the SCF licence is acknowledged, so the first call usually sets both enabled and acknowledge_licence.
 
-| Parameter                       | Type    | Required | Description                                                                                      |
-| ------------------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------ |
-| `org_id`                        | string  | Yes      | Organization UUID — obtain from scf_list_organizations                                           |
-| `enabled`                       | boolean | No       | Turn document generation on or off for this organization                                         |
-| `derivative_generators_enabled` | boolean | No       | Allow generators that derive content from other generated documents                              |
-| `acknowledge_licence`           | boolean | No       | Record acknowledgement of the SCF content licence — required once before generation is permitted |
+| Parameter                       | Type    | Required | Description                                                                                                                                                                                                                                                                        |
+| ------------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`                        | string  | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                                                                                             |
+| `enabled`                       | boolean | No       | Turn document generation on or off for this organization                                                                                                                                                                                                                           |
+| `derivative_generators_enabled` | boolean | No       | Allow generators that derive content from other generated documents                                                                                                                                                                                                                |
+| `acknowledge_licence`           | boolean | No       | Record acknowledgement of the SCF content licence — required once before generation is permitted                                                                                                                                                                                   |
+| `document_profile`              | string  | No       | Document structure to switch to (how controls are grouped into policies, standards and procedures). The current one is in scf_get_document_settings; an unknown name is refused (400) with the valid names. A switch supersedes documents: call scf_preview_document_profile first |
 
 ---
 
@@ -207,5 +219,62 @@ Preview a document's assembled content as structured JSON (read — viewer role)
 | ------------- | ------ | -------- | -------------------------------------------------------- |
 | `org_id`      | string | Yes      | Organization UUID — obtain from scf_list_organizations   |
 | `document_id` | string | Yes      | Generated document UUID — obtain from scf_list_documents |
+
+---
+
+## `scf_list_document_scopes`
+
+What each generator can produce under the organization's document profile (read — viewer role): only scopes with at least one in-scope control, each with its control count.
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+
+---
+
+## `scf_get_document_map`
+
+Which document each in-scope control lands in (read — viewer role): per control, its policy, standard and procedure under the organization's document profile.
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+
+---
+
+## `scf_preview_document_profile`
+
+What switching to another document profile would supersede, create and keep (read — viewer role). Changes nothing; call before scf_update_document_settings(document_profile).
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+| `profile` | string | Yes      | The document profile to preview switching to           |
+
+---
+
+## `scf_get_isms_profile`
+
+The organization's ISMS profile (read — viewer): scope statement, context issues, interested parties, communication plan, audit programme, and objectives (read-only here).
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+
+The objectives in the profile cannot be changed through `scf_update_isms_profile_section`. Security objectives have their own tools: see [objectives.md](objectives.md).
+
+---
+
+## `scf_update_isms_profile_section`
+
+Save one ISMS profile section (write — editor). data REPLACES the whole section: read it with scf_get_isms_profile, change it and send it all back, keeping row ids. Audited.
+
+| Parameter | Type            | Required | Description                                                                                                                                                                            |
+| --------- | --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`  | string          | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                 |
+| `section` | enum            | Yes      | Section to save: scope, context_issues, interested_parties, communication_plan, audit_programme                                                                                        |
+| `data`    | object \| array | Yes      | The section's whole value, in the shape scf_get_isms_profile returns it: an object for scope, a list of rows (at most 200) for every other section. A row without an id gets a new one |
+
+The tool refuses a list for `scope`, and anything but a list for the other sections, before the call reaches the platform: the platform reads an empty list for `scope` as an empty object and would blank the scope.
 
 ---

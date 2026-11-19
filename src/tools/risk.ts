@@ -8,6 +8,8 @@ const TreatmentStatus = z.enum(["identified", "analysed", "treating", "treated",
 // PIG R7: the approval state of an accepted risk. Null on every other risk.
 const AcceptanceState = z.enum(["approved", "expired", "unapproved"]);
 
+const IsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "ISO date, YYYY-MM-DD");
+
 export function registerRiskTools(server: McpServer) {
   server.tool(
     "scf_list_risks",
@@ -64,19 +66,31 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_create_risk",
-    "Create a new risk assessment in the risk register (write — editor+ role). Likelihood and impact scores populate the 5×5 risk matrix.",
+    "Add a risk to the register by risk_code, or re-score one already there (write — editor; upsert, only passed fields change). Accept with scf_accept_risk; re-scoring an accepted risk clears approval.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      title: z.string().describe("Risk title (required, max ~100 chars)"),
-      description: z.string().describe("Risk description (required)"),
-      likelihood: z.number().int().min(1).max(5).describe("Inherent likelihood on a 1–5 scale"),
-      impact: z.number().int().min(1).max(5).describe("Inherent impact on a 1–5 scale"),
-      owner: z.string().optional().describe("Name or identifier of the risk owner"),
-      treatment_status: TreatmentStatus.optional().describe("Treatment workflow status (default identified)"),
-      control_id: z
+      risk_code: z
         .string()
+        .regex(/^R-[A-Z]{2,4}-\d+$/, "Risk code such as R-AC-1 or R-ORG-1")
+        .describe(
+          "Risk code: catalog R-XX-N (obtain from scf_list_catalog_risks) or custom R-ORG-N (obtain from scf_list_custom_risks)",
+        ),
+      likelihood: z.number().int().min(1).max(5).optional().describe("Inherent likelihood on a 1–5 scale"),
+      impact: z.number().int().min(1).max(5).optional().describe("Inherent impact on a 1–5 scale"),
+      residual_likelihood: z
+        .number()
+        .int()
+        .min(1)
+        .max(5)
         .optional()
-        .describe("SCF control ID to link (e.g., 'AST-01') — obtain from scf_list_controls"),
+        .describe("Residual likelihood after treatment, 1–5 scale"),
+      residual_impact: z.number().int().min(1).max(5).optional().describe("Residual impact after treatment, 1–5 scale"),
+      treatment_status: TreatmentStatus.optional().describe("Treatment lifecycle state (default identified)"),
+      treatment_plan: z.string().optional().describe("How the risk is being treated"),
+      treatment_due_date: IsoDate.optional().describe("When treatment is due (YYYY-MM-DD)"),
+      next_review_date: IsoDate.optional().describe("When the risk is next reviewed (YYYY-MM-DD)"),
+      owner_user_id: z.string().uuid().optional().describe("Risk owner — obtain from scf_list_members"),
+      notes: z.string().optional().describe("Free-text notes on this risk assessment"),
     },
     { title: "Create Risk", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {

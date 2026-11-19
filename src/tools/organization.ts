@@ -260,7 +260,7 @@ export function registerOrganizationTools(server: McpServer) {
 
   server.tool(
     "scf_update_org_settings",
-    "Update the organization profile and maturity targets (write — admin): business_size, mission_statement, maturity_targets. Partial: only passed fields change.",
+    "Update organization settings (write — admin): business_size, mission_statement, maturity_targets, isms_measurement_reminder_days, auto_task_generation_enabled. Partial: only passed fields change.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       business_size: z
@@ -282,21 +282,34 @@ export function registerOrganizationTools(server: McpServer) {
         .describe(
           'Target maturity per SCF domain code (domain code → L0–L5), e.g. {"GOV": "L3"}. Replaces the whole map; {} clears every target. Unknown domain codes, or one code given twice in different case, are refused (422). A control\'s own target (scf_set_target_maturity) overrides its domain\'s',
         ),
+      isms_measurement_reminder_days: z
+        .number()
+        .int()
+        .min(1)
+        .max(366)
+        .optional()
+        .describe(
+          "Days left in the period at which the owner of a logged ISMS metric is reminded its value is still to be entered (1–366; platform default 14; 366 = from the first day of every period)",
+        ),
+      auto_task_generation_enabled: z
+        .boolean()
+        .optional()
+        .describe(
+          "Whether the platform creates evidence collection tasks by itself (platform default true). false = only tasks a person creates exist",
+        ),
     },
     { title: "Update Organization Settings", readOnlyHint: false, destructiveHint: false },
-    async ({ org_id, business_size, mission_statement, maturity_targets }) => {
+    async ({ org_id, ...fields }) => {
       try {
-        if (business_size === undefined && mission_statement === undefined && maturity_targets === undefined) {
+        if (Object.values(fields).every((value) => value === undefined)) {
           return errorResult(
-            new Error("Pass at least one of business_size, mission_statement or maturity_targets to update"),
+            new Error(
+              "Pass at least one of business_size, mission_statement, maturity_targets, isms_measurement_reminder_days or auto_task_generation_enabled to update",
+            ),
           );
         }
         const client = getClient();
-        const data = await client.patch(`/organizations/${org_id}/settings`, {
-          business_size,
-          mission_statement,
-          maturity_targets,
-        });
+        const data = await client.patch(`/organizations/${org_id}/settings`, fields);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);

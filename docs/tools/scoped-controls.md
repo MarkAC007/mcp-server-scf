@@ -125,11 +125,12 @@ Setting `selected: false` on a material or mandatory (MCR) control is refused (4
 
 Unscope every control mapped only to these frameworks (destructive write — editor). Shared controls are kept. An MCR framework, or one taking out a material control, needs an admin and a reason.
 
-| Parameter        | Type   | Required | Description                                                                                                                                                                                                                      |
-| ---------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `org_id`         | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                                           |
-| `frameworks`     | array  | Yes      | Framework slugs to remove, e.g. ['iso_27017_2015'] — obtain from scf_list_frameworks                                                                                                                                             |
-| `removal_reason` | string | No       | Why these controls leave scope — recorded in the audit trail. Required (400 without it), with an admin key (403 otherwise), when a framework carries an MCR obligation or its removal would take a material control out of scope |
+| Parameter                | Type   | Required | Description                                                                                                                                                                                                                                                        |
+| ------------------------ | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`                 | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                                                                             |
+| `frameworks`             | array  | Yes      | Framework slugs to remove, e.g. ['iso_27017_2015'] — obtain from scf_list_frameworks                                                                                                                                                                               |
+| `removal_reason`         | string | No       | Why these controls leave scope — recorded in the audit trail. Required (400 without it), with an admin key (403 otherwise), when a framework carries an MCR obligation or its removal would take a material control out of scope                                   |
+| `orphan_evidence_action` | enum   | No       | Tracked evidence whose only in-scope requirers are the controls being removed: keep (default) leaves it tracked and reports it; untrack switches tracking off and closes its open tasks as won't-do. Files and history are never touched. One of `keep`, `untrack` |
 
 ---
 

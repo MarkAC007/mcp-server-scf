@@ -9,6 +9,7 @@ import { registerCapabilityTools } from "./tools/capabilities.js";
 import { registerWebhookTools } from "./tools/webhooks.js";
 import { registerDocumentTools } from "./tools/documents.js";
 import { registerEngagementTools } from "./tools/engagements.js";
+import { registerEngagementReviewTools } from "./tools/engagement-reviews.js";
 import { registerCatalogReconciliationTools } from "./tools/catalog-reconciliation.js";
 import { registerTeamTools } from "./tools/teams.js";
 import { registerCollaborationTools } from "./tools/collaboration.js";
@@ -35,6 +36,7 @@ export function collectExposedTools() {
   registerWebhookTools(asServer);
   registerDocumentTools(asServer);
   registerEngagementTools(asServer);
+  registerEngagementReviewTools(asServer);
   registerCatalogReconciliationTools(asServer);
   registerTeamTools(asServer);
   registerCollaborationTools(asServer);
