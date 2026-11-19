@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "mcp-server-scf",
   "display_name": "SCF Controls Platform",
-  "version": "4.5.1",
+  "version": "4.6.0",
   "description": "MCP server for the SCF Controls Platform — 47 tools (254 platform operations, loaded progressively) for controls, evidence, risk, and TPRM.",
   "long_description": "Gives Claude Desktop access to 1,451 SCF security controls, 354+ framework mappings (NIST 800-53, ISO 27001, SOC 2, FedRAMP, GDPR), evidence tracking, a 5x5 risk register, and third-party vendor risk management through the SCF Controls Platform. 47 tools over 254 platform operations across 18 groups, loaded progressively — catalog, scoping, evidence, risk, TPRM, organization, capabilities, webhooks, ISMS documents, audit engagements, engagement evidence review, catalog reconciliation, teams, collaboration, the guided journey, assurance (deficiencies, compensating controls, due care, capability tests) and security objectives with ISMS metrics — all callable in natural language.",
   "author": {
