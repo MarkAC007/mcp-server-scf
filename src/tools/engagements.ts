@@ -7,6 +7,8 @@ const ORG_ID = z.string().uuid().describe("Organization UUID — obtain from scf
 
 const ENGAGEMENT_ID = z.string().uuid().describe("Audit engagement UUID — obtain from scf_list_engagements");
 
+export const AUDITOR_KINDS = ["external", "internal"] as const;
+
 /**
  * Audit Engagement Workspaces.
  *
@@ -211,21 +213,66 @@ export function registerEngagementTools(server: McpServer) {
   );
 
   server.tool(
+    "scf_list_org_auditors",
+    "List the organization's external auditors (read — viewer): the source of org_auditor_id for scf_add_engagement_auditor. Inviting or changing an auditor is done in the platform UI.",
+    {
+      org_id: ORG_ID,
+    },
+    { title: "List Organization Auditors", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/auditors`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
     "scf_add_engagement_auditor",
-    "Grant an existing user read access to one engagement (write — admin role). Scoped to that engagement's frozen scope and queries only; re-granting a revoked auditor reactivates the grant.",
+    "Grant read access to one engagement (write — admin): an external auditor by org_auditor_id, or a user by user_id (an organization member needs kind internal). Exactly one id; a re-grant reactivates.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
       user_id: z
         .string()
         .uuid()
-        .describe("UUID of an existing user to grant engagement access to — obtain from scf_list_members"),
+        .optional()
+        .describe(
+          "UUID of an existing user. An organization member (scf_list_members) must be granted with kind internal: the platform refuses a member as external (422)",
+        ),
+      org_auditor_id: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "UUID of one of the organization's external auditors — obtain from scf_list_org_auditors. Not the engagement auditor record id that scf_remove_engagement_auditor takes",
+        ),
+      kind: z
+        .enum(AUDITOR_KINDS)
+        .optional()
+        .describe(
+          "external (default) or internal (an organization member acting as auditor; user_id only, and required for a member). An internal auditor cannot accept evidence they own, are accountable for, or responded on",
+        ),
     },
     { title: "Add Engagement Auditor", readOnlyHint: false, destructiveHint: false },
-    async ({ org_id, engagement_id, user_id }) => {
+    async ({ org_id, engagement_id, user_id, org_auditor_id, kind }) => {
       try {
+        if ((user_id === undefined) === (org_auditor_id === undefined)) {
+          return errorResult(new Error("Pass exactly one of user_id or org_auditor_id"));
+        }
+        if (org_auditor_id !== undefined && kind === "internal") {
+          return errorResult(new Error("org_auditor_id is for external auditors; an internal auditor is a user_id"));
+        }
         const client = getClient();
-        const data = await client.post(`/organizations/${org_id}/engagements/${engagement_id}/auditors`, { user_id });
+        const body: Record<string, string> = {};
+        if (user_id !== undefined) body.user_id = user_id;
+        // The platform's body field is auditor_id; the tool names it apart from the grant record id.
+        if (org_auditor_id !== undefined) body.auditor_id = org_auditor_id;
+        if (kind !== undefined) body.kind = kind;
+        const data = await client.post(`/organizations/${org_id}/engagements/${engagement_id}/auditors`, body);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
@@ -242,7 +289,9 @@ export function registerEngagementTools(server: McpServer) {
       auditor_id: z
         .string()
         .uuid()
-        .describe("Engagement auditor record UUID — obtain from scf_list_engagement_auditors"),
+        .describe(
+          "Engagement auditor record UUID (the grant, not the org_auditor_id) — obtain from scf_list_engagement_auditors",
+        ),
     },
     { title: "Remove Engagement Auditor", readOnlyHint: false, destructiveHint: true },
     async ({ org_id, engagement_id, auditor_id }) => {
@@ -260,7 +309,7 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_list_engagement_queries",
-    "List an engagement's structured auditor queries (read — viewer role, or an assigned auditor). A query is an auditor's question against one control, with its responses and status.",
+    "List an engagement's auditor queries (read — viewer role, or an assigned auditor). A query is a question against one control or one evidence object, with its responses and status.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
@@ -268,6 +317,10 @@ export function registerEngagementTools(server: McpServer) {
         .string()
         .optional()
         .describe("Filter to a single SCF control in DOMAIN-NN format — obtain from scf_get_engagement_scope"),
+      evidence_id: z
+        .string()
+        .optional()
+        .describe("Filter to queries raised on one evidence object (SCF ERL id, e.g. 'E-GOV-01')"),
       status: z
         .enum(["open", "answered", "closed"])
         .optional()
@@ -307,14 +360,21 @@ export function registerEngagementTools(server: McpServer) {
 
   server.tool(
     "scf_create_engagement_query",
-    "Raise an auditor query against one control in the engagement's scope (write — org member or assigned auditor). The control must be in the engagement's frozen scope.",
+    "Raise a query on one control or one evidence object of the engagement (write — org member or assigned auditor): exactly one of scf_id or evidence_id. Never moves an evidence review card.",
     {
       org_id: ORG_ID,
       engagement_id: ENGAGEMENT_ID,
       scf_id: z
         .string()
+        .optional()
         .describe(
           "SCF control the query is about, in DOMAIN-NN format — must be in scope, see scf_get_engagement_scope",
+        ),
+      evidence_id: z
+        .string()
+        .optional()
+        .describe(
+          "Evidence object the query is about (SCF ERL id, e.g. 'E-GOV-01') — must be on the engagement's review board, see scf_list_evidence_reviews (load the engagement-reviews group)",
         ),
       title: z.string().describe("Short summary of what is being asked"),
       body: z.string().describe("Full text of the query"),
@@ -322,6 +382,9 @@ export function registerEngagementTools(server: McpServer) {
     { title: "Create Engagement Query", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, engagement_id, ...body }) => {
       try {
+        if ((body.scf_id === undefined) === (body.evidence_id === undefined)) {
+          return errorResult(new Error("Pass exactly one of scf_id or evidence_id"));
+        }
         const client = getClient();
         const data = await client.post(`/organizations/${org_id}/engagements/${engagement_id}/queries`, body);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };

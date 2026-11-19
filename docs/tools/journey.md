@@ -49,17 +49,18 @@ The platform resolves an import against a file on disk by its **filename stem**,
 
 ## `scf_import_journey`
 
-Set or re-issue the org's journey from a template (write — ADMIN role). Merges by stage key: attestations survive; dropping an attested stage is refused (409). An uploaded `template` wins outright.
+Set or re-issue the org's journey from a template (write — ADMIN). Merges by stage key: attestations survive; dropping an attested stage is refused (409) unless replace_attested. `template` wins.
 
-Re-issuing a revised journey is safe: stages are merged on their `key`, so an attested stage keeps its attestation, and a template that would drop an attested stage is refused with a 409 rather than silently discarding the record. This route requires the **admin** role, not editor.
+Re-issuing a revised journey is safe: stages are merged on their `key`, so an attested stage keeps its attestation, and a template that would drop an attested stage is refused with a 409 rather than silently discarding the record. Passing `replace_attested: true` lets the revision drop those stages: their attestations are discarded and the discard is written to the audit log. This route requires the **admin** role, not editor.
 
-| Parameter           | Type    | Required | Description                                                                                           |
-| ------------------- | ------- | -------- | ----------------------------------------------------------------------------------------------------- |
-| `org_id`            | string  | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                            |
-| `template_key`      | string  | No       | Template to import — get from `scf_list_journey_templates`. A bare filename stem; no path separators. |
-| `activate`          | boolean | No       | Start the first stage immediately (default `false`)                                                   |
-| `practitioner_name` | string  | No       | The consultancy or practitioner recorded as having set this journey up                                |
-| `template`          | object  | No       | A practitioner-authored artefact to upload. When present it wins over `template_key` entirely.        |
+| Parameter           | Type    | Required | Description                                                                                                                                                               |
+| ------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`            | string  | Yes      | Organization ID (UUID) — get from `scf_list_organizations`                                                                                                                |
+| `template_key`      | string  | No       | Template to import — get from `scf_list_journey_templates`. A bare filename stem; no path separators.                                                                     |
+| `activate`          | boolean | No       | Start the first stage immediately (default `false`)                                                                                                                       |
+| `replace_attested`  | boolean | No       | Allow a revision to drop stages that are already attested (default false: refused with 409). Their attestations are discarded and the discard is written to the audit log |
+| `practitioner_name` | string  | No       | The consultancy or practitioner recorded as having set this journey up                                                                                                    |
+| `template`          | object  | No       | A practitioner-authored artefact to upload. When present it wins over `template_key` entirely.                                                                            |
 
 `template` carries `template_key`, `template_version`, `name`, `description` and `stages` (at least one). Each stage carries `key`, `title`, `summary`, `expect_next` and `precondition_spec`.
 

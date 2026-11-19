@@ -73,7 +73,7 @@ export function registerJourneyTools(server: McpServer) {
 
   server.tool(
     "scf_import_journey",
-    "Set or re-issue the org's journey from a template (write — ADMIN role). Merges by stage key: attestations survive; dropping an attested stage is refused (409). An uploaded `template` wins outright.",
+    "Set or re-issue the org's journey from a template (write — ADMIN). Merges by stage key: attestations survive; dropping an attested stage is refused (409) unless replace_attested. `template` wins.",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
       template_key: z
@@ -90,6 +90,12 @@ export function registerJourneyTools(server: McpServer) {
           "Template to import, e.g. 'compliancegenie-default' — obtain from scf_list_journey_templates. Ignored when `template` is supplied.",
         ),
       activate: z.boolean().default(false).describe("Start the first stage immediately (default false)"),
+      replace_attested: z
+        .boolean()
+        .optional()
+        .describe(
+          "Allow a revision to drop stages that are already attested (default false: refused with 409). Their attestations are discarded and the discard is written to the audit log",
+        ),
       practitioner_name: z
         .string()
         .optional()
@@ -115,8 +121,9 @@ export function registerJourneyTools(server: McpServer) {
           "A practitioner-authored journey artefact to upload. When present it wins over template_key entirely.",
         ),
     },
-    // Not destructive: import merges by stage key and the platform refuses (409) a
-    // revision that would drop an attested stage. The irreversible one is attest.
+    // Not destructive by default: import merges by stage key and the platform refuses
+    // (409) a revision that would drop an attested stage unless the caller passes
+    // replace_attested, which is an explicit, audited opt-in.
     { title: "Import Journey", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
       try {

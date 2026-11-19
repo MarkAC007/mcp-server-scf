@@ -20,8 +20,8 @@ const fakeClient = {
     calls.push({ method: "PATCH", path, body });
     return { ok: true };
   }),
-  put: vi.fn(async (path: string, body?: unknown) => {
-    calls.push({ method: "PUT", path, body });
+  put: vi.fn(async (path: string, body?: unknown, params?: unknown) => {
+    calls.push({ method: "PUT", path, body, params });
     return { ok: true };
   }),
   delete: vi.fn(async (path: string) => {
@@ -40,6 +40,11 @@ import { registerRiskTools } from "../src/tools/risk.js";
 import { registerAssuranceTools } from "../src/tools/assurance.js";
 import { registerCapabilityTools } from "../src/tools/capabilities.js";
 import { registerObjectiveTools } from "../src/tools/objectives.js";
+import { registerCatalogTools } from "../src/tools/catalog.js";
+import { registerEngagementTools } from "../src/tools/engagements.js";
+import { registerEngagementReviewTools } from "../src/tools/engagement-reviews.js";
+import { registerDocumentTools } from "../src/tools/documents.js";
+import { registerJourneyTools } from "../src/tools/journey.js";
 import { readFileSync } from "node:fs";
 import { collectExposedTools } from "../src/server.js";
 
@@ -609,7 +614,7 @@ describe("security objectives and ISMS metrics call the routes they document, an
   it("no objectives tool issues a DELETE, and the module has no client.delete", async () => {
     const t = h();
     const deletesBefore = fakeClient.delete.mock.calls.length;
-    expect(t.size).toBe(10);
+    expect(t.size).toBe(11);
     const args: Record<string, Record<string, unknown>> = {
       scf_list_security_objectives: { include_archived: true },
       scf_get_security_objective: { objective_id: ID },
@@ -621,16 +626,401 @@ describe("security objectives and ISMS metrics call the routes they document, an
       scf_confirm_security_objective: { objective_id: ID },
       scf_log_isms_metric_value: { objective_id: ID, value: 1 },
       scf_record_objective_evaluation: { objective_id: ID, note: "n" },
+      scf_list_isms_measurement_tasks: {},
     };
     expect([...t.keys()].sort()).toEqual(Object.keys(args).sort());
     for (const [name, handler] of t) {
       const res = await handler({ org_id: ORG, ...args[name] });
       expect(res.isError, name).toBeFalsy();
     }
-    expect(calls).toHaveLength(10);
+    expect(calls).toHaveLength(11);
     expect(fakeClient.delete.mock.calls.length).toBe(deletesBefore);
     expect(calls.some((c) => c.method === "DELETE")).toBe(false);
     const src = readFileSync(new URL("../src/tools/objectives.ts", import.meta.url), "utf8");
     expect(src).not.toMatch(/\.delete\b/);
+  });
+});
+
+describe("platform alignment 2026-11: new routes and new fields on existing tools", () => {
+  const ENG = `/organizations/${ORG}/engagements/${ID}`;
+  const EV = "E-GOV-01";
+  const reviews = () => handlersOf(registerEngagementReviewTools);
+  const parses = (register: (s: McpServer) => void, tool: string, args: Record<string, unknown>) =>
+    z.object(shapeOf(register, tool)).safeParse(args).success;
+
+  it("the risk and threat catalogs call the catalog routes", async () => {
+    const t = handlersOf(registerCatalogTools);
+    await t.get("scf_list_catalog_risks")!({});
+    await t.get("scf_list_catalog_threats")!({ include_deprecated: true });
+    expect(calls).toEqual([
+      { method: "GET", path: "/catalog/risks", params: { include_deprecated: undefined } },
+      { method: "GET", path: "/catalog/threats", params: { include_deprecated: true } },
+    ]);
+  });
+
+  it("scf_create_risk posts risk_code and the platform's fields, and its schema has no title", async () => {
+    await handlersOf(registerRiskTools).get("scf_create_risk")!({
+      org_id: ORG,
+      risk_code: "R-AC-1",
+      likelihood: 3,
+      impact: 4,
+      owner_user_id: ID,
+      next_review_date: "2027-01-31",
+    });
+    expect(calls).toEqual([
+      {
+        method: "POST",
+        path: `/organizations/${ORG}/risk-assessments`,
+        body: { risk_code: "R-AC-1", likelihood: 3, impact: 4, owner_user_id: ID, next_review_date: "2027-01-31" },
+        params: undefined,
+      },
+    ]);
+    const shape = shapeOf(registerRiskTools, "scf_create_risk");
+    expect(Object.keys(shape).sort()).toEqual(
+      [
+        "org_id",
+        "risk_code",
+        "likelihood",
+        "impact",
+        "residual_likelihood",
+        "residual_impact",
+        "treatment_status",
+        "treatment_plan",
+        "treatment_due_date",
+        "next_review_date",
+        "owner_user_id",
+        "notes",
+      ].sort(),
+    );
+    expect(parses(registerRiskTools, "scf_create_risk", { org_id: ORG, risk_code: "R-ORG-12" })).toBe(true);
+    expect(parses(registerRiskTools, "scf_create_risk", { org_id: ORG })).toBe(false);
+    expect(parses(registerRiskTools, "scf_create_risk", { org_id: ORG, risk_code: "AC-1" })).toBe(false);
+  });
+
+  it("the evidence review read tools call the board, card, events, people, dashboard and comment routes", async () => {
+    const t = reviews();
+    const base = { org_id: ORG, engagement_id: ID };
+    await t.get("scf_list_evidence_reviews")!({
+      ...base,
+      framework: "iso_27001_2022",
+      status: "submitted",
+      mine: true,
+    });
+    await t.get("scf_get_evidence_review")!({ ...base, evidence_id: EV });
+    await t.get("scf_list_evidence_review_events")!({ ...base, evidence_id: EV });
+    await t.get("scf_list_review_people")!(base);
+    await t.get("scf_get_review_dashboard")!({ ...base, framework: "iso_27001_2022" });
+    await t.get("scf_list_evidence_review_comments")!({ ...base, evidence_id: EV, visibility: "internal" });
+    await t.get("scf_count_evidence_review_comments")!({ ...base, evidence_id: EV });
+    expect(calls).toEqual([
+      {
+        method: "GET",
+        path: `${ENG}/evidence-reviews`,
+        params: { framework: "iso_27001_2022", status: "submitted", mine: true },
+      },
+      { method: "GET", path: `${ENG}/evidence-reviews/${EV}`, params: { framework: undefined } },
+      { method: "GET", path: `${ENG}/evidence-reviews/${EV}/events`, params: undefined },
+      { method: "GET", path: `${ENG}/review-people`, params: undefined },
+      { method: "GET", path: `${ENG}/review-dashboard`, params: { framework: "iso_27001_2022" } },
+      { method: "GET", path: `${ENG}/evidence-reviews/${EV}/comments`, params: { visibility: "internal" } },
+      { method: "GET", path: `${ENG}/evidence-reviews/${EV}/comments/counts`, params: undefined },
+    ]);
+  });
+
+  it("scf_set_evidence_review_status posts only the fields given, with framework as a query param", async () => {
+    const set = reviews().get("scf_set_evidence_review_status")!;
+    await set({ org_id: ORG, engagement_id: ID, evidence_id: EV, to_status: "in_progress" });
+    await set({
+      org_id: ORG,
+      engagement_id: ID,
+      evidence_id: EV,
+      framework: "soc2",
+      to_status: "submitted",
+      from_status: "action_required",
+      note: "Policy re-approved",
+      artifact_file_ids: [ID],
+    });
+    expect(calls).toEqual([
+      {
+        method: "POST",
+        path: `${ENG}/evidence-reviews/${EV}/status`,
+        body: { to_status: "in_progress" },
+        params: { framework: undefined },
+      },
+      {
+        method: "POST",
+        path: `${ENG}/evidence-reviews/${EV}/status`,
+        body: {
+          to_status: "submitted",
+          from_status: "action_required",
+          note: "Policy re-approved",
+          artifact_file_ids: [ID],
+        },
+        params: { framework: "soc2" },
+      },
+    ]);
+    const args = { org_id: ORG, engagement_id: ID, evidence_id: EV };
+    expect(
+      parses(registerEngagementReviewTools, "scf_set_evidence_review_status", { ...args, to_status: "done" }),
+    ).toBe(false);
+    expect(parses(registerEngagementReviewTools, "scf_set_evidence_review_status", args)).toBe(false);
+  });
+
+  it("scf_assign_evidence_reviewer puts user_id, and null clears", async () => {
+    const assign = reviews().get("scf_assign_evidence_reviewer")!;
+    await assign({ org_id: ORG, engagement_id: ID, evidence_id: EV, user_id: ID });
+    await assign({ org_id: ORG, engagement_id: ID, evidence_id: EV, user_id: null });
+    expect(calls.map((c) => [c.method, c.path, c.body])).toEqual([
+      ["PUT", `${ENG}/evidence-reviews/${EV}/reviewer`, { user_id: ID }],
+      ["PUT", `${ENG}/evidence-reviews/${EV}/reviewer`, { user_id: null }],
+    ]);
+    const args = { org_id: ORG, engagement_id: ID, evidence_id: EV };
+    expect(parses(registerEngagementReviewTools, "scf_assign_evidence_reviewer", { ...args, user_id: null })).toBe(
+      true,
+    );
+    expect(parses(registerEngagementReviewTools, "scf_assign_evidence_reviewer", args)).toBe(false);
+  });
+
+  it("scf_create_evidence_review_comment posts content and only the optional fields given", async () => {
+    const comment = reviews().get("scf_create_evidence_review_comment")!;
+    await comment({ org_id: ORG, engagement_id: ID, evidence_id: EV, content: "Please attach the signed copy" });
+    await comment({
+      org_id: ORG,
+      engagement_id: ID,
+      evidence_id: EV,
+      content: "Owner is on leave",
+      visibility: "internal",
+      parent_comment_id: ID,
+      mentions: [ORG],
+    });
+    expect(calls.map((c) => c.body)).toEqual([
+      { content: "Please attach the signed copy" },
+      { content: "Owner is on leave", visibility: "internal", parent_comment_id: ID, mentions: [ORG] },
+    ]);
+    expect(calls.every((c) => c.method === "POST" && c.path === `${ENG}/evidence-reviews/${EV}/comments`)).toBe(true);
+    expect(
+      parses(registerEngagementReviewTools, "scf_create_evidence_review_comment", {
+        org_id: ORG,
+        engagement_id: ID,
+        evidence_id: EV,
+        content: "",
+      }),
+    ).toBe(false);
+  });
+
+  it("an evidence id is one path segment: a slash cannot reach another route", () => {
+    const base = { org_id: ORG, engagement_id: ID, to_status: "accepted" };
+    for (const evidence_id of ["E-GOV-01/comments", "../other", "E-GOV-01?x=1", "a b", ""]) {
+      expect(parses(registerEngagementReviewTools, "scf_set_evidence_review_status", { ...base, evidence_id })).toBe(
+        false,
+      );
+    }
+    expect(
+      parses(registerEngagementReviewTools, "scf_set_evidence_review_status", { ...base, evidence_id: "E-GOV-01" }),
+    ).toBe(true);
+  });
+
+  it("the evidence review module has ten tools and no delete", () => {
+    expect(reviews().size).toBe(10);
+    const src = readFileSync(new URL("../src/tools/engagement-reviews.ts", import.meta.url), "utf8");
+    expect(src).not.toMatch(/\.delete\b/);
+    expect([...reviews().keys()].some((name) => /delete|remove/.test(name))).toBe(false);
+  });
+
+  it("scf_list_org_auditors reads the auditor list; scf_add_engagement_auditor takes exactly one of user_id or org_auditor_id", async () => {
+    const t = handlersOf(registerEngagementTools);
+    await t.get("scf_list_org_auditors")!({ org_id: ORG });
+    const add = t.get("scf_add_engagement_auditor")!;
+    await add({ org_id: ORG, engagement_id: ID, user_id: ORG });
+    await add({ org_id: ORG, engagement_id: ID, org_auditor_id: ID, kind: "external" });
+    await add({ org_id: ORG, engagement_id: ID, user_id: ORG, kind: "internal" });
+    expect(calls).toEqual([
+      { method: "GET", path: `/organizations/${ORG}/auditors`, params: undefined },
+      { method: "POST", path: `${ENG}/auditors`, body: { user_id: ORG }, params: undefined },
+      { method: "POST", path: `${ENG}/auditors`, body: { auditor_id: ID, kind: "external" }, params: undefined },
+      { method: "POST", path: `${ENG}/auditors`, body: { user_id: ORG, kind: "internal" }, params: undefined },
+    ]);
+    calls.length = 0;
+    expect((await add({ org_id: ORG, engagement_id: ID })).isError).toBe(true);
+    expect((await add({ org_id: ORG, engagement_id: ID, user_id: ORG, org_auditor_id: ID })).isError).toBe(true);
+    expect((await add({ org_id: ORG, engagement_id: ID, org_auditor_id: ID, kind: "internal" })).isError).toBe(true);
+    expect(Object.keys(shapeOf(registerEngagementTools, "scf_add_engagement_auditor"))).not.toContain("auditor_id");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("engagement queries carry evidence_id, and a new query has exactly one target", async () => {
+    const t = handlersOf(registerEngagementTools);
+    await t.get("scf_list_engagement_queries")!({ org_id: ORG, engagement_id: ID, evidence_id: EV });
+    const create = t.get("scf_create_engagement_query")!;
+    await create({ org_id: ORG, engagement_id: ID, evidence_id: EV, title: "Date?", body: "Which period?" });
+    await create({ org_id: ORG, engagement_id: ID, scf_id: "GOV-01", title: "Owner?", body: "Who owns it?" });
+    expect(calls).toEqual([
+      { method: "GET", path: `${ENG}/queries`, params: { evidence_id: EV } },
+      {
+        method: "POST",
+        path: `${ENG}/queries`,
+        body: { evidence_id: EV, title: "Date?", body: "Which period?" },
+        params: undefined,
+      },
+      {
+        method: "POST",
+        path: `${ENG}/queries`,
+        body: { scf_id: "GOV-01", title: "Owner?", body: "Who owns it?" },
+        params: undefined,
+      },
+    ]);
+    calls.length = 0;
+    expect((await create({ org_id: ORG, engagement_id: ID, title: "t", body: "b" })).isError).toBe(true);
+    expect(
+      (await create({ org_id: ORG, engagement_id: ID, scf_id: "GOV-01", evidence_id: EV, title: "t", body: "b" }))
+        .isError,
+    ).toBe(true);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("the document structure tools and the ISMS profile call their routes", async () => {
+    const t = handlersOf(registerDocumentTools);
+    const DOC = `/organizations/${ORG}/documents`;
+    await t.get("scf_list_document_scopes")!({ org_id: ORG });
+    await t.get("scf_get_document_map")!({ org_id: ORG });
+    await t.get("scf_preview_document_profile")!({ org_id: ORG, profile: "topics" });
+    await t.get("scf_update_document_settings")!({ org_id: ORG, document_profile: "topics" });
+    await t.get("scf_get_isms_profile")!({ org_id: ORG });
+    await t.get("scf_update_isms_profile_section")!({
+      org_id: ORG,
+      section: "interested_parties",
+      data: [{ id: "abc123", party: "Customers", kind: "external" }],
+    });
+    await t.get("scf_update_isms_profile_section")!({ org_id: ORG, section: "scope", data: { boundaries: "UK" } });
+    expect(calls).toEqual([
+      { method: "GET", path: `${DOC}/scopes`, params: undefined },
+      { method: "GET", path: `${DOC}/map`, params: undefined },
+      { method: "GET", path: `${DOC}/profile-preview`, params: { profile: "topics" } },
+      { method: "PUT", path: `${DOC}/settings`, body: { document_profile: "topics" }, params: undefined },
+      { method: "GET", path: `/organizations/${ORG}/isms-profile`, params: undefined },
+      {
+        method: "PUT",
+        path: `/organizations/${ORG}/isms-profile/interested_parties`,
+        body: { data: [{ id: "abc123", party: "Customers", kind: "external" }] },
+        params: undefined,
+      },
+      {
+        method: "PUT",
+        path: `/organizations/${ORG}/isms-profile/scope`,
+        body: { data: { boundaries: "UK" } },
+        params: undefined,
+      },
+    ]);
+    const save = t.get("scf_update_isms_profile_section")!;
+    expect(
+      parses(registerDocumentTools, "scf_update_isms_profile_section", {
+        org_id: ORG,
+        section: "objectives",
+        data: [],
+      }),
+    ).toBe(false);
+    // The platform reads an empty list for scope as an empty object: the tool refuses the wrong shape itself.
+    calls.length = 0;
+    expect((await save({ org_id: ORG, section: "scope", data: [] })).isError).toBe(true);
+    expect((await save({ org_id: ORG, section: "scope", data: [{ boundaries: "UK" }] })).isError).toBe(true);
+    expect((await save({ org_id: ORG, section: "context_issues", data: { issue: "x" } })).isError).toBe(true);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("measurement tasks are read; a value is logged by ref with a collector, by exactly one address", async () => {
+    const t = handlersOf(registerObjectiveTools);
+    const MET = `/organizations/${ORG}/isms-metrics`;
+    await t.get("scf_list_isms_measurement_tasks")!({ org_id: ORG, assigned_to_me: true });
+    const log = t.get("scf_log_isms_metric_value")!;
+    await log({ org_id: ORG, ref: "OBJ-09", value: 97, collector: "jumpcloud-patch-report" });
+    expect(calls).toEqual([
+      { method: "GET", path: `${MET}/measurement-tasks`, params: { assigned_to_me: true } },
+      {
+        method: "POST",
+        path: `${MET}/by-ref/OBJ-09/results`,
+        body: { value: 97, collector: "jumpcloud-patch-report" },
+        params: undefined,
+      },
+    ]);
+    calls.length = 0;
+    expect((await log({ org_id: ORG, value: 1 })).isError).toBe(true);
+    expect((await log({ org_id: ORG, objective_id: ID, ref: "OBJ-09", value: 1 })).isError).toBe(true);
+    expect(calls).toHaveLength(0);
+    expect(parses(registerObjectiveTools, "scf_log_isms_metric_value", { org_id: ORG, ref: "OBJ-9/x", value: 1 })).toBe(
+      false,
+    );
+    expect(
+      parses(registerObjectiveTools, "scf_log_isms_metric_value", {
+        org_id: ORG,
+        ref: "OBJ-9",
+        value: 1,
+        collector: "",
+      }),
+    ).toBe(false);
+  });
+
+  it("scf_update_org_settings sends the reminder days and the task-generation switch", async () => {
+    const update = handlersOf(registerOrganizationTools).get("scf_update_org_settings")!;
+    await update({ org_id: ORG, isms_measurement_reminder_days: 21, auto_task_generation_enabled: false });
+    expect(calls).toEqual([
+      {
+        method: "PATCH",
+        path: `/organizations/${ORG}/settings`,
+        body: { isms_measurement_reminder_days: 21, auto_task_generation_enabled: false },
+      },
+    ]);
+    expect(
+      parses(registerOrganizationTools, "scf_update_org_settings", { org_id: ORG, isms_measurement_reminder_days: 0 }),
+    ).toBe(false);
+  });
+
+  it("unscope, deficiency and journey import carry their new fields", async () => {
+    await handlersOf(registerScopedControlTools).get("scf_bulk_unscope_framework")!({
+      org_id: ORG,
+      frameworks: ["iso_27017_2015"],
+      orphan_evidence_action: "untrack",
+    });
+    await handlersOf(registerAssuranceTools).get("scf_create_deficiency")!({
+      org_id: ORG,
+      title: "Patch SLA missed",
+      source: "security_objective",
+      source_ref: ID,
+    });
+    await handlersOf(registerJourneyTools).get("scf_import_journey")!({
+      org_id: ORG,
+      template_key: "compliancegenie-default",
+      activate: false,
+      replace_attested: true,
+    });
+    expect(calls).toEqual([
+      {
+        method: "POST",
+        path: `/organizations/${ORG}/scoped-controls/bulk-unscope-framework`,
+        body: { frameworks: ["iso_27017_2015"], removal_reason: undefined, orphan_evidence_action: "untrack" },
+        params: undefined,
+      },
+      {
+        method: "POST",
+        path: `/organizations/${ORG}/deficiencies`,
+        body: { title: "Patch SLA missed", source: "security_objective", source_ref: ID },
+        params: undefined,
+      },
+      {
+        method: "POST",
+        path: `/organizations/${ORG}/journey/import`,
+        body: { template_key: "compliancegenie-default", activate: false, replace_attested: true },
+        params: undefined,
+      },
+    ]);
+    expect(
+      parses(registerScopedControlTools, "scf_bulk_unscope_framework", {
+        org_id: ORG,
+        frameworks: ["x"],
+        orphan_evidence_action: "delete",
+      }),
+    ).toBe(false);
+    expect(parses(registerAssuranceTools, "scf_create_deficiency", { org_id: ORG, title: "t", source: "audit" })).toBe(
+      false,
+    );
   });
 });

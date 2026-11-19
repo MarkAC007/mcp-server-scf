@@ -93,7 +93,7 @@
     },
     "DELETE /api/organizations/{org_id}/scoped-controls/{scf_id}": {
       "verdict": "deferred",
-      "note": "scf_update_scoped_control(selected=false) unscopes without losing notes. Promote if hard delete is ever required."
+      "note": "scf_batch_update_controls with selected=false unscopes without losing notes. Promote if hard delete is ever required."
     },
     "DELETE /api/organizations/{org_id}/systems/{system_id}": {
       "verdict": "deferred",
@@ -906,7 +906,7 @@
     },
     "PATCH /api/organizations/{org_id}/settings": {
       "verdict": "in",
-      "note": "Promoted for PIG R4/R5 (scf-controls-platform #1120). scf_update_org_settings exposes only business_size, mission_statement and maturity_targets; owner teams, trust-portal exposure, name, industry and the engine switches stay out of the tool body."
+      "note": "Promoted for PIG R4/R5 (scf-controls-platform #1120). scf_update_org_settings exposes business_size, mission_statement, maturity_targets, isms_measurement_reminder_days and auto_task_generation_enabled; owner teams, trust-portal exposure, name, industry and the assessment engine switch stay out of the tool body."
     },
     "PATCH /api/organizations/{org_id}/systems/{system_id}": {
       "verdict": "in"
@@ -1467,6 +1467,135 @@
       "verdict": "out",
       "reason": "ui-only",
       "note": "Form feedback: the generated wording for a metric being edited; writes nothing"
+    },
+    "GET /api/catalog/risks": {
+      "verdict": "in"
+    },
+    "GET /api/catalog/threats": {
+      "verdict": "in"
+    },
+    "GET /api/admin/catalog/upgrade/runs/{run_id}/publisher-changes": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Operator view of what a publisher changed in a catalog upgrade run"
+    },
+    "GET /api/admin/catalog/framework-registry": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Operator's framework registry for catalog upgrades"
+    },
+    "POST /api/admin/catalog/framework-registry": {
+      "verdict": "out",
+      "reason": "infra-admin",
+      "note": "Operator's framework registry for catalog upgrades"
+    },
+    "GET /api/organizations/{org_id}/documents/profile-preview": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/scopes": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/documents/map": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/isms-profile": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/isms-profile/{section}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/isms-profile/starters/{section}": {
+      "verdict": "deferred",
+      "note": "Starter rows the UI offers for an empty section. Promote when an agent is asked to draft an ISMS profile from nothing."
+    },
+    "DELETE /api/evidence-tasks/{task_id}": {
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Removes an evidence task; removal stays a human decision in the UI"
+    },
+    "DELETE /api/consultant/clients/{org_id}/organisation": {
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Deletes a client organisation; consultant relationship, and removal stays a human decision"
+    },
+    "GET /api/organizations/{org_id}/evidence-assessment/engine": {
+      "verdict": "deferred",
+      "note": "Which assessment engine decides (llm, jev_shadow, jev). Promote together with an engine switch on scf_update_org_settings."
+    },
+    "GET /api/organizations/{org_id}/evidence/{evidence_id}/files/{file_id}/assessment/shadow": {
+      "verdict": "deferred",
+      "note": "The shadow engine's verdict beside the deciding one. Promote when agents are asked to compare engines."
+    },
+    "GET /api/organizations/{org_id}/auditors": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/auditors": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Invites an external auditor by email; an access decision a person makes in the UI"
+    },
+    "PATCH /api/organizations/{org_id}/auditors/{auditor_id}": {
+      "verdict": "out",
+      "reason": "identity-admin",
+      "note": "Changes or deactivates an external auditor; an access decision a person makes in the UI"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/files/{file_id}": {
+      "verdict": "out",
+      "reason": "binary-transport",
+      "note": "Returns a signed download link for an artifact"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/events": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/review-people": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/review-dashboard": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/status": {
+      "verdict": "in"
+    },
+    "PUT /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/reviewer": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/comments": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/comments": {
+      "verdict": "in"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/comments/counts": {
+      "verdict": "in"
+    },
+    "PATCH /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/comments/{comment_id}": {
+      "verdict": "deferred",
+      "note": "Edit your own review comment. Promote together with organisation-level comment edit, which is also deferred."
+    },
+    "DELETE /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/comments/{comment_id}": {
+      "verdict": "out",
+      "reason": "destructive",
+      "note": "Withdraws a review comment; removal stays a human decision in the UI"
+    },
+    "GET /api/organizations/{org_id}/engagements/{engagement_id}/evidence-reviews/{evidence_id}/comments/{comment_id}/history": {
+      "verdict": "deferred",
+      "note": "Edit history of one review comment. Promote with comment edit."
+    },
+    "GET /api/isms-metrics/portfolio": {
+      "verdict": "deferred",
+      "note": "One summary row per organisation the caller can open; an API key sees one organisation. Promote if multi-organisation keys arrive."
+    },
+    "GET /api/organizations/{org_id}/isms-metrics/measurement-tasks": {
+      "verdict": "in"
+    },
+    "POST /api/organizations/{org_id}/isms-metrics/by-ref/{ref}/results": {
+      "verdict": "in"
     }
   }
 }

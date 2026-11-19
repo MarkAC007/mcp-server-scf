@@ -19,8 +19,8 @@ const fakeClient = {
     calls.push({ method: "PATCH", path, body });
     return { ok: true };
   }),
-  put: vi.fn(async (path: string, body?: unknown) => {
-    calls.push({ method: "PUT", path, body });
+  put: vi.fn(async (path: string, body?: unknown, params?: unknown) => {
+    calls.push({ method: "PUT", path, body, params });
     return { ok: true };
   }),
   delete: vi.fn(async (path: string) => {
@@ -71,9 +71,9 @@ describe("the plan and the code agree", () => {
   it("places every original tool exactly once and exposes the planned surface", () => {
     const exposed = collectExposedTools();
     const originals = new Set(exposed.flatMap((t) => Object.values(t.methods)));
-    expect(originals.size).toBe(235);
+    expect(originals.size).toBe(254);
     expect(exposed.map((t) => t.name).sort()).toEqual(Object.keys(PLAN.tools).sort());
-    expect(exposed).toHaveLength(43);
+    expect(exposed).toHaveLength(46);
   });
 
   it("every exposed tool is scf_-prefixed with a description of at most 200 characters", () => {
@@ -284,7 +284,7 @@ describe("progressive disclosure over a real MCP connection", () => {
     const body = JSON.parse((res.content as Array<{ text: string }>)[0].text);
     expect(body.loaded_groups).toEqual(["objectives"]);
     expect(body.tools.map((t: { name: string }) => t.name)).toEqual(["scf_objective_read", "scf_objective_write"]);
-    expect(body.tools[0].methods).toEqual(["list", "get", "metric", "measures"]);
+    expect(body.tools[0].methods).toEqual(["list", "get", "metric", "measures", "measurement_tasks"]);
     expect(body.tools[1].methods).toEqual([
       "create",
       "update",
@@ -302,6 +302,71 @@ describe("progressive disclosure over a real MCP connection", () => {
 
     await client.callTool({ name: "scf_objective_read", arguments: { method: "list", org_id: ORG } });
     expect(calls[0]).toMatchObject({ method: "GET", path: `/organizations/${ORG}/security-objectives` });
+  });
+
+  it("evidence review is not listed at startup; scf_load_tools with engagement-reviews enables it", async () => {
+    const { client } = await connect(false);
+    const before = (await client.listTools()).tools.map((t) => t.name);
+    expect(before).toHaveLength(26);
+    expect(before).not.toContain("scf_evidence_review_read");
+    expect(before).not.toContain("scf_document_profile_read");
+    const loader = (await client.listTools()).tools.find((t) => t.name === LOAD_TOOLS_NAME)!;
+    expect(loader.description).toContain("engagement-reviews");
+
+    const res = await client.callTool({ name: LOAD_TOOLS_NAME, arguments: { groups: ["engagement-reviews"] } });
+    const body = JSON.parse((res.content as Array<{ text: string }>)[0].text);
+    expect(body.tools.map((t: { name: string }) => t.name)).toEqual([
+      "scf_evidence_review_read",
+      "scf_evidence_review_write",
+    ]);
+    expect(body.tools[0].methods).toEqual([
+      "board",
+      "card",
+      "events",
+      "people",
+      "dashboard",
+      "comments",
+      "comment_counts",
+    ]);
+    expect(body.tools[1].methods).toEqual(["set_status", "assign_reviewer", "comment"]);
+    const tools = (await client.listTools()).tools;
+    expect(tools.map((t) => t.name)).not.toContain("scf_engagement_read");
+    expect(tools.find((t) => t.name === "scf_evidence_review_read")!.annotations).toMatchObject({ readOnlyHint: true });
+    expect(tools.find((t) => t.name === "scf_evidence_review_write")!.annotations).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: false,
+    });
+
+    await client.callTool({
+      name: "scf_evidence_review_write",
+      arguments: {
+        method: "assign_reviewer",
+        org_id: ORG,
+        engagement_id: ID,
+        evidence_id: "E-GOV-01",
+        framework: "iso_27001_2022",
+        user_id: null,
+      },
+    });
+    expect(calls[0]).toEqual({
+      method: "PUT",
+      path: `/organizations/${ORG}/engagements/${ID}/evidence-reviews/E-GOV-01/reviewer`,
+      body: { user_id: null },
+      params: { framework: "iso_27001_2022" },
+    });
+  });
+
+  it("the risk and threat catalogs are methods of the core catalog tool", async () => {
+    const { client } = await connect(false);
+    await client.callTool({ name: "scf_catalog_read", arguments: { method: "list_risks" } });
+    await client.callTool({
+      name: "scf_catalog_read",
+      arguments: { method: "list_threats", include_deprecated: true },
+    });
+    expect(calls.map((c) => [c.method, c.path, c.params])).toEqual([
+      ["GET", "/catalog/risks", { include_deprecated: undefined }],
+      ["GET", "/catalog/threats", { include_deprecated: true }],
+    ]);
   });
 
   it("groups: all loads everything, and loading twice is harmless", async () => {

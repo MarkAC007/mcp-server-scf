@@ -1,6 +1,6 @@
 {
   "_comment": "Platform OpenAPI `^(a|b)$` patterns, captured verbatim, one per vocabulary in scripts/api-coverage.mjs VOCABULARIES. Refresh with: node scripts/api-coverage.mjs --spec <openapi.json> --write --platform-commit <sha>.",
-  "platform_commit": "ea65f985",
+  "platform_commit": "1fc76d26",
   "patterns": {
     "system_type": {
       "source": "components.schemas.SystemCreate.properties.system_type.pattern",
@@ -19,7 +19,7 @@
       "pattern": "^(public|internal|confidential|restricted)$"
     },
     "deficiency_priority": {
-      "source": "components.schemas.DeficiencyCreate.properties.priority.pattern",
+      "source": "components.schemas.DeficiencyRaise.properties.priority.pattern",
       "pattern": "^(critical|high|medium|low)$"
     },
     "deficiency_status": {

@@ -21,7 +21,7 @@ The 19 tools split into five concerns:
 4. **Custom risk control mappings and standards exceptions** — `scf_list_custom_risk_controls`, `scf_add_custom_risk_control`, `scf_update_custom_risk_control`, `scf_remove_custom_risk_control`
 5. **Risk ↔ control traceability** — `scf_get_risks_for_control`, `scf_get_controls_for_risk`
 
-An accepted risk records who approved it, when, why and until when. Only `scf_accept_risk` (admin) records that approval: setting `treatment_status` to `accepted` through `scf_update_risk_assessment` records none, re-scoring an accepted risk clears it, and changing a standards exception's control links clears it. `acceptance_state` reads `approved`, `expired` or `unapproved`. A custom risk linked to a control and a document is a standards exception against that document.
+An accepted risk records who approved it, when, why and until when. Only `scf_accept_risk` (admin) records that approval: setting `treatment_status` to `accepted` through `scf_create_risk` or `scf_update_risk_assessment` records none, re-scoring an accepted risk clears it, and changing a standards exception's control links clears it. `acceptance_state` reads `approved`, `expired` or `unapproved`. A custom risk linked to a control and a document is a standards exception against that document.
 
 ---
 
@@ -52,18 +52,24 @@ Get one risk assessment: inherent and residual scores, treatment plan, owner, re
 
 ## `scf_create_risk`
 
-Create a new risk assessment in the risk register (write — editor+ role). Likelihood and impact scores populate the 5×5 risk matrix.
+Add a risk to the register by risk_code, or re-score one already there (write — editor; upsert, only passed fields change). Accept with scf_accept_risk; re-scoring an accepted risk clears approval.
 
-| Parameter          | Type    | Required | Description                                            |
-| ------------------ | ------- | -------- | ------------------------------------------------------ |
-| `org_id`           | string  | Yes      | Organization UUID — obtain from scf_list_organizations |
-| `title`            | string  | Yes      | Risk title (required, max ~100 chars)                  |
-| `description`      | string  | Yes      | Risk description (required)                            |
-| `likelihood`       | integer | Yes      | Inherent likelihood on a 1–5 scale                     |
-| `impact`           | integer | Yes      | Inherent impact on a 1–5 scale                         |
-| `owner`            | string  | No       | Name or identifier of the risk owner                   |
-| `treatment_status` | string  | No       | Treatment workflow status (default identified)         |
-| `control_id`       | string  | No       | Linked control ID                                      |
+| Parameter             | Type    | Required | Description                                                                                                          |
+| --------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| `org_id`              | string  | Yes      | Organization UUID — obtain from scf_list_organizations                                                               |
+| `risk_code`           | string  | Yes      | Risk code: catalog R-XX-N (obtain from scf_list_catalog_risks) or custom R-ORG-N (obtain from scf_list_custom_risks) |
+| `likelihood`          | integer | No       | Inherent likelihood on a 1–5 scale                                                                                   |
+| `impact`              | integer | No       | Inherent impact on a 1–5 scale                                                                                       |
+| `residual_likelihood` | integer | No       | Residual likelihood after treatment, 1–5 scale                                                                       |
+| `residual_impact`     | integer | No       | Residual impact after treatment, 1–5 scale                                                                           |
+| `treatment_status`    | string  | No       | Treatment lifecycle state (default identified)                                                                       |
+| `treatment_plan`      | string  | No       | How the risk is being treated                                                                                        |
+| `treatment_due_date`  | string  | No       | When treatment is due (YYYY-MM-DD)                                                                                   |
+| `next_review_date`    | string  | No       | When the risk is next reviewed (YYYY-MM-DD)                                                                          |
+| `owner_user_id`       | string  | No       | Risk owner — obtain from scf_list_members                                                                            |
+| `notes`               | string  | No       | Free-text notes on this risk assessment                                                                              |
+
+The tool checks `risk_code` against the pattern `R-` plus two to four capital letters, a hyphen and a number (for example `R-AC-1` or `R-ORG-1`). The optional fields are the same as `scf_update_risk_assessment`. The earlier `title`, `description`, `owner` and `control_id` parameters are gone. To register a risk that is not in the catalog, define it with `scf_create_custom_risk` first, which also creates its register row; link a custom risk to controls with `scf_add_custom_risk_control`.
 
 ---
 
@@ -266,6 +272,6 @@ Set or clear the standard's document on a custom risk's control link (write — 
 ## Example prompts
 
 - "Show the 5x5 risk matrix for my organization."
-- "Create a risk assessment for our cloud migration."
+- "Add catalog risk `R-AC-1` to our register with likelihood 3 and impact 4."
 - "List all critical risks needing treatment."
 - "Define a custom risk for supplier concentration and link `GOV-12`."

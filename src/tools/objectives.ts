@@ -329,10 +329,17 @@ export function registerObjectiveTools(server: McpServer) {
 
   server.tool(
     "scf_log_isms_metric_value",
-    "Log a result for a logged or milestone metric (write — editor; milestone: 1 done, 0 not). Results are never changed or removed: a correction is a new entry for the period.",
+    "Log a result for a logged or milestone metric (write — editor; milestone: 1 done, 0 not), by objective_id or ref (OBJ-09). Results are never changed or removed: a correction is a new entry.",
     {
       org_id: orgId,
-      objective_id: objectiveId,
+      objective_id: objectiveId.optional(),
+      ref: z
+        .string()
+        .regex(/^OBJ-\d{1,6}$/, "Objective ref such as OBJ-09")
+        .optional()
+        .describe(
+          "The objective's ref, e.g. OBJ-09, instead of objective_id — as scf_list_security_objectives shows it. Meant for collectors: an API key repeating the newest value is answered without writing a new result",
+        ),
       value: z
         .number()
         .finite()
@@ -343,13 +350,53 @@ export function registerObjectiveTools(server: McpServer) {
         "A date in the period the value covers (moved to that period's start); the current period when omitted",
       ).optional(),
       note: text(4000, "Where the value came from, or why it corrects an earlier entry").optional(),
+      collector: z
+        .string()
+        .regex(/^[A-Za-z0-9][A-Za-z0-9 ._:/-]{0,79}$/, "Up to 80 letters, digits, spaces and . _ : / -")
+        .optional()
+        .describe(
+          "Name of the automated collector that measured the value, e.g. 'jumpcloud-patch-report'. Accepted only from an API key caller",
+        ),
     },
     { title: "Log ISMS Metric Value", readOnlyHint: false, destructiveHint: false },
     async (args) => {
       try {
+        if ((args.objective_id === undefined) === (args.ref === undefined)) {
+          return errorResult(new Error("Pass exactly one of objective_id or ref"));
+        }
         const client = getClient();
-        const body = given({ value: args.value, period_start: args.period_start, note: args.note });
+        const body = given({
+          value: args.value,
+          period_start: args.period_start,
+          note: args.note,
+          collector: args.collector,
+        });
+        if (args.ref !== undefined) {
+          return ok(await client.post(`/organizations/${args.org_id}/isms-metrics/by-ref/${args.ref}/results`, body));
+        }
         return ok(await client.post(`/organizations/${args.org_id}/isms-metrics/${args.objective_id}/results`, body));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_list_isms_measurement_tasks",
+    "This period's measurement tasks (read — viewer): one per logged metric whose value is due, due date first. Derived when read, nothing is stored; log the value with scf_log_isms_metric_value.",
+    {
+      org_id: orgId,
+      assigned_to_me: z.boolean().optional().describe("Only tasks whose reminder goes to the caller (default false)"),
+      include_done: z
+        .boolean()
+        .optional()
+        .describe("Also list tasks whose value is already logged this period (default false)"),
+    },
+    { title: "List ISMS Measurement Tasks", readOnlyHint: true },
+    async ({ org_id, ...params }) => {
+      try {
+        const client = getClient();
+        return ok(await client.get(`/organizations/${org_id}/isms-metrics/measurement-tasks`, params));
       } catch (error) {
         return errorResult(error);
       }

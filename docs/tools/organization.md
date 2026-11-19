@@ -1,6 +1,6 @@
 # Organization & Platform tools
 
-Current user profile, organization management, membership lookups, organisation settings (business size, mission statement and per-domain maturity targets), personal and organisation work queues, field-level audit trail, and notification feed.
+Current user profile, organization management, membership lookups, organisation settings (business size, mission statement, per-domain maturity targets, the ISMS measurement reminder and automatic evidence task generation), personal and organisation work queues, field-level audit trail, and notification feed.
 
 Source: [`src/tools/organization.ts`](../../src/tools/organization.ts).
 
@@ -148,14 +148,18 @@ Get an organization's settings (read — viewer): profile (business_size, missio
 
 ## `scf_update_org_settings`
 
-Update the organization profile and maturity targets (write — admin): business_size, mission_statement, maturity_targets. Partial: only passed fields change.
+Update organization settings (write — admin): business_size, mission_statement, maturity_targets, isms_measurement_reminder_days, auto_task_generation_enabled. Partial: only passed fields change.
 
-| Parameter           | Type           | Required | Description                                                                                                                                                                                                                                                                                |
-| ------------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `org_id`            | string         | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                                                                                                     |
-| `business_size`     | string \| null | No       | Business size, which picks the matching row of each control's right-sizing guidance: micro_small, small, medium, large, enterprise; null clears                                                                                                                                            |
-| `mission_statement` | string \| null | No       | Mission statement (up to 4000 chars); blank or null clears                                                                                                                                                                                                                                 |
-| `maturity_targets`  | object         | No       | Target maturity per SCF domain code (domain code → L0–L5), e.g. {"GOV": "L3"}. Replaces the whole map; {} clears every target. Unknown domain codes, or one code given twice in different case, are refused (422). A control's own target (scf_set_target_maturity) overrides its domain's |
+| Parameter                        | Type           | Required | Description                                                                                                                                                                                                                                                                                |
+| -------------------------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`                         | string         | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                                                                                                     |
+| `business_size`                  | string \| null | No       | Business size, which picks the matching row of each control's right-sizing guidance: micro_small, small, medium, large, enterprise; null clears                                                                                                                                            |
+| `mission_statement`              | string \| null | No       | Mission statement (up to 4000 chars); blank or null clears                                                                                                                                                                                                                                 |
+| `maturity_targets`               | object         | No       | Target maturity per SCF domain code (domain code → L0–L5), e.g. {"GOV": "L3"}. Replaces the whole map; {} clears every target. Unknown domain codes, or one code given twice in different case, are refused (422). A control's own target (scf_set_target_maturity) overrides its domain's |
+| `isms_measurement_reminder_days` | integer        | No       | Days left in the period at which the owner of a logged ISMS metric is reminded its value is still to be entered (1–366; platform default 14; 366 = from the first day of every period)                                                                                                     |
+| `auto_task_generation_enabled`   | boolean        | No       | Whether the platform creates evidence collection tasks by itself (platform default true). false = only tasks a person creates exist                                                                                                                                                        |
+
+Pass at least one field to change. The tool refuses a call with none before it reaches the platform.
 
 ---
 

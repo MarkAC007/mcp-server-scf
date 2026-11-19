@@ -46,13 +46,13 @@ Built for the **[SCF Controls Platform](https://scfcontrolsplatform.com/)**. Mai
 
 `mcp-server-scf` connects AI assistants to the [SCF Controls Platform](https://scfcontrolsplatform.com/) via MCP, enabling natural language interaction with your compliance program. Your AI can browse the full SCF control catalog, track implementation progress, manage evidence collection, assess risks, and monitor third-party vendors — all without leaving your editor or chat.
 
-**44 tools** over **235 platform operations**, in 17 groups. Each tool is one noun and direction — `scf_vendor_read`, `scf_vendor_write` — and its `method` argument picks the operation; the `method` description explains each one. Read tools are `readOnlyHint: true`, so a client can allow them all at once.
+**47 tools** over **254 platform operations**, in 18 groups. Each tool is one noun and direction — `scf_vendor_read`, `scf_vendor_write` — and its `method` argument picks the operation; the `method` description explains each one. Read tools are `readOnlyHint: true`, so a client can allow them all at once.
 
 Only the **core** groups are in the tool list at startup (26 tools, about 27k tokens of schema instead of 71k). Call `scf_load_tools` with the groups you need — or `all` — and the rest appear; the server sends `notifications/tools/list_changed`. A client that ignores that notification can set `SCF_LOAD_ALL_TOOLS=true` to get everything up front. Per-group docs list every method with its parameters; [`docs/migration-consolidation.md`](docs/migration-consolidation.md) maps each pre-v4 tool name to its tool and method.
 
 | Group                                                          | Loaded    | Operations | Tools                                                                                                                                                |
 | -------------------------------------------------------------- | --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [catalog](docs/tools/catalog.md)                               | core      | 8          | `scf_catalog_read`                                                                                                                                   |
+| [catalog](docs/tools/catalog.md)                               | core      | 10         | `scf_catalog_read`                                                                                                                                   |
 | [controls](docs/tools/scoped-controls.md)                      | core      | 15         | `scf_control_read`, `scf_control_write`                                                                                                              |
 | [evidence](docs/tools/evidence.md)                             | core      | 25         | `scf_evidence_read`, `scf_evidence_write`, `scf_evidence_file_read`, `scf_evidence_file_write`, `scf_list_evidence_tasks`, `scf_evidence_task_write` |
 | [assessments](docs/tools/evidence.md)                          | core      | 17         | `scf_assessment_read`, `scf_assessment_write`                                                                                                        |
@@ -62,13 +62,14 @@ Only the **core** groups are in the tool list at startup (26 tools, about 27k to
 | [organization](docs/tools/organization.md)                     | core      | 12         | `scf_org_read`, `scf_update_org_settings`, `scf_user_read`, `scf_mark_notifications_read`                                                            |
 | [teams](docs/tools/teams.md)                                   | on demand | 11         | `scf_team_read`, `scf_team_write`                                                                                                                    |
 | [collaboration](docs/tools/collaboration.md)                   | on demand | 7          | `scf_collaboration_read`, `scf_collaboration_write`                                                                                                  |
-| [documents](docs/tools/documents.md)                           | on demand | 15         | `scf_document_read`, `scf_document_write`                                                                                                            |
-| [engagements](docs/tools/engagements.md)                       | on demand | 16         | `scf_engagement_read`, `scf_engagement_write`                                                                                                        |
+| [documents](docs/tools/documents.md)                           | on demand | 20         | `scf_document_read`, `scf_document_profile_read`, `scf_document_write`                                                                               |
+| [engagements](docs/tools/engagements.md)                       | on demand | 17         | `scf_engagement_read`, `scf_engagement_write`                                                                                                        |
+| [engagement-reviews](docs/tools/engagement-reviews.md)         | on demand | 10         | `scf_evidence_review_read`, `scf_evidence_review_write`                                                                                              |
 | [assurance](docs/tools/assurance.md)                           | on demand | 19         | `scf_assurance_read`, `scf_assurance_write`                                                                                                          |
 | [catalog-reconciliation](docs/tools/catalog-reconciliation.md) | on demand | 9          | `scf_catalog_reconciliation_read`, `scf_catalog_reconciliation_write`                                                                                |
 | [webhooks](docs/tools/webhooks.md)                             | on demand | 6          | `scf_webhook_read`, `scf_webhook_write`                                                                                                              |
 | [journey](docs/tools/journey.md)                               | on demand | 4          | `scf_journey_read`, `scf_journey_write`                                                                                                              |
-| [objectives](docs/tools/objectives.md)                         | on demand | 10         | `scf_objective_read`, `scf_objective_write`                                                                                                          |
+| [objectives](docs/tools/objectives.md)                         | on demand | 11         | `scf_objective_read`, `scf_objective_write`                                                                                                          |
 
 ## Try it with MCP Inspector
 
@@ -78,7 +79,7 @@ Kick the tires without adding the server to a client — [MCP Inspector](https:/
 npx @modelcontextprotocol/inspector npx -y mcp-server-scf
 ```
 
-Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see the 26 core tools (set `SCF_LOAD_ALL_TOOLS=true` for all 44), each with a `method` picker and its Zod schema rendered as a live form.
+Inspector opens on `http://localhost:6274` and connects to `mcp-server-scf` over stdio. You'll see the 26 core tools (set `SCF_LOAD_ALL_TOOLS=true` for all 47), each with a `method` picker and its Zod schema rendered as a live form.
 
 Live tool calls need your instance's URL and an API key — export `SCF_API_URL` and `SCF_API_KEY` in the same shell before launching Inspector, or set them under the "Environment Variables" tab inside the Inspector UI. Without them, you can still browse schemas and descriptions; tool calls return a configuration error.
 

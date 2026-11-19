@@ -134,7 +134,7 @@ export function registerAssuranceTools(server: McpServer) {
 
   server.tool(
     "scf_create_deficiency",
-    "Raise a deficiency by hand (write — editor) against an in-scope control, an assessed risk, or both. At least one of scf_id or risk_code is required. Starts open.",
+    "Raise a deficiency by hand (write — editor) against an in-scope control, an assessed risk, or both, or from a security objective (source). One of scf_id, risk_code or source is required. Starts open.",
     {
       org_id: OrgId,
       title: z.string().min(1).max(255).describe("Short title (1–255 chars, non-blank)"),
@@ -158,6 +158,17 @@ export function registerAssuranceTools(server: McpServer) {
         .optional()
         .describe("Risk the deficiency is against — must be one the organisation has assessed (422 otherwise)"),
       root_cause: z.string().optional().describe("Why the deficiency arose"),
+      source: z
+        .literal("security_objective")
+        .optional()
+        .describe(
+          "security_objective when the deficiency is raised from an off-track security objective (needs source_ref; scf_id and risk_code are then optional). Omit otherwise",
+        ),
+      source_ref: z
+        .string()
+        .max(100)
+        .optional()
+        .describe("With source: the objective's UUID — obtain from scf_list_security_objectives (objectives group)"),
     },
     { title: "Create Deficiency", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {

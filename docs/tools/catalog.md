@@ -2,13 +2,15 @@
 
 Read-only access to the full SCF reference catalog — 1,451 controls, 354+ compliance frameworks, 272 evidence types, and 5,736 assessment objectives. These tools are keyless at the org level: they return the universal SCF taxonomy, not per-organization state.
 
+The SCF Risk Catalog and Threat Catalog are read here too. The risk catalog is the source of the `risk_code` that `scf_create_risk` takes, and it is empty until the operator loads it.
+
 Source: [`src/tools/catalog.ts`](../../src/tools/catalog.ts).
 
 <!-- consolidated-surface -->
 
 > **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
 >
-> - `scf_catalog_read` (core): `list_controls` = `scf_list_controls`, `get_control` = `scf_get_control`, `list_domains` = `scf_list_domains`, `get_domain` = `scf_get_domain`, `list_frameworks` = `scf_list_frameworks`, `list_assessment_objectives` = `scf_list_assessment_objectives`, `list_evidence` = `scf_list_evidence_catalog`, `get_evidence` = `scf_get_catalog_evidence`
+> - `scf_catalog_read` (core): `list_controls` = `scf_list_controls`, `get_control` = `scf_get_control`, `list_domains` = `scf_list_domains`, `get_domain` = `scf_get_domain`, `list_frameworks` = `scf_list_frameworks`, `list_assessment_objectives` = `scf_list_assessment_objectives`, `list_evidence` = `scf_list_evidence_catalog`, `get_evidence` = `scf_get_catalog_evidence`, `list_risks` = `scf_list_catalog_risks`, `list_threats` = `scf_list_catalog_threats`
 
 ---
 
@@ -98,9 +100,30 @@ Get one catalog evidence entry (read, no org): title, description, area of focus
 
 ---
 
+## `scf_list_catalog_risks`
+
+The SCF Risk Catalog (read, no org): codes keyed R-XX-N with title, description, status and NIST CSF function. The source of risk_code for scf_create_risk. Empty until the operator loads it.
+
+| Parameter            | Type    | Required | Description                                             |
+| -------------------- | ------- | -------- | ------------------------------------------------------- |
+| `include_deprecated` | boolean | No       | Include risks the publisher has retired (default false) |
+
+---
+
+## `scf_list_catalog_threats`
+
+The SCF Threat Catalog (read, no org): codes keyed by threat code with title, description and status, plus categories and catalog_version. Same shape as scf_list_catalog_risks.
+
+| Parameter            | Type    | Required | Description                                               |
+| -------------------- | ------- | -------- | --------------------------------------------------------- |
+| `include_deprecated` | boolean | No       | Include threats the publisher has retired (default false) |
+
+---
+
 ## Example prompts
 
 - "What NIST 800-53 controls apply to access control?"
 - "Show me the assessment objectives for `GOV-01`."
 - "List all frameworks mapped in SCF."
 - "Find every control in the `IAC` domain."
+- "Which SCF catalog risk codes can I add to our risk register?"

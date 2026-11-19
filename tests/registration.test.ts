@@ -11,6 +11,7 @@ import { registerCapabilityTools } from "../src/tools/capabilities.js";
 import { registerWebhookTools } from "../src/tools/webhooks.js";
 import { registerDocumentTools } from "../src/tools/documents.js";
 import { registerEngagementTools } from "../src/tools/engagements.js";
+import { registerEngagementReviewTools } from "../src/tools/engagement-reviews.js";
 import { registerCatalogReconciliationTools } from "../src/tools/catalog-reconciliation.js";
 import { registerTeamTools } from "../src/tools/teams.js";
 import { registerCollaborationTools } from "../src/tools/collaboration.js";
@@ -27,7 +28,7 @@ describe("tool registration", () => {
   // Per-domain expected tool counts. If src/tools/*.ts adds/removes tools,
   // bump the number here and in README.md (CI will already catch the README drift).
   const cases: Array<[string, (s: McpServer) => void, number]> = [
-    ["catalog", registerCatalogTools, 8],
+    ["catalog", registerCatalogTools, 10],
     ["scoped-controls", registerScopedControlTools, 15],
     ["evidence", registerEvidenceTools, 42],
     ["risk", registerRiskTools, 19],
@@ -35,14 +36,15 @@ describe("tool registration", () => {
     ["organization", registerOrganizationTools, 12],
     ["capabilities", registerCapabilityTools, 19],
     ["webhooks", registerWebhookTools, 6],
-    ["documents", registerDocumentTools, 15],
-    ["engagements", registerEngagementTools, 16],
+    ["documents", registerDocumentTools, 20],
+    ["engagements", registerEngagementTools, 17],
+    ["engagement-reviews", registerEngagementReviewTools, 10],
     ["catalog-reconciliation", registerCatalogReconciliationTools, 9],
     ["teams", registerTeamTools, 11],
     ["collaboration", registerCollaborationTools, 7],
     ["journey", registerJourneyTools, 4],
     ["assurance", registerAssuranceTools, 19],
-    ["objectives", registerObjectiveTools, 10],
+    ["objectives", registerObjectiveTools, 11],
   ];
 
   for (const [name, register, expected] of cases) {
@@ -77,9 +79,9 @@ describe("tool registration", () => {
     });
   }
 
-  it("total tool count equals 235", () => {
+  it("total tool count equals 254", () => {
     const server = makeMockServer();
     for (const [, register] of cases) register(server);
-    expect(server.tool).toHaveBeenCalledTimes(235);
+    expect(server.tool).toHaveBeenCalledTimes(254);
   });
 });

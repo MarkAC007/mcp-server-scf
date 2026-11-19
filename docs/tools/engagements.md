@@ -8,13 +8,20 @@ scope keeps rendering after controls are deprecated by a later SCF release, with
 carrying a lifecycle badge, so an audit that ran under SCF 2025.1 still reads as it did.
 
 Auditors are granted access **per engagement**, not per organization — the grant exposes
-that engagement's frozen scope and its queries and nothing else.
+that engagement's frozen scope, its queries and its evidence review board, and nothing
+else. A grant goes to one of the organization's external auditors by `org_auditor_id`
+(`scf_list_org_auditors` lists them) or to a user by `user_id`; an organization member is
+granted with `kind: internal`.
 
-The 16 tools split into four concerns:
+A query is raised on one control or one evidence object. The evidence review board, where
+an auditor works through evidence objects, is a separate on-demand group: see
+[engagement-reviews.md](engagement-reviews.md).
+
+The 17 tools split into four concerns:
 
 1. **Engagement CRUD** — `scf_list_engagements`, `scf_get_engagement`, `scf_create_engagement`, `scf_update_engagement`, `scf_delete_engagement`
 2. **Scope views** — `scf_get_engagement_scope`, `scf_get_engagement_presentation`
-3. **Auditor access** — `scf_list_engagement_auditors`, `scf_add_engagement_auditor`, `scf_remove_engagement_auditor`, `scf_list_my_engagements`
+3. **Auditor access** — `scf_list_engagement_auditors`, `scf_add_engagement_auditor`, `scf_remove_engagement_auditor`, `scf_list_my_engagements`, `scf_list_org_auditors`
 4. **Structured queries** — `scf_list_engagement_queries`, `scf_get_engagement_query`, `scf_create_engagement_query`, `scf_respond_to_engagement_query`, `scf_update_engagement_query_status`
 
 Source: [`src/tools/engagements.ts`](../../src/tools/engagements.ts).
@@ -23,7 +30,7 @@ Source: [`src/tools/engagements.ts`](../../src/tools/engagements.ts).
 
 > **Tool surface (v4).** The operations below are exposed as the following tools; pass the operation as `method`. Groups not in the core set appear after `scf_load_tools`. Full mapping: [`migration-consolidation.md`](../migration-consolidation.md).
 >
-> - `scf_engagement_read` (load `engagements`): `list` = `scf_list_engagements`, `get` = `scf_get_engagement`, `mine` = `scf_list_my_engagements`, `scope` = `scf_get_engagement_scope`, `presentation` = `scf_get_engagement_presentation`, `auditors` = `scf_list_engagement_auditors`, `queries` = `scf_list_engagement_queries`, `query` = `scf_get_engagement_query`
+> - `scf_engagement_read` (load `engagements`): `list` = `scf_list_engagements`, `get` = `scf_get_engagement`, `mine` = `scf_list_my_engagements`, `scope` = `scf_get_engagement_scope`, `presentation` = `scf_get_engagement_presentation`, `auditors` = `scf_list_engagement_auditors`, `org_auditors` = `scf_list_org_auditors`, `queries` = `scf_list_engagement_queries`, `query` = `scf_get_engagement_query`
 > - `scf_engagement_write` (load `engagements`): `create` = `scf_create_engagement`, `update` = `scf_update_engagement`, `delete` = `scf_delete_engagement`, `add_auditor` = `scf_add_engagement_auditor`, `remove_auditor` = `scf_remove_engagement_auditor`, `create_query` = `scf_create_engagement_query`, `update_query_status` = `scf_update_engagement_query_status`, `respond_to_query` = `scf_respond_to_engagement_query`
 
 ---
@@ -133,15 +140,29 @@ List the auditors granted read access to one engagement (read — viewer role). 
 
 ---
 
+## `scf_list_org_auditors`
+
+List the organization's external auditors (read — viewer): the source of org_auditor_id for scf_add_engagement_auditor. Inviting or changing an auditor is done in the platform UI.
+
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+
+---
+
 ## `scf_add_engagement_auditor`
 
-Grant an existing user read access to one engagement (write — admin role). Scoped to that engagement's frozen scope and queries only; re-granting a revoked auditor reactivates the grant.
+Grant read access to one engagement (write — admin): an external auditor by org_auditor_id, or a user by user_id (an organization member needs kind internal). Exactly one id; a re-grant reactivates.
 
-| Parameter       | Type   | Required | Description                                                                           |
-| --------------- | ------ | -------- | ------------------------------------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                |
-| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                              |
-| `user_id`       | string | Yes      | UUID of an existing user to grant engagement access to — obtain from scf_list_members |
+| Parameter        | Type   | Required | Description                                                                                                                                                                                                   |
+| ---------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `org_id`         | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                                                        |
+| `engagement_id`  | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                                                                                                                                                      |
+| `user_id`        | string | No       | UUID of an existing user. An organization member (scf_list_members) must be granted with kind internal: the platform refuses a member as external (422)                                                       |
+| `org_auditor_id` | string | No       | UUID of one of the organization's external auditors — obtain from scf_list_org_auditors. Not the engagement auditor record id that scf_remove_engagement_auditor takes                                        |
+| `kind`           | enum   | No       | external (default) or internal (an organization member acting as auditor; user_id only, and required for a member). An internal auditor cannot accept evidence they own, are accountable for, or responded on |
+
+Pass exactly one of `user_id` or `org_auditor_id`. The tool refuses a call with both or neither, or `org_auditor_id` with `kind: internal`, before it reaches the platform. `org_auditor_id` is sent to the platform as `auditor_id`.
 
 ---
 
@@ -149,23 +170,24 @@ Grant an existing user read access to one engagement (write — admin role). Sco
 
 Revoke an auditor's access to one engagement (destructive write — admin role). Returns no content on success.
 
-| Parameter       | Type   | Required | Description                                                               |
-| --------------- | ------ | -------- | ------------------------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                    |
-| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                  |
-| `auditor_id`    | string | Yes      | Engagement auditor record UUID — obtain from scf_list_engagement_auditors |
+| Parameter       | Type   | Required | Description                                                                                                   |
+| --------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                        |
+| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                                                      |
+| `auditor_id`    | string | Yes      | Engagement auditor record UUID (the grant, not the org_auditor_id) — obtain from scf_list_engagement_auditors |
 
 ---
 
 ## `scf_list_engagement_queries`
 
-List an engagement's structured auditor queries (read — viewer role, or an assigned auditor). A query is an auditor's question against one control, with its responses and status.
+List an engagement's auditor queries (read — viewer role, or an assigned auditor). A query is a question against one control or one evidence object, with its responses and status.
 
 | Parameter       | Type   | Required | Description                                                                               |
 | --------------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
 | `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                    |
 | `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                                  |
 | `scf_id`        | string | No       | Filter to a single SCF control in DOMAIN-NN format — obtain from scf_get_engagement_scope |
+| `evidence_id`   | string | No       | Filter to queries raised on one evidence object (SCF ERL id, e.g. 'E-GOV-01')             |
 | `status`        | enum   | No       | Filter by query status: open, answered or closed                                          |
 
 ---
@@ -184,15 +206,18 @@ Get one auditor query with its full response thread (read — viewer role, or an
 
 ## `scf_create_engagement_query`
 
-Raise an auditor query against one control in the engagement's scope (write — org member or assigned auditor). The control must be in the engagement's frozen scope.
+Raise a query on one control or one evidence object of the engagement (write — org member or assigned auditor): exactly one of scf_id or evidence_id. Never moves an evidence review card.
 
-| Parameter       | Type   | Required | Description                                                                                          |
-| --------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------- |
-| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                               |
-| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                                             |
-| `scf_id`        | string | Yes      | SCF control the query is about, in DOMAIN-NN format — must be in scope, see scf_get_engagement_scope |
-| `title`         | string | Yes      | Short summary of what is being asked                                                                 |
-| `body`          | string | Yes      | Full text of the query                                                                               |
+| Parameter       | Type   | Required | Description                                                                                                                                                                    |
+| --------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org_id`        | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                                                                                         |
+| `engagement_id` | string | Yes      | Audit engagement UUID — obtain from scf_list_engagements                                                                                                                       |
+| `scf_id`        | string | No       | SCF control the query is about, in DOMAIN-NN format — must be in scope, see scf_get_engagement_scope                                                                           |
+| `evidence_id`   | string | No       | Evidence object the query is about (SCF ERL id, e.g. 'E-GOV-01') — must be on the engagement's review board, see scf_list_evidence_reviews (load the engagement-reviews group) |
+| `title`         | string | Yes      | Short summary of what is being asked                                                                                                                                           |
+| `body`          | string | Yes      | Full text of the query                                                                                                                                                         |
+
+Pass exactly one of `scf_id` or `evidence_id`. The tool refuses a call with both or neither before it reaches the platform.
 
 ---
 

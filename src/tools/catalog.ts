@@ -208,4 +208,40 @@ export function registerCatalogTools(server: McpServer) {
       }
     },
   );
+
+  server.tool(
+    "scf_list_catalog_risks",
+    "The SCF Risk Catalog (read, no org): codes keyed R-XX-N with title, description, status and NIST CSF function. The source of risk_code for scf_create_risk. Empty until the operator loads it.",
+    {
+      include_deprecated: z.boolean().optional().describe("Include risks the publisher has retired (default false)"),
+    },
+    { title: "List Catalog Risks", readOnlyHint: true },
+    async ({ include_deprecated }) => {
+      try {
+        const client = getClient();
+        const data = await client.get("/catalog/risks", { include_deprecated });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_list_catalog_threats",
+    "The SCF Threat Catalog (read, no org): codes keyed by threat code with title, description and status, plus categories and catalog_version. Same shape as scf_list_catalog_risks.",
+    {
+      include_deprecated: z.boolean().optional().describe("Include threats the publisher has retired (default false)"),
+    },
+    { title: "List Catalog Threats", readOnlyHint: true },
+    async ({ include_deprecated }) => {
+      try {
+        const client = getClient();
+        const data = await client.get("/catalog/threats", { include_deprecated });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }

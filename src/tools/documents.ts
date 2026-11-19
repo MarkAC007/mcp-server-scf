@@ -13,6 +13,14 @@ const SECTION_ID = z
     "Section identifier from the document detail (scf_get_document). May contain slashes — pass it exactly as returned, unescaped.",
   );
 
+export const ISMS_PROFILE_SECTIONS = [
+  "scope",
+  "context_issues",
+  "interested_parties",
+  "communication_plan",
+  "audit_programme",
+] as const;
+
 /**
  * ISMS document generation (platform doc-gen feature).
  *
@@ -59,7 +67,7 @@ export function registerDocumentTools(server: McpServer) {
 
   server.tool(
     "scf_get_document_settings",
-    "Get the organization's document-generation settings (read — viewer role): whether doc-gen is enabled, whether derivative generators are enabled, and the SCF licence acknowledgement state.",
+    "Get the organization's document-generation settings (read — viewer role): doc-gen and derivative switches, SCF licence acknowledgement state, the current document_profile and the profiles on offer.",
     {
       org_id: ORG_ID,
     },
@@ -89,6 +97,12 @@ export function registerDocumentTools(server: McpServer) {
         .boolean()
         .optional()
         .describe("Record acknowledgement of the SCF content licence — required once before generation is permitted"),
+      document_profile: z
+        .string()
+        .optional()
+        .describe(
+          "Document structure to switch to (how controls are grouped into policies, standards and procedures). The current one is in scf_get_document_settings; an unknown name is refused (400) with the valid names. A switch supersedes documents: call scf_preview_document_profile first",
+        ),
     },
     { title: "Update Document Settings", readOnlyHint: false, destructiveHint: false },
     async ({ org_id, ...body }) => {
@@ -349,6 +363,113 @@ export function registerDocumentTools(server: McpServer) {
         const client = getClient();
         const data = await client.get(`/organizations/${org_id}/documents/${document_id}/preview`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Document structure (profile) and the ISMS profile the generators read
+  // ---------------------------------------------------------------------------
+
+  server.tool(
+    "scf_list_document_scopes",
+    "What each generator can produce under the organization's document profile (read — viewer role): only scopes with at least one in-scope control, each with its control count.",
+    {
+      org_id: ORG_ID,
+    },
+    { title: "List Document Scopes", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/documents/scopes`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_document_map",
+    "Which document each in-scope control lands in (read — viewer role): per control, its policy, standard and procedure under the organization's document profile.",
+    {
+      org_id: ORG_ID,
+    },
+    { title: "Get Document Map", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/documents/map`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_preview_document_profile",
+    "What switching to another document profile would supersede, create and keep (read — viewer role). Changes nothing; call before scf_update_document_settings(document_profile).",
+    {
+      org_id: ORG_ID,
+      profile: z.string().describe("The document profile to preview switching to"),
+    },
+    { title: "Preview Document Profile", readOnlyHint: true },
+    async ({ org_id, profile }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/documents/profile-preview`, { profile });
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_get_isms_profile",
+    "The organization's ISMS profile (read — viewer): scope statement, context issues, interested parties, communication plan, audit programme, and objectives (read-only here).",
+    {
+      org_id: ORG_ID,
+    },
+    { title: "Get ISMS Profile", readOnlyHint: true },
+    async ({ org_id }) => {
+      try {
+        const client = getClient();
+        const data = await client.get(`/organizations/${org_id}/isms-profile`);
+        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    "scf_update_isms_profile_section",
+    "Save one ISMS profile section (write — editor). data REPLACES the whole section: read it with scf_get_isms_profile, change it and send it all back, keeping row ids. Audited.",
+    {
+      org_id: ORG_ID,
+      section: z.enum(ISMS_PROFILE_SECTIONS).describe(`Section to save: ${ISMS_PROFILE_SECTIONS.join(", ")}`),
+      data: z
+        .union([z.record(z.string(), z.unknown()), z.array(z.record(z.string(), z.unknown())).max(200)])
+        .describe(
+          "The section's whole value, in the shape scf_get_isms_profile returns it: an object for scope, a list of rows (at most 200) for every other section. A row without an id gets a new one",
+        ),
+    },
+    { title: "Update ISMS Profile Section", readOnlyHint: false, destructiveHint: false },
+    async ({ org_id, section, data }) => {
+      try {
+        // The platform reads an empty list for scope as an empty object, which would blank the scope.
+        if ((section === "scope") === Array.isArray(data)) {
+          return errorResult(
+            new Error(section === "scope" ? "scope takes an object, not a list" : `${section} takes a list of rows`),
+          );
+        }
+        const client = getClient();
+        const result = await client.put(`/organizations/${org_id}/isms-profile/${section}`, { data });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (error) {
         return errorResult(error);
       }
