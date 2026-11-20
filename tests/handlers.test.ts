@@ -291,6 +291,24 @@ describe("PIG parity tools call the platform routes they document", () => {
     });
   });
 
+  // #302: the platform route is /risk-assessments/{risk_code}; the list row's `id` (a UUID) is not found there.
+  it("scf_get_risk reads by risk code, and risk_id says so on both surfaces", async () => {
+    await risk.get("scf_get_risk")!({ org_id: ORG, risk_id: RISK });
+    expect(calls[0]).toMatchObject({ method: "GET", path: `/organizations/${ORG}/risk-assessments/${RISK}` });
+
+    // The description a client is sent, for the single-route tool and for the consolidated one.
+    const sent = (shape: Record<string, z.ZodTypeAny>) =>
+      (z.toJSONSchema(z.object(shape)) as { properties: Record<string, { description?: string }> }).properties.risk_id
+        .description;
+    const read = collectExposedTools().find((t) => t.name === "scf_risk_read")!;
+    for (const text of [sent(shapeOf(registerRiskTools, "scf_get_risk")), sent(read.shape)]) {
+      expect(text).toMatch(/risk code/i);
+      expect(text).toContain("risk_code");
+      expect(text).toMatch(/not (the|its|a) (row's |assessment's )?`?id`?/i);
+      expect(text).not.toMatch(/assessment ID/i);
+    }
+  });
+
   it("scf_accept_risk PUTs rationale and expiry to the acceptance route", async () => {
     await risk.get("scf_accept_risk")!({ org_id: ORG, risk_code: RISK, rationale: "cost", expires_on: "2027-03-31" });
     expect(calls[0]).toEqual({
