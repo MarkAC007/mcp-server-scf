@@ -47,10 +47,15 @@ export function registerRiskTools(server: McpServer) {
 
   server.tool(
     "scf_get_risk",
-    "Get one risk assessment: inherent and residual scores, treatment plan, owner, review date, and any acceptance (accepted_by, accepted_at, rationale, expires_on, acceptance_state).",
+    "Get one risk assessment by its risk code: inherent and residual scores, treatment plan, owner, review date, and any acceptance (accepted_by, accepted_at, rationale, expires_on, acceptance_state).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      risk_id: z.string().describe("Risk assessment ID — obtain from scf_list_risks"),
+      // #302: the platform route is /risk-assessments/{risk_code}. The name stays risk_id so existing calls keep working.
+      risk_id: z
+        .string()
+        .describe(
+          "Risk code — catalog R-XX-N or custom R-ORG-N. Use the risk_code field of a scf_list_risks row, not the row's id",
+        ),
     },
     { title: "Get Risk", readOnlyHint: true },
     async ({ org_id, risk_id }) => {
