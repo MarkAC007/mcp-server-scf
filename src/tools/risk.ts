@@ -50,18 +50,15 @@ export function registerRiskTools(server: McpServer) {
     "Get one risk assessment by its risk code: inherent and residual scores, treatment plan, owner, review date, and any acceptance (accepted_by, accepted_at, rationale, expires_on, acceptance_state).",
     {
       org_id: z.string().uuid().describe("Organization UUID — obtain from scf_list_organizations"),
-      // #302: the platform route is /risk-assessments/{risk_code}. The name stays risk_id so existing calls keep working.
-      risk_id: z
-        .string()
-        .describe(
-          "Risk code — catalog R-XX-N or custom R-ORG-N. Use the risk_code field of a scf_list_risks row, not the row's id",
-        ),
+      // #302: the platform route is /risk-assessments/{risk_code}, so the parameter is risk_code, as on every other
+      // risk tool. It was risk_id up to v4.6.1; that name is gone.
+      risk_code: z.string().describe("Risk code — catalog R-XX-N or custom R-ORG-N"),
     },
     { title: "Get Risk", readOnlyHint: true },
-    async ({ org_id, risk_id }) => {
+    async ({ org_id, risk_code }) => {
       try {
         const client = getClient();
-        const data = await client.get(`/organizations/${org_id}/risk-assessments/${risk_id}`);
+        const data = await client.get(`/organizations/${org_id}/risk-assessments/${risk_code}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (error) {
         return errorResult(error);
