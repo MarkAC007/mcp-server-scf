@@ -292,21 +292,38 @@ describe("PIG parity tools call the platform routes they document", () => {
   });
 
   // #302: the platform route is /risk-assessments/{risk_code}; the list row's `id` (a UUID) is not found there.
-  it("scf_get_risk reads by risk code, and risk_id says so on both surfaces", async () => {
-    await risk.get("scf_get_risk")!({ org_id: ORG, risk_id: RISK });
-    expect(calls[0]).toMatchObject({ method: "GET", path: `/organizations/${ORG}/risk-assessments/${RISK}` });
+  // The parameter is risk_code, as on every other risk tool. It was risk_id up to v4.6.1; that name is gone.
+  const RISK_PATH = `/organizations/${ORG}/risk-assessments/${RISK}`;
 
-    // The description a client is sent, for the single-route tool and for the consolidated one.
-    const sent = (shape: Record<string, z.ZodTypeAny>) =>
-      (z.toJSONSchema(z.object(shape)) as { properties: Record<string, { description?: string }> }).properties.risk_id
-        .description;
+  it("scf_get_risk reads by risk_code and has no risk_id parameter", async () => {
+    await risk.get("scf_get_risk")!({ org_id: ORG, risk_code: RISK });
+    expect(calls).toEqual([{ method: "GET", path: RISK_PATH }]);
+
+    const shape = shapeOf(registerRiskTools, "scf_get_risk");
+    expect(Object.keys(shape)).toEqual(["org_id", "risk_code"]);
+    expect(z.object(shape).safeParse({ org_id: ORG, risk_code: RISK }).success).toBe(true);
+    expect(z.object(shape).safeParse({ org_id: ORG, risk_id: RISK }).success).toBe(false);
+  });
+
+  it("scf_risk_read get takes risk_code and refuses risk_id before any request", async () => {
     const read = collectExposedTools().find((t) => t.name === "scf_risk_read")!;
-    for (const text of [sent(shapeOf(registerRiskTools, "scf_get_risk")), sent(read.shape)]) {
-      expect(text).toMatch(/risk code/i);
-      expect(text).toContain("risk_code");
-      expect(text).toMatch(/not (the|its|a) (row's |assessment's )?`?id`?/i);
-      expect(text).not.toMatch(/assessment ID/i);
+    await read.handler({ method: "get", org_id: ORG, risk_code: RISK });
+    expect(calls).toEqual([{ method: "GET", path: RISK_PATH }]);
+
+    for (const args of [{ risk_id: RISK }, {}]) {
+      const refused = await read.handler({ method: "get", org_id: ORG, ...args });
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0].text).toContain("risk_code");
     }
+    expect(calls).toHaveLength(1);
+
+    const props = (z.toJSONSchema(z.object(read.shape)) as { properties: Record<string, { description?: string }> })
+      .properties;
+    expect(props).not.toHaveProperty("risk_id");
+    // One description shared with controls_for_risk, not two joined by "|".
+    expect(props.risk_code.description).toBe(
+      "Risk code — catalog R-XX-N or custom R-ORG-N Used by: get, controls_for_risk.",
+    );
   });
 
   it("scf_accept_risk PUTs rationale and expiry to the acceptance route", async () => {

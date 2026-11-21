@@ -43,12 +43,14 @@ List the whole risk register (ordered by risk code): scores, treatment status an
 
 Get one risk assessment by its risk code: inherent and residual scores, treatment plan, owner, review date, and any acceptance (accepted_by, accepted_at, rationale, expires_on, acceptance_state).
 
-| Parameter | Type   | Required | Description                                                                                                     |
-| --------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------- |
-| `org_id`  | string | Yes      | Organization UUID — obtain from scf_list_organizations                                                          |
-| `risk_id` | string | Yes      | Risk code — catalog R-XX-N or custom R-ORG-N. Use the risk_code field of a scf_list_risks row, not the row's id |
+| Parameter   | Type   | Required | Description                                            |
+| ----------- | ------ | -------- | ------------------------------------------------------ |
+| `org_id`    | string | Yes      | Organization UUID — obtain from scf_list_organizations |
+| `risk_code` | string | Yes      | Risk code — catalog R-XX-N or custom R-ORG-N           |
 
-`risk_id` takes a risk code such as `R-AC-1`. The platform reads one risk assessment by risk code only, so the `id` (a UUID) that `scf_list_risks` returns for a row is answered with "not found".
+Pass `risk_code`: a risk code such as `R-AC-1`, the `risk_code` field of a `scf_list_risks` row. The platform reads one risk assessment by risk code only, so the `id` (a UUID) that `scf_list_risks` returns for a row is answered with "not found".
+
+**Breaking:** this parameter was named `risk_id` up to v4.6.1. That name is no longer accepted; a call that passes only `risk_id` is refused with `risk_code` named as the missing parameter, before any request is made. Rename the argument to `risk_code`; the value is unchanged.
 
 ---
 
